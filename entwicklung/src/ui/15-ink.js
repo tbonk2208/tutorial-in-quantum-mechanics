@@ -108,7 +108,12 @@ const INKUI = (() => {
       this.cv.width = Math.round(r.width * dpr); this.cv.height = Math.round(r.height * dpr);
       this.redraw();
     }
-    pos(e){ const r = this.rect; return {x:Math.round((e.clientX - r.left) * 10) / 10, y:Math.round((e.clientY - r.top) * 10) / 10, t:Math.round(e.timeStamp || now()), p:Math.round((e.pressure || .5) * 100) / 100}; }
+    pos(e){
+      const r = this.rect, q = {x:Math.round((e.clientX - r.left) * 10) / 10, y:Math.round((e.clientY - r.top) * 10) / 10, t:Math.round(e.timeStamp || now()), p:Math.round((e.pressure || .5) * 100) / 100};
+      /* Aufzeichnung (Schreibprobe): echter Druck und Neigung des Stifts */
+      if (this.opt.rec){ q.p = Math.round((e.pressure || 0) * 1000) / 1000; if (e.pointerType === 'pen'){ q.tiltX = Math.round(e.tiltX || 0); q.tiltY = Math.round(e.tiltY || 0); } }
+      return q;
+    }
     down(e){
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       if (e.pointerType === 'touch'){
@@ -139,9 +144,9 @@ const INKUI = (() => {
       const last = this.strokes[this.strokes.length - 1];
       if (last && this.lastUpType === e.pointerType && now() - this.lastUpT < 70){
         const q = last[last.length - 1];
-        if (Math.hypot(p.x - q.x, p.y - q.y) < 6){ this.strokes.pop(); this.cur = last.slice(); this.cur.push(p); this.seg(q, p); return; }
+        if (Math.hypot(p.x - q.x, p.y - q.y) < 6){ this.strokes.pop(); this.cur = last.slice(); this.cur.pt = last.pt; this.cur.push(p); this.seg(q, p); return; }
       }
-      this.cur = [p];
+      this.cur = [p]; this.cur.pt = e.pointerType;
       this.dot(p);
     }
     move(e){
@@ -203,7 +208,7 @@ const INKUI = (() => {
       const near = q => { const t = L2 ? Math.max(0, Math.min(1, ((q.x - a.x) * dx + (q.y - a.y) * dy) / L2)) : 0; return Math.hypot(q.x - a.x - t * dx, q.y - a.y - t * dy) < 12; };
       const n = this.strokes.length;
       this.strokes = this.strokes.filter(s => !s.some(near));
-      if (this.strokes.length !== n){ this.erased = true; this.trash = null; this.redraw(); }
+      if (this.strokes.length !== n){ this.erased = true; this.nErase = (this.nErase || 0) + 1; this.trash = null; this.redraw(); }
     }
     /* Rückgängig: letzter Strich; nach „Löschen“ holt es die gelöschten Striche zurück */
     undo(){
@@ -570,6 +575,202 @@ const INKUI = (() => {
     main.append(box);
     new HandTrainer(box);
   }
+  /* ---------- Schreibprobe: echte Handschrift aufzeichnen, damit die Erkennung ausgewertet werden kann ----------
+     Speichert nur auf diesem Gerät (localStorage 'qm-probe-1'), sendet nichts, lernt NICHT an (kein HANDQ.add). */
+  const PROBE_KEY = 'qm-probe-1';
+  /* Zusammenhang wie bei einer typischen Aufgabe (nicht die Zielzeile selbst, damit die Messung ehrlich bleibt) */
+  const PROBE_SPEC = {coords:['x', 't'], params:{m:'pos', k:'pos', L:'pos', a:'pos', ω:'pos', A:'pos', V:'real', E_1:'pos', n:{int:[1, 5]}}, funcs:['Y_1^0']};
+  const PROBE_LINES = [
+    ['E = ħ^2 k^2/(2m)', 'Bruch als echten Bruch mit Strich'],
+    ['∫_0^L |ψ|^2 dx = 1', 'Grenzen unten und oben ans Integral'],
+    ['∫_-∞^∞ e^(-a x^2) dx = sqrt(π/a)', 'Hochzahl klein und hoch'],
+    ['d/dx sin(k x) = k cos(k x)', ''],
+    ['i ħ ∂ψ/∂t = Ĥ ψ', 'Dach direkt über das H'],
+    ['∂^2/∂x^2 e^(i k x) = -k^2 e^(i k x)', ''],
+    ["ψ'' = -k^2 ψ", 'zwei Striche oben rechts'],
+    ['Σ_{n=1}^∞ |c_n|^2 = 1', 'Grenzen unter und über das Summenzeichen'],
+    ['⟨ψ|φ⟩ = ⟨φ|ψ⟩^*', 'Sternchen klein oben rechts'],
+    ['⟨n|x̂|m⟩', ''],
+    ['|ψ⟩ = 1/sqrt(2) (|↑⟩ + |↓⟩)', ''],
+    ['[x̂, p̂] = i ħ', ''],
+    ['a† |n⟩ = sqrt(n+1) |n+1⟩', '† klein oben rechts'],
+    ['σ_x = (0, 1; 1, 0)', 'große Klammern über beide Zeilen'],
+    ['χ = 1/sqrt(2) (1; i)', 'Spaltenvektor in großen Klammern'],
+    ['ψ^* ψ = |ψ|^2', ''],
+    ['Δx Δp ≥ ħ/2', ''],
+    ['E_n = -E_1/n^2', 'Index klein und tief'],
+    ['λ = 2π/k', ''],
+    ['ψ(t) = A cos(ω t + φ)', ''],
+    ['ψ(x) = sqrt(2/L) sin(n π x/L)', 'Bruch unter der Wurzel'],
+    ['p̂ = -i ħ d/dx', ''],
+    ['Y_1^0(θ, φ) = sqrt(3/(4π)) cos(θ)', 'Index unten, Hochzahl oben am Y']
+  ];
+  let PCTX = null;
+  const probeCtx = () => PCTX || (PCTX = makeCtx(JSON.parse(JSON.stringify(PROBE_SPEC))));
+  /* normierte KaTeX-Ausgabe: gleich geschrieben ⇔ gleiche Formel (Leerzeichen, \left/\right, Abstände egal) */
+  function texNorm(src){
+    try { return texLine(parseLine(String(src || ''), probeCtx().pctx)).replace(/\\(?:left|right|middle|bigg?|Bigg?)(?![a-zA-Z])/g, '').replace(/\\[,;:!]/g, ' ').replace(/\s+/g, ' ').replace(/ ?([^a-zA-Z ]) ?/g, '$1').trim(); }
+    catch(e){ return null; }
+  }
+  /* im Browser-Speicher kompakt (Punkte als Zahlenreihen, etwa halb so groß), in Datei und Zwischenablage als Objekte {x, y, t, p, tiltX, tiltY} */
+  const packPts = pts => pts.map(p => p.tiltX != null ? [p.x, p.y, p.t, p.p, p.tiltX, p.tiltY] : [p.x, p.y, p.t, p.p]);
+  const unpackPts = a => a.map(q => { const p = {x:q[0], y:q[1], t:q[2], p:q[3]}; if (q.length > 4){ p.tiltX = q[4]; p.tiltY = q[5]; } return p; });
+  const probePack = d => Object.assign({}, d, {packed:1, lines:d.lines.map(l => l.strokes ? Object.assign({}, l, {strokes:l.strokes.map(s => ({pointerType:s.pointerType, a:packPts(s.points)}))}) : l)});
+  const probeUnpack = d => { if (!d.packed) return d; const o = Object.assign({}, d, {lines:d.lines.map(l => l.strokes ? Object.assign({}, l, {strokes:l.strokes.map(s => ({pointerType:s.pointerType, points:s.points || unpackPts(s.a || [])}))}) : l)}); delete o.packed; return o; };
+  const probeLoad = () => { try { const d = JSON.parse(localStorage.getItem(PROBE_KEY) || 'null'); return d && d.app === 'qm-schreibprobe' && Array.isArray(d.lines) ? probeUnpack(d) : null; } catch(e){ return null; } };
+  function probeSave(d){
+    d.updated = new Date().toISOString(); d.summary = probeSum(d);
+    try { localStorage.setItem(PROBE_KEY, JSON.stringify(probePack(d))); return true; }
+    catch(e){ toast('Der Speicher im Browser ist voll. Sichere die Probe jetzt als Datei.'); return false; }
+  }
+  function deviceInfo(){
+    const n = navigator, mm = q => { try { return matchMedia(q).matches; } catch(e){ return null; } };
+    return {userAgent:n.userAgent, platform:(n.userAgentData && n.userAgentData.platform) || n.platform || '', lang:n.language || '', dpr:window.devicePixelRatio || 1,
+      screen:{w:screen.width, h:screen.height}, viewport:{w:innerWidth, h:innerHeight}, maxTouchPoints:n.maxTouchPoints || 0, pointerFine:mm('(pointer: fine)'), anyHover:mm('(any-hover: hover)')};
+  }
+  function recogInfo(){
+    let m = null;
+    try { if (typeof INKR !== 'undefined' && INKR.model){ const M = INKR.model(); if (M) m = {arch:M.arch, classes:M.N, F:M.F, sig:String(M.sig || '').slice(0, 400)}; } } catch(e){}
+    let hs = null; try { const H = hand(); if (H && H.count) hs = H.count(); } catch(e){}
+    return {ready:modelReady(), classes:classes() ? classes().length : null, model:m, handSamples:hs};
+  }
+  function probeNew(){
+    const iso = new Date().toISOString();
+    return {app:'qm-schreibprobe', v:1, id:Math.random().toString(36).slice(2, 10), started:iso, updated:iso, finished:null,
+      appVersion:typeof APP_VERSION !== 'undefined' ? APP_VERSION : '', device:deviceInfo(), recognizer:recogInfo(),
+      context:{name:'probe-1', spec:JSON.parse(JSON.stringify(PROBE_SPEC))},
+      lines:PROBE_LINES.map(([target], i) => ({i:i + 1, target, done:false}))};
+  }
+  /* Lesarten in Rangfolge (beste zuerst, ohne Doppelte) und Rang der Zielzeile (0 = sofort richtig, -1 = nicht dabei) */
+  function rankOf(read, target){
+    const tn = texNorm(target), list = [];
+    for (const t of [read.text].concat((read.alts || []).map(a => a.text))){ const x = String(t || '').trim(); if (x && !list.includes(x)) list.push(x); }
+    return {list, rank:tn == null ? -1 : list.findIndex(t => texNorm(t) === tn)};
+  }
+  function probeSum(d){
+    const w = d.lines.filter(l => l.done && !l.skipped && l.read);
+    return {lines:d.lines.length, written:w.length, skipped:d.lines.filter(l => l.skipped).length, top1:w.filter(l => l.rank === 0).length, top3:w.filter(l => l.rank >= 0 && l.rank < 3).length};
+  }
+  function probeView(main){
+    main.append(h('button', {class:'back', type:'button', onclick:() => go('settings')}, '← Einstellungen'));
+    main.append(h('h1', {}, 'Schreibprobe'));
+    const box = h('div', {class:'probe'});
+    main.append(box);
+    let d = probeLoad(), cur = -1, ink = null;
+    const firstOpen = () => d ? d.lines.findIndex(l => !l.done) : 0;
+    function intro(){
+      const k = d ? firstOpen() : 0, part = d && d.lines.some(l => l.done);
+      box.innerHTML = `<div class="stack">
+        <p>Mit der Schreibprobe prüfen wir, wie gut das Tutorial deine Handschrift liest. Du schreibst ${PROBE_LINES.length} vorgegebene Zeilen mit dem Stift. Das dauert etwa 10 Minuten.</p>
+        <ul class="clean small">
+          <li>Schreib jede Zeile genau so, wie sie dasteht, in deiner normalen Schrift – nicht schöner als sonst.</li>
+          <li>Gespeichert werden nur die Striche (Punkte, Zeit, Druck, Neigung des Stifts), die Lesart und Gerätedaten (Bildschirmgröße, Browser). Nichts wird gesendet.</li>
+          <li>Am Ende sicherst du alles als Datei und gibst sie Claude, zum Beispiel als Anhang im Chat.</li>
+          <li>Die Probe lernt deine Handschrift nicht an. Das geht getrennt unter „Handschrift anlernen“.</li>
+          <li>Eine Zeile passt nicht? Dann überspring sie einfach.</li>
+        </ul>
+        ${modelReady() ? '' : '<p class="small ink-msg bad">Die Handschrifterkennung ist nicht geladen. Die Striche werden trotzdem aufgezeichnet.</p>'}
+        <div class="row"><button type="button" class="btn btn-primary" data-p="go">${part ? 'Weiter bei Zeile ' + (k + 1) : 'Schreibprobe starten'}</button>${part ? '<button type="button" class="btn" data-p="sum">Zwischenstand</button><button type="button" class="btn" data-p="del">Probe löschen</button>' : ''}</div></div>`;
+      box.onclick = e => {
+        const b = e.target.closest('button[data-p]'); if (!b) return;
+        if (b.dataset.p === 'go'){ if (!d){ d = probeNew(); probeSave(d); } line(firstOpen()); }
+        else if (b.dataset.p === 'sum') summary();
+        else if (b.dataset.p === 'del') del(b, intro);
+      };
+    }
+    function del(b, after){
+      if (!b.dataset.sure){ b.dataset.sure = '1'; b.textContent = 'Wirklich löschen? Noch einmal tippen'; setTimeout(() => { if (b.isConnected && b.dataset.sure){ delete b.dataset.sure; b.textContent = 'Probe löschen'; } }, 4000); return; }
+      try { localStorage.removeItem(PROBE_KEY); } catch(e){}
+      d = null; toast('Probe gelöscht.'); after();
+    }
+    function line(k){
+      if (k < 0 || k >= d.lines.length){ summary(); return; }
+      cur = k;
+      const L = d.lines[k], [target, tip] = PROBE_LINES[k];
+      const prev = k > 0 ? d.lines[k - 1] : null;
+      const fb = prev && prev.done ? (prev.skipped ? 'Zeile ' + k + ' übersprungen.' : prev.rank === 0 ? 'Zeile ' + k + ': richtig gelesen ✓' : 'Zeile ' + k + ': gelesen als ' + lineHTML(prev.read && prev.read.text || '–', probeCtx())) : '';
+      box.innerHTML = `<div class="probe-head"><span class="small">Zeile ${k + 1} von ${d.lines.length}</span><span class="bar"><i style="width:${Math.round(100 * k / d.lines.length)}%"></i></span></div>
+        <div class="probe-target"><span class="small muted">Schreib genau das:</span><div class="probe-tex">${texHTML(texLine(parseLine(target, probeCtx().pctx)), true)}</div>${tip ? '<span class="small muted">' + escH(tip) + '</span>' : ''}</div>
+        <div class="inkp${S().inkTall ? ' tall' : ''}"><div class="ink-tools">
+          <button type="button" class="btn btn-sm" data-a="undo" aria-label="Rückgängig">↶<span class="lbl">Rückgängig</span></button>
+          <button type="button" class="btn btn-sm" data-a="clear" aria-label="Löschen">✕<span class="lbl">Löschen</span></button>
+          <button type="button" class="btn btn-sm ink-er" data-a="eraser" aria-pressed="false" aria-label="Radierer">⌫<span class="lbl">Radierer</span></button>
+          <button type="button" class="btn btn-sm ink-tall" data-a="tall" aria-pressed="${S().inkTall ? 'true' : 'false'}" aria-label="Schreibfläche größer">⤢<span class="lbl">Größer</span></button>
+        </div><canvas class="ink-cv" aria-label="Schreibfläche für Zeile ${k + 1}"></canvas><div class="ink-msg small" hidden></div></div>
+        <div class="row probe-btns"><button type="button" class="btn btn-primary" data-p="next">Weiter</button><button type="button" class="btn" data-p="skip">Überspringen</button>${k > 0 ? '<button type="button" class="btn btn-ghost" data-p="back">← Zurück</button>' : ''}<span class="grow"></span><button type="button" class="btn btn-ghost" data-p="pause">Pause</button></div>
+        <p class="small muted probe-fb" aria-live="polite">${fb}</p>`;
+      if (ink) ink.destroy();
+      const panel = box.querySelector('.inkp'), msg = box.querySelector('.ink-msg');
+      ink = new InkCanvas(box.querySelector('canvas'), {lw:2.6, bg:lineBg, rec:true,
+        onTouchIgnored:() => { if (PEN.fingerHint) return; PEN.fingerHint = true; toast('Der Finger schreibt hier nicht. Nimm den Stift.'); }});
+      const cnt = {undo:0, clear:0};
+      /* „Zurück“: gespeicherte Striche dieser Zeile wieder zeigen */
+      if (L.done && L.strokes && L.strokes.length){
+        const t0 = 0;
+        ink.strokes = L.strokes.map(s => { const a = s.points.map(p => Object.assign({}, p, {t:t0 + p.t})); a.pt = s.pointerType; return a; });
+        requestAnimationFrame(() => { ink.fit(); ink.redraw(); });
+      }
+      box.onclick = e => {
+        const b = e.target.closest('button'); if (!b) return;
+        const a = b.dataset.a, p = b.dataset.p;
+        if (a === 'undo'){ cnt.undo++; ink.undo(); }
+        else if (a === 'clear'){ cnt.clear++; ink.clear(true); }
+        else if (a === 'eraser'){ const on = !ink.eraser; ink.eraser = on; b.setAttribute('aria-pressed', on); panel.classList.toggle('erasing', on); }
+        else if (a === 'tall'){ const on = !panel.classList.contains('tall'); panel.classList.toggle('tall', on); b.setAttribute('aria-pressed', on); const st = S(); st.inkTall = on; store.save(); }
+        else if (p === 'next'){
+          if (!ink.strokes.length){ msg.textContent = 'Schreib zuerst die Zeile – oder tippe auf „Überspringen“.'; msg.hidden = false; return; }
+          record(L, cnt); probeSave(d); line(k + 1);
+        }
+        else if (p === 'skip'){ Object.assign(L, {done:true, skipped:true, strokes:[], read:null, rank:-1, at:new Date().toISOString()}); probeSave(d); line(k + 1); }
+        else if (p === 'back') line(k - 1);
+        else if (p === 'pause'){ probeSave(d); intro(); }
+      };
+      box.querySelector('.probe-target').scrollIntoView({block:'nearest'});
+    }
+    /* eine Zeile aufzeichnen und lesen (ohne Anlernen) */
+    function record(L, cnt){
+      const S0 = ink.strokes;
+      let t0 = Infinity; for (const s of S0) for (const p of s) if (p.t < t0) t0 = p.t;
+      if (!isFinite(t0)) t0 = 0;
+      const strokes = S0.map(s => ({pointerType:s.pt || '', points:s.map(p => { const q = {x:p.x, y:p.y, t:Math.round(p.t - t0), p:p.p}; if (p.tiltX != null){ q.tiltX = p.tiltX; q.tiltY = p.tiltY; } return q; })}));
+      let read = null;
+      const t1 = performance.now();
+      try {
+        const r = recognize(S0.map(s => s.map(p => ({x:p.x, y:p.y, t:p.t}))), probeCtx());
+        read = {text:String(r.text || ''), alts:(r.alts || []).slice(0, 5).map(a => ({text:String(a && a.text || a || ''), score:a && a.score != null ? Math.round(a.score * 1e4) / 1e4 : null})), conf:r.conf != null ? r.conf : null, ok:r.ok != null ? r.ok : null, ms:r.ms != null ? r.ms : Math.round(performance.now() - t1)};
+        if (r.missing) read.err = 'Erkennung nicht geladen'; else if (r.err) read.err = String(r.err);
+      } catch(e){ console.error(e); read = {text:'', alts:[], conf:null, ok:false, ms:Math.round(performance.now() - t1), err:String(e.message || e)}; }
+      const rk = rankOf(read, L.target);
+      Object.assign(L, {done:true, skipped:false, at:new Date().toISOString(), strokes, nStrokes:strokes.length, box:{w:Math.round(ink.w), h:Math.round(ink.h)}, dpr:window.devicePixelRatio || 1,
+        tall:box.querySelector('.inkp').classList.contains('tall'), durMs:Math.max(0, ...strokes.flatMap(s => s.points.map(p => p.t))), edits:{undo:cnt.undo, clear:cnt.clear, erase:ink.nErase || 0},
+        read, readings:rk.list.slice(0, 5), rank:rk.rank, same:rk.rank === 0, targetTex:texNorm(L.target)});
+    }
+    function summary(){
+      if (ink){ ink.destroy(); ink = null; }
+      if (!d){ intro(); return; }
+      const all = d.lines.every(l => l.done);
+      if (all && !d.finished){ d.finished = new Date().toISOString(); probeSave(d); }
+      const s = probeSum(d);
+      const name = 'qm-schreibprobe-' + today() + '.json';
+      box.innerHTML = `<div class="stack">
+        <h2>${all ? 'Fertig – danke!' : 'Zwischenstand'}</h2>
+        <p class="probe-score"><b>${s.top1} von ${s.written}</b> geschriebenen Zeilen sofort richtig gelesen, <b>${s.top3}</b> unter den ersten drei Lesarten${s.skipped ? ' (' + s.skipped + ' übersprungen)' : ''}.</p>
+        <div class="row"><button type="button" class="btn btn-primary" data-p="file">Als Datei sichern</button><button type="button" class="btn" data-p="clip">In die Zwischenablage</button>${all ? '' : '<button type="button" class="btn" data-p="go">Weiter schreiben</button>'}<span class="grow"></span><button type="button" class="btn" data-p="again">Noch einmal schreiben</button><button type="button" class="btn" data-p="del">Probe löschen</button></div>
+        <p class="small">Gib die Datei <code>${escH(name)}</code> an Claude, zum Beispiel als Anhang im Chat. Sie enthält nur deine Striche, die Lesarten und Gerätedaten.</p>
+        <div class="probe-tbw"><table class="tb probe-tb"><tr><th>#</th><th>Zielzeile</th><th>gelesen</th><th></th></tr>${d.lines.map(l => `<tr class="${l.skipped ? 'skip' : !l.done ? 'open' : l.rank === 0 ? 'ok' : l.rank > 0 && l.rank < 3 ? 'near' : 'bad'}"><td>${l.i}</td><td>${lineHTML(l.target, probeCtx())}</td><td>${l.skipped ? '<span class="muted">übersprungen</span>' : !l.done ? '<span class="muted">offen</span>' : l.read && l.read.text ? lineHTML(l.read.text, probeCtx()) : '<span class="muted">nichts gelesen</span>'}</td><td>${l.skipped || !l.done ? '' : l.rank === 0 ? '✓' : l.rank > 0 ? 'Platz ' + (l.rank + 1) : '✗'}</td></tr>`).join('')}</table></div></div>`;
+      box.onclick = e => {
+        const b = e.target.closest('button[data-p]'); if (!b) return;
+        const p = b.dataset.p;
+        if (p === 'file') download(name, JSON.stringify(d), 'application/json');
+        else if (p === 'clip'){ try { navigator.clipboard.writeText(JSON.stringify(d)).then(() => toast('Kopiert. Im Chat einfügen oder in eine Datei speichern.'), () => toast('Kopieren nicht möglich. Nimm „Als Datei sichern“.')); } catch(err){ toast('Kopieren nicht möglich. Nimm „Als Datei sichern“.'); } }
+        else if (p === 'go') line(firstOpen());
+        else if (p === 'again'){ if (!b.dataset.sure){ b.dataset.sure = '1'; b.textContent = 'Alte Probe ersetzen? Noch einmal tippen'; return; } d = probeNew(); probeSave(d); line(0); }
+        else if (p === 'del') del(b, intro);
+      };
+    }
+    if (d && d.lines.every(l => l.done)) summary(); else intro();
+  }
+
   /* noch nicht gelesene Handschrift sofort lesen (vor Seitenwechsel, Abgeben, Schließen) */
   function flushAll(){ for (const L of [...PEN.lines]){ if (!L.pending) continue; try { L.flush(); } catch(e){ console.error(e); } } }
   window.addEventListener('pagehide', flushAll);
@@ -579,5 +780,5 @@ const INKUI = (() => {
     const C = classes();
     return 'Die Handschrift wird im Gerät gelesen (ohne Internet' + (C ? ', ' + C.length + ' Zeichen' : '') + ').';
   }
-  return {InkCanvas, InkLine, defaultMode, pref, trainerView, status, recogReady, modelReady, strokesPNG, taskInfo, flushAll, PEN, installPalmGuard};
+  return {InkCanvas, InkLine, defaultMode, pref, trainerView, probeView, PROBE_LINES, probeTexNorm:texNorm, probeLoad, status, recogReady, modelReady, strokesPNG, taskInfo, flushAll, PEN, installPalmGuard};
 })();

@@ -233,3 +233,23 @@ table.tb th,table.tb td{border-bottom:1px solid var(--line);padding:7px 8px;text
 @media (max-width:520px){ main{padding:16px 10px} .task{padding:12px 10px} .sheet{padding:6px 4px 8px} .ln{grid-template-columns:22px minmax(0,1fr);gap:4px} .ln .st{width:20px;height:20px;font-size:.78rem}
   .ink-tools{gap:4px} .ink-tools .grow{min-width:0} .ink-tools .lbl{display:none} .ink-tools .lbs{display:inline} .ink-tools .btn{min-width:36px;padding:3px 7px;justify-content:center} .ink-cv{height:140px} .inkp.tall .ink-cv{height:210px} }
 @media print{ .inkp,.ink-seg,.ink-alts{display:none} }
+/* Schreibprobe */
+.probe{margin-top:12px}
+.probe-head{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.probe-head .bar{flex:1;max-width:320px;width:auto}
+.probe-target{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;background:var(--accent-soft);padding:8px 14px;margin-bottom:10px;display:flex;flex-direction:column;gap:2px}
+.probe-tex{overflow-x:auto;overflow-y:hidden}
+.probe-tex .katex-display{margin:.35em 0}
+.probe-tex .katex{font-size:1.4em}
+.probe-btns{margin-top:8px}
+.probe-fb{margin-top:8px;min-height:1.5em}
+.probe-fb .katex{font-size:1em}
+.probe-score{font-size:1.05rem}
+.probe-tbw{overflow-x:auto}
+.probe-tb td{vertical-align:middle}
+.probe-tb .katex{font-size:1em}
+.probe-tb tr.ok td:last-child{color:var(--good);font-weight:700}
+.probe-tb tr.near td:last-child{color:var(--warn);font-weight:700}
+.probe-tb tr.bad td:last-child{color:var(--bad);font-weight:700}
+.probe-tb tr.skip,.probe-tb tr.open{opacity:.6}
+@media (max-width:520px){ .probe-tex .katex{font-size:1.15em} .probe-target{padding:6px 10px} }

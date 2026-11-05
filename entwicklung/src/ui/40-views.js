@@ -564,6 +564,7 @@ VIEWS.lex = (main, args) => {
 /* ---------- Einstellungen ---------- */
 VIEWS.settings = (main, args) => {
   if (args && args[0] === 'hand' && typeof INKUI !== 'undefined') return INKUI.trainerView(main);
+  if (args && args[0] === 'probe' && typeof INKUI !== 'undefined') return INKUI.probeView(main);
   const S = store.data.settings;
   main.append(h('h1', {}, 'Einstellungen'));
   const f = h('div', {class:'stack'});
@@ -585,6 +586,9 @@ VIEWS.settings = (main, args) => {
     const bh = h('button', {class:'btn btn-sm', type:'button'}, 'Handschrift anlernen');
     bh.onclick = () => go('settings/hand');
     pen.append(h('div', {class:'row'}, bh, h('span', {class:'small muted'}, 'Seltene Zeichen wie ψ, ħ, ∂, ⟨ ⟩ je zweimal schreiben.')));
+    const bp = h('button', {class:'btn btn-sm', type:'button'}, 'Schreibprobe');
+    bp.onclick = () => go('settings/probe');
+    pen.append(h('div', {class:'row'}, bp, h('span', {class:'small muted'}, '23 Testzeilen mit dem Stift schreiben (etwa 10 Minuten), damit die Erkennung mit deiner Schrift ausgewertet werden kann. Nichts wird gesendet.')));
     main.append(pen);
   }
   const data = h('div', {class:'box stack', style:'margin-top:18px'});
