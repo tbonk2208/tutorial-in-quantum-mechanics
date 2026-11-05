@@ -1,0 +1,37 @@
+{
+ "name": "Tutorial in Quantum Mechanics",
+ "short_name": "QM Tutorial",
+ "id": "./",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#eef1f8",
+ "theme_color": "#3b3fa8",
+ "lang": "de",
+ "dir": "ltr",
+ "orientation": "any",
+ "categories": [
+  "education"
+ ],
+ "description": "Tutorial in Quantum Mechanics: Quantenmechanik I und ihre mathematischen Grundlagen für den Physik-Bachelor. Herleitungen Zeile für Zeile prüfen, Lernweg, Labor, Wiederholung und Probeklausur.",
+ "icons": [
+  {
+   "src": "icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icons/icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}
