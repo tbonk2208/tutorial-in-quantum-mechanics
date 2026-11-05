@@ -57,6 +57,12 @@ Startseite mit **Neues lernen**, **Üben**, **Wiederholen** (verteilte Wiederhol
 6. **Üben:** Herleitungen mit zeilenweiser Prüfung, gestuften Hinweisen und Musterlösung nach eigenem Versuch.
 7. **Abschluss:** vier Aufgaben ohne Hilfe; ab 3 von 4 gilt das Thema als sicher.
 
+## Mit dem Stift schreiben
+
+Jede Rechenzeile lässt sich mit ✎ auf Stift umschalten (Voreinstellung unter „Einstellungen → Stift und Handschrift“: Tastatur, Stift oder automatisch). Man schreibt wie auf Papier: Brüche als echten Bruch, Grenzen an Integral und Summe, Hoch- und Tiefstellungen, Matrizen mit großen Klammern, Dirac-Klammern ⟨ | ⟩, ein Dach über den Buchstaben. Nach einer kurzen Pause steht unter der Schrift, wie das Tutorial sie liest; andere Lesarten und einzelne Zeichen lassen sich antippen und korrigieren, und das Eingabefeld bleibt editierbar.
+
+Gelesen wird im Gerät mit einem eigenen Erkennungsnetz (103 Zeichen, trainiert mit CROHME 2011–2013 und HASYv2, siehe `LICENSE-Handschriftmodell.txt`). Gemessen an fremden Schreibern werden einzelne Zeichen zu 87–91 % richtig erkannt; ganze Zeilen eines Schreibers sind zu etwa 67 % sofort fehlerfrei und zu 75 % unter den ersten drei Lesarten. Unter „Handschrift anlernen“ schreibt man selten trainierte Zeichen (ψ, ħ, ∂, ⟨ ⟩, ω …) ein paarmal selbst; Korrekturen werden ebenfalls gemerkt (nur im Browser). Mit eigenem API-Schlüssel kann eine schwierige Zeile auf Knopfdruck von Claude gelesen werden; dabei geht das Bild der Zeile an Anthropic. Ausgelegt ist die Stifteingabe für Windows mit Stift; Maus geht auch.
+
 ## Formeln eingeben
 
 Tastatur mit Symbolleiste, Vorschau unter jeder Zeile. Beispiele: `∫_0^L |ψ|^2 dx = 1`, `ħ^2/2m` (= ħ²/(2m)), `d^2/dx^2 ψ`, `∂ψ/∂t`, `[x̂, p̂] f`, `⟨n|x̂|m⟩`, `⟨x^2⟩`, `Δx`, `|↑⟩`, `S_z`, `(1, 0; 0, -1)`, `Σ_{n=1}^∞ |c_n|^2`. LaTeX (`\frac`, `\int`, `\langle`) geht auch. Neue Abkürzungen führt man mit `κ = sqrt(2m(V_0 - E))/ħ` ein.
@@ -80,8 +86,9 @@ Ohne Schlüssel sendet das Tutorial nichts ins Internet. Unter „Einstellungen�
 | `fonts/` | Schriften: KaTeX (MIT, `LICENSE-KaTeX.txt`), Bricolage Grotesque, Source Sans 3 (SIL OFL 1.1, `OFL-*.txt`) |
 | `.nojekyll` | GitHub Pages liefert die Dateien unverändert aus |
 | `LICENSE` | GNU GPL v3 (wie bei der Mathe-Lernhilfe) |
+| `LICENSE-Handschriftmodell.txt` | Herkunft und Lizenz der Gewichte des Erkennungsnetzes (CC BY-NC-SA 3.0) |
 | `entwicklung/` | Quelltext und Tests |
 
 ## Entwicklung
 
-Der Quelltext liegt im Ordner `entwicklung/`: `src/engine` (Prüfkern: Parser, Ableitungen, Integrale, Orts- und Matrixdarstellung, Zeilenprüfung), `src/content` (ein Thema pro Datei; `00m*` = Mathematische Grundlagen), `src/ui` (Oberfläche, Labore) und `test/`. `node build.js` baut `index.html` neu (KaTeX 0.16 wird aus einem lokalen npm-Paket eingebettet). `node test/validate.js` prüft jede Musterlösung mit dem Prüfkern und alle Formeln mit KaTeX; `node test/mutate.js` prüft, ob veränderte Musterzeilen als falsch erkannt werden.
+Der Quelltext liegt im Ordner `entwicklung/`: `src/engine` (Prüfkern: Parser, Ableitungen, Integrale, Orts- und Matrixdarstellung, Zeilenprüfung), `src/content` (ein Thema pro Datei; `00m*` = Mathematische Grundlagen), `src/ui` (Oberfläche, Labore, Stifteingabe `15-ink.js`, Erkennung `16-ink-recog.js`, Modell `model/sym-qm.json`) und `test/` (Stifttests in `test/ink/`, brauchen die nicht enthaltenen Testdaten). Die Skripte zum Training des Erkennungsnetzes liegen in `entwicklung/handschrift-training/`. `node build.js` baut `index.html` neu (KaTeX 0.16 wird aus einem lokalen npm-Paket eingebettet). `node test/validate.js` prüft jede Musterlösung mit dem Prüfkern und alle Formeln mit KaTeX; `node test/mutate.js` prüft, ob veränderte Musterzeilen als falsch erkannt werden.

@@ -31,6 +31,8 @@ function renderNav(active){
   $('#topprog').innerHTML = '<span class="bar"><i style="width:' + Math.round(100 * sure / TOPICS.length) + '%"></i></span>' + sure + '/' + TOPICS.length + '<span class="lbl">&nbsp;Themen sicher</span>';
 }
 function render(){
+  if (typeof INKUI !== 'undefined') INKUI.flushAll();   /* Handschrift nicht verlieren */
+  $$('.nh-dlg').forEach(d => d.remove());   /* offene Schreibweise-Hilfe schließen */
   const r = route();
   const main = $('#main');
   main.innerHTML = '';
@@ -520,6 +522,7 @@ function examRun(main){
   tick(); const iv = setInterval(() => { if (!document.body.contains(timer)) clearInterval(iv); else tick(); }, 1000);
   fin.onclick = () => {
     if (run.done){ store.data.examRun = null; store.save(); go('exam'); return; }
+    if (typeof INKUI !== 'undefined') INKUI.flushAll();
     run.done = true; store.save();
     main.innerHTML = ''; examRun(main);
   };
@@ -541,7 +544,7 @@ VIEWS.lex = (main, args) => {
   const q = h('input', {type:'search', placeholder:'Begriff suchen, z. B. Kommutator, Normierung, Tunneleffekt', 'aria-label':'Begriff suchen'});
   const list = h('div');
   wrap.append(q, list); main.append(wrap);
-  const all = [{id:'schreibweise', title:'Schreibweise: Formeln eintippen', text:NOTATION_HELP}].concat(LEX.slice().sort((a, b) => a.title.localeCompare(b.title, 'de')));
+  const all = [{id:'schreibweise', title:'Schreibweise: Formeln eintippen und mit dem Stift schreiben', text:NOTATION_HELP}].concat(LEX.slice().sort((a, b) => a.title.localeCompare(b.title, 'de')));
   const draw = () => {
     const s = q.value.trim().toLowerCase();
     list.innerHTML = '';
@@ -559,7 +562,8 @@ VIEWS.lex = (main, args) => {
 };
 
 /* ---------- Einstellungen ---------- */
-VIEWS.settings = main => {
+VIEWS.settings = (main, args) => {
+  if (args && args[0] === 'hand' && typeof INKUI !== 'undefined') return INKUI.trainerView(main);
   const S = store.data.settings;
   main.append(h('h1', {}, 'Einstellungen'));
   const f = h('div', {class:'stack'});
@@ -569,6 +573,20 @@ VIEWS.settings = main => {
   main.append(f);
   $('.s-theme', f).value = S.theme || ''; $('.s-size', f).value = S.size || ''; $('.s-mode', f).value = S.mode || 'line';
   f.addEventListener('change', () => { S.theme = $('.s-theme', f).value; S.size = $('.s-size', f).value; S.mode = $('.s-mode', f).value; store.save(); applySettings(); toast('Gespeichert.'); });
+  /* Stift und Handschrift */
+  if (typeof INKUI !== 'undefined'){
+    const pen = h('div', {class:'box stack', style:'margin-top:18px'});
+    pen.innerHTML = `<h3>Stift und Handschrift</h3>
+    <label class="fld">Eingabe in den Rechenzeilen <select class="s-input"><option value="kbd">Tastatur</option><option value="pen">Stift</option><option value="auto">automatisch (Stift, sobald ein Stift benutzt wurde)</option></select></label>
+    <label class="ckm"><input type="checkbox" class="s-finger"> <span>Mit dem Finger schreiben (für Geräte ohne Stift). Aus: Finger und Handballen schreiben nicht.</span></label>
+    <p class="small muted">In jeder Zeile kannst du vorn mit ✎ (Stift) und ⌨ (Tastatur) wechseln. ${escH(INKUI.status())}</p>`;
+    $('.s-input', pen).value = INKUI.pref(); $('.s-finger', pen).checked = !!S.inkFinger;
+    pen.addEventListener('change', () => { S.input = $('.s-input', pen).value; S.inkFinger = $('.s-finger', pen).checked; store.save(); toast('Gespeichert.'); });
+    const bh = h('button', {class:'btn btn-sm', type:'button'}, 'Handschrift anlernen');
+    bh.onclick = () => go('settings/hand');
+    pen.append(h('div', {class:'row'}, bh, h('span', {class:'small muted'}, 'Seltene Zeichen wie ψ, ħ, ∂, ⟨ ⟩ je zweimal schreiben.')));
+    main.append(pen);
+  }
   const data = h('div', {class:'box stack', style:'margin-top:18px'});
   data.innerHTML = '<h3>Lernstand</h3><p class="small muted">Der Lernstand liegt nur auf diesem Gerät. Du kannst ihn als Datei sichern und auf einem anderen Gerät wieder einlesen.</p>';
   const bx = h('button', {class:'btn btn-sm', type:'button'}, 'Als Datei sichern');

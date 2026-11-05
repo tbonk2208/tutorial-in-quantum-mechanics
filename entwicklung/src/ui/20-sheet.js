@@ -59,9 +59,13 @@ function insertAt(inp, text, back){
   inp.dispatchEvent(new Event('input', {bubbles:true}));
 }
 function showNotationHelp(){
-  const d = h('div', {class:'box box-info', style:'position:fixed;left:50%;top:12%;transform:translateX(-50%);z-index:70;max-width:min(92vw,680px);max-height:76vh;overflow:auto;background:var(--sheet);box-shadow:0 10px 40px rgba(0,0,0,.25)'});
+  $$('.nh-dlg').forEach(x => x.remove());
+  const d = h('div', {class:'box box-info nh-dlg', role:'dialog', 'aria-label':'So schreibst du Formeln', style:'position:fixed;left:50%;top:12%;transform:translateX(-50%);z-index:70;width:min(92vw,680px);max-height:76vh;overflow:auto;background:var(--sheet);box-shadow:0 10px 40px rgba(0,0,0,.25)'});
   d.innerHTML = '<h3>So schreibst du Formeln</h3>' + md(NOTATION_HELP) + '<div class="row" style="margin-top:10px"><button class="btn btn-primary" type="button">Schließen</button></div>';
-  d.querySelector('button').onclick = () => d.remove();
+  const esc = e => { if (e.key === 'Escape') close(); };
+  const close = () => { d.remove(); document.removeEventListener('keydown', esc); };
+  d.querySelector('button').onclick = close;
+  document.addEventListener('keydown', esc);
   document.body.append(d);
 }
 const NOTATION_HELP = `Tippe so, wie du auf Papier schreiben würdest. Unter jeder Zeile siehst du sofort, wie das Tutorial sie liest.
@@ -76,7 +80,16 @@ const NOTATION_HELP = `Tippe so, wie du auf Papier schreiben würdest. Unter jed
 - Dirac: \`|n⟩\`, \`⟨m|n⟩\`, \`⟨n|x̂|m⟩\`, Erwartungswert \`⟨x^2⟩\`, Unschärfe \`Δx\`. Spin: \`|↑⟩\`, \`|+x⟩\`, \`S_z\`, \`σ_x\`. Matrizen: \`(1, 0; 0, -1)\`.
 - Mehrere Schritte in einer Zeile: \`A = B = C\`. Eine Zeile, die mit \`=\` beginnt, setzt die vorige fort.
 - Neue Abkürzungen: \`κ = sqrt(2m(V_0 - E))/ħ\` – danach kannst du \`κ\` benutzen.
-- LaTeX geht auch: \`\\frac{\\hbar^2}{2m}\`, \`\\int_0^L\`, \`\\langle x \\rangle\`.`;
+- LaTeX geht auch: \`\\frac{\\hbar^2}{2m}\`, \`\\int_0^L\`, \`\\langle x \\rangle\`.
+
+**Mit dem Stift schreiben.** Tippe vorn in der Zeile auf ✎ (zurück zum Tippen: ⌨). Schreib wie auf Papier. Nach einer kurzen Pause steht im Feld darunter, wie das Tutorial die Zeile liest, und die Vorschau zeigt die Formel. Stimmt etwas nicht, tippst du eine andere Lesart an, korrigierst im Feld per Tastatur oder radierst (Radierer oder Radiererende des Stifts). „↵ Fertig“ wirkt wie Enter.
+
+- Brüche als echten Bruch: Zähler über, Nenner unter einen waagerechten Strich. Ableitungen genauso: $\\frac{d}{dx}$, $\\frac{\\partial\\psi}{\\partial t}$.
+- Integrale und Summen: Grenzen unten und oben direkt ans ∫ bzw. Σ, beim Integral am Ende \`dx\` mit etwas Abstand.
+- Matrizen und Spaltenvektoren: große Klammern über alle Zeilen, die Einträge sauber in Spalten.
+- Hochzahlen und Indizes deutlich kleiner und höher bzw. tiefer. Komplex konjugiert: ein kleines Sternchen oben rechts (\`ψ*\` oder \`ψ^*\`), adjungiert ein kleines † oder +.
+- Operatoren: das Dach ^ direkt über den Buchstaben (p̂, Ĥ). Dirac-Klammern ⟨ ⟩ spitz und so hoch wie der Inhalt, den Strich | lang.
+- Der Finger schreibt nicht (Schutz vor dem Handballen). Für Geräte ohne Stift lässt sich das in den Einstellungen einschalten. Dort kannst du auch seltene Zeichen wie ψ, ħ, ∂ anlernen.`;
 
 /* ===== Rechenblatt für ein Ziel ===== */
 function sheetGoal(task, goal, opts){
@@ -94,7 +107,7 @@ function sheetGoal(task, goal, opts){
   root.append(sheet, tools, gstate, hints);
   const rows = [];
   let lastRes = null;
-  function addRow(m, w, focus){
+  function addRow(m, w, focus, mode){
     const row = h('div', {class:'ln'});
     const stEl = h('div', {class:'st', 'aria-hidden':'true'}, '·');
     const inp = h('input', {class:'math', type:'text', autocomplete:'off', autocapitalize:'off', spellcheck:'false', 'aria-label':'Rechenzeile ' + (rows.length + 1), placeholder:rows.length ? 'nächster Schritt' : firstPh(goal)});
@@ -103,28 +116,42 @@ function sheetGoal(task, goal, opts){
     why.value = w || '';
     const x = h('button', {class:'x', type:'button', title:'Zeile löschen', 'aria-label':'Zeile löschen'}, '×');
     const pv = h('div', {class:'pv'}), fbk = h('div', {class:'fbk', hidden:true});
-    const body = h('div', {}, h('div', {class:'inp'}, inp, why, x), pv, fbk);
+    const body = h('div', {class:'lnb'}, h('div', {class:'inp'}, inp, why, x), pv, fbk);
     row.append(stEl, body);
     sheet.append(row);
     const R = {row, inp, why, pv, fbk, stEl};
     rows.push(R);
+    /* Stift oder Tastatur je Zeile (15-ink.js); gelesener Text landet im Eingabefeld und läuft wie getippt */
+    if (typeof INKUI !== 'undefined') R.ink = new INKUI.InkLine(R, {mode:mode || INKUI.defaultMode(), task, ctx:() => ctx,
+      extra:() => rows.slice(0, Math.max(0, rows.indexOf(R))).map(r => r.inp.value.trim()).filter(Boolean),
+      onText:() => {
+        clearTimeout(tm); preview(R); markStale(R); save();
+        /* auf dem Blatt immer eine freie Stiftzeile unter der letzten beschriebenen */
+        if (R.inp.value.trim() && rows[rows.length - 1] === R && R.ink.mode === 'pen') addRow('', '', false, 'pen');
+      },
+      onEnter:() => enterRow(R, 'pen')});
     let tm = 0;
     inp.addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => { preview(R); save(); }, 90); markStale(R); });
     why.addEventListener('input', save);
     inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter'){ e.preventDefault();
-        const i = rows.indexOf(R);
-        if ((store.data.settings.mode || 'line') === 'line' && !opts.exam) runCheck(i);
-        if (i === rows.length - 1) addRow('', '', true); else rows[i + 1].inp.focus();
-      }
+      if (e.key === 'Enter'){ e.preventDefault(); enterRow(R, 'key'); }
       if (e.key === 'Backspace' && !inp.value && rows.length > 1){ e.preventDefault(); const i = rows.indexOf(R); removeRow(R); rows[Math.max(0, i - 1)].inp.focus(); }
     });
-    x.addEventListener('click', () => { if (rows.length > 1) removeRow(R); else { inp.value = ''; preview(R); } save(); });
+    x.addEventListener('click', () => { if (rows.length > 1) removeRow(R); else { inp.value = ''; if (R.ink) R.ink.clear(); preview(R); markStale(R); } save(); });
     preview(R);
-    if (focus) inp.focus();
+    if (focus){ if (R.ink && R.ink.mode === 'pen') R.ink.focusPen(); else inp.focus(); }
     return R;
   }
-  function removeRow(R){ R.row.remove(); rows.splice(rows.indexOf(R), 1); save(); markStale(rows[0]); }
+  /* Enter (Tastatur) bzw. „↵ Fertig“ (Stift): bei „Zeile für Zeile“ prüfen, dann zur nächsten Zeile */
+  function enterRow(R, how){
+    const i = rows.indexOf(R);
+    if (i < 0) return;
+    if (R.ink) R.ink.flush();
+    if ((store.data.settings.mode || 'line') === 'line' && !opts.exam) runCheck(i);
+    const N = i === rows.length - 1 ? addRow('', '', false, R.ink ? R.ink.mode : null) : rows[i + 1];
+    if (how === 'pen' && N.ink && N.ink.mode === 'pen') N.ink.focusPen(); else N.inp.focus();
+  }
+  function removeRow(R){ if (R.ink) R.ink.destroy(); R.row.remove(); rows.splice(rows.indexOf(R), 1); save(); markStale(rows[0]); }
   function markStale(R){
     const i = rows.indexOf(R);
     rows.forEach((r, k) => { if (k >= i){ r.row.className = 'ln'; r.stEl.textContent = '·'; r.fbk.hidden = true; } });
@@ -137,7 +164,8 @@ function sheetGoal(task, goal, opts){
     catch(e){ R.pv.textContent = e.message || 'Nicht lesbar'; R.pv.classList.add('err'); }
   }
   function save(){ st.lines = rows.map(r => ({m:r.inp.value, w:r.why.value})); store.save(); }
-  for (const l of (st.lines.length ? st.lines : [{m:'', w:''}])) addRow(l.m, l.w);
+  /* gespeicherte Zeilen mit Text kompakt (Tastatur), leere nach der Voreinstellung */
+  for (const l of (st.lines.length ? st.lines : [{m:'', w:''}])) addRow(l.m, l.w, false, l.m && String(l.m).trim() ? 'kbd' : null);
   // Werkzeuge
   const bAdd = h('button', {class:'btn btn-sm', type:'button'}, '+ Zeile');
   bAdd.onclick = () => addRow('', '', true);
@@ -173,6 +201,7 @@ function sheetGoal(task, goal, opts){
   };
   bAsk.onclick = () => askPanel(hints, task, goal, () => rows.map(r => r.inp.value).filter(Boolean));
   function runCheck(upto, all){
+    rows.slice().forEach(r => r.ink && r.ink.flush());   /* noch nicht gelesene Handschrift zuerst lesen */
     const lines = rows.map(r => r.inp.value);
     const take = all ? lines : lines.slice(0, upto + 1);
     let res;

@@ -20,8 +20,17 @@ const engine = ls('src/engine').map(R).join('\n;\n');
 const content = ls('src/content').map(R).join('\n;\n');
 const ui = ls('src/ui').map(R).join('\n;\n');
 const css = R('src/ui/style.css');
-const version = crypto.createHash('sha1').update(engine + content + ui + css).digest('hex').slice(0, 12);
+/* Handschrift-Modell (Agent T): falls vorhanden, als JSON-Block in index.html (offline nutzbar, kein eigener Abruf) */
+const SYM_FILE = path.join(__dirname, 'src/ui/model/sym-qm.json');
+let symTag = '';
+if (fs.existsSync(SYM_FILE)){
+  const raw = fs.readFileSync(SYM_FILE, 'utf8');
+  JSON.parse(raw);   /* bricht den Bau ab, wenn die Datei kein gültiges JSON ist */
+  symTag = '<script type="application/json" id="sym-data">' + raw.trim().replace(/<\//g, '<\\/').replace(/<!--/g, '\\u003c!--') + '</script>';
+}
+const version = crypto.createHash('sha1').update(engine + content + ui + css + symTag).digest('hex').slice(0, 12);
 const html = R('src/index.template.html')
+  .replace('<!--SYM_DATA-->', () => symTag)
   .replace('/*KATEX_CSS*/', () => kcss)
   .replace('/*APP_CSS*/', () => css)
   .replace('/*KATEX_JS*/', () => kjs.replace(/<\/script/gi, '<\\/script'))
@@ -49,4 +58,18 @@ fs.writeFileSync(path.join(out, 'manifest.webmanifest'), JSON.stringify({
 }, null, 1));
 fs.writeFileSync(path.join(out, '.nojekyll'), '');
 fs.copyFileSync(path.join(MATHE, 'LICENSE'), path.join(out, 'LICENSE'));
-console.log('gebaut', version, (html.length / 1024).toFixed(0) + ' KB');
+if (fs.existsSync(SYM_FILE)) fs.writeFileSync(path.join(out, 'LICENSE-Handschriftmodell.txt'), `Handschriftmodell (eingebettet in index.html als <script id="sym-data">, Quelle: entwicklung/src/ui/model/sym-qm.json)
+sowie die gelernten Gewichte für die Strichgruppierung in entwicklung/src/ui/16-ink-recog.js
+
+Diese Gewichte wurden aus folgenden Datensätzen gelernt; die Daten selbst sind nicht enthalten.
+
+1. CROHME 2011–2013 – Competition on Recognition of Online Handwritten Mathematical Expressions
+   H. Mouchère u. a., ICDAR; © Université de Nantes / CNRS; Lizenz: Creative Commons BY-NC-SA 3.0
+   https://creativecommons.org/licenses/by-nc-sa/3.0/
+2. HASYv2 – M. Thoma (2017), The HASYv2 dataset, arXiv:1701.08380; Lizenz: Open Database License (ODbL) 1.0
+   https://opendatacommons.org/licenses/odbl/1-0/
+
+Die Modellgewichte werden unter Creative Commons BY-NC-SA 3.0 weitergegeben (Namensnennung wie oben,
+nicht kommerziell, Weitergabe unter gleichen Bedingungen). Der übrige Programmcode steht unter der GNU GPL v3 (LICENSE).
+`);
+console.log('gebaut', version, (html.length / 1024).toFixed(0) + ' KB', symTag ? '(mit Handschrift-Modell, ' + (symTag.length / 1024).toFixed(0) + ' KB)' : '(ohne Handschrift-Modell)');

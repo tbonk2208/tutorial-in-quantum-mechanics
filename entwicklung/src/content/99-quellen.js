@@ -42,4 +42,11 @@ const SOURCES_TEXT = `**Fachliche Grundlage (Standardstoff Quantenmechanik I).**
 
 **Wie geprüft wird.** Jede Zeile wird an mehreren zufällig gewählten Parameterwerten (und für Operatorgleichungen an zufälligen Testfunktionen) numerisch ausgewertet; zwei Ausdrücke gelten als gleich, wenn sie überall bis auf eine relative Abweichung von $10^{-7}$ übereinstimmen. Integrale werden adaptiv nach Gauß-Kronrod berechnet, Ableitungen symbolisch. Das erkennt jede gültige Umformung, auch ungewöhnliche Wege. Grenzen: Eine Zeile, die zufällig an allen Stichproben stimmt, aber allgemein falsch ist, wäre extrem unwahrscheinlich, ist aber nicht ausgeschlossen; Näherungen ($\\approx$) und Grenzwerte werden nicht geprüft; ob ein Schritt *begründet* ist, beurteilt der Prüfkern nicht – dafür ist die Spalte „Begründung“ da.
 
+**Handschrifterkennung.** Das Erkennungsnetz für die Stifteingabe (103 Zeichen, Faltungsnetz, läuft im Browser) wurde für dieses Tutorial neu trainiert mit:
+
+30. CROHME 2011–2013, Competition on Recognition of Online Handwritten Mathematical Expressions (H. Mouchère u. a., ICDAR; Université de Nantes/CNRS), Lizenz CC BY-NC-SA 3.0.
+31. M. Thoma (2017): The HASYv2 dataset. arXiv:1701.08380. https://arxiv.org/abs/1701.08380 – Daten unter ODbL 1.0.
+
+Die Trainingsdaten sind nicht im Tutorial enthalten, nur die daraus gelernten Gewichte; diese stehen deshalb unter CC BY-NC-SA 3.0 (nicht kommerziell, Weitergabe unter gleichen Bedingungen). Gemessen an fremden Schreibern: einzelne Zeichen zu 87–91 % richtig (unter den ersten drei Vorschlägen zu 98 %); ganze Musterzeilen eines Schreibers zu etwa 67 % fehlerfrei, zu 75 % unter den ersten drei Lesarten. Eigene Beispiele („Handschrift anlernen“) und die Korrektur einzelner Zeichen verbessern das; schwierige Zeilen kann optional die KI lesen.
+
 **Schriften und Formelsatz:** KaTeX (MIT-Lizenz), Bricolage Grotesque, Source Sans 3 (SIL Open Font License 1.1).`;

@@ -192,3 +192,44 @@ table.tb th,table.tb td{border-bottom:1px solid var(--line);padding:7px 8px;text
 @media (max-width:560px){ .brand .bl{display:none} .brand .bs{display:inline} }
 .chtabs .bs{display:none}
 @media (max-width:560px){ .chtabs .bl{display:none} .chtabs .bs{display:inline} .chtabs button{padding:9px 10px 8px} }
+/* Stifteingabe (15-ink.js) */
+.ink-seg{display:inline-flex;flex:none;align-self:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--sheet)}
+.ink-seg button{border:0;background:transparent;color:var(--muted);font:600 1.05rem/1 var(--f-body);width:34px;height:36px;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.ink-seg button+button{border-left:1px solid var(--line)}
+.ink-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.ink-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.inkp{margin:0 0 6px}
+.ink-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:5px}
+.ink-tools .btn{min-height:32px;padding:3px 10px;gap:5px}
+.ink-tools .lbs{display:none}
+.ink-tools .btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ink-tools .ink-er[aria-pressed="true"]{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.ink-cv{display:block;width:100%;height:150px;border:2px solid var(--line);border-radius:10px;background:var(--sheet);cursor:crosshair;touch-action:none}
+.inkp.tall .ink-cv{height:230px}
+.inkp.erasing .ink-cv{border-color:var(--bad);border-style:dashed;cursor:cell}
+.ink-zone{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+.ink-msg{margin-top:4px;color:var(--muted)}
+.ink-msg.bad{color:var(--bad)}
+.ink-msg .btn{vertical-align:middle;margin-left:4px}
+.ink-alts{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:2px 4px 4px 6px;font-size:.88rem;color:var(--muted)}
+.ink-lab{margin-right:2px}
+.ink-alt{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:8px;padding:2px 9px;min-height:34px;cursor:pointer;font:inherit;max-width:100%;overflow:hidden}
+.ink-alt .katex{font-size:1em}
+.ink-syms{display:inline-flex;gap:3px;flex-wrap:wrap}
+.chipc{font:600 1rem/1 var(--f-body);min-width:34px;min-height:34px;border:1px solid var(--line);border-radius:6px;background:var(--sheet);color:var(--ink);cursor:pointer;padding:0 6px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.ink-alt:hover,.chipc:hover{border-color:var(--accent)}
+.inkpop{position:absolute;z-index:65;background:var(--sheet);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:8px;width:min(280px,92vw)}
+.inkpop .pop-t{font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.inkpop .pop-g{display:flex;flex-wrap:wrap;gap:4px}
+.inkpop .pop-g button{min-width:38px;height:38px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);font:600 1.05rem var(--f-body);cursor:pointer;padding:0 6px}
+.inkpop .pop-g button:hover{border-color:var(--accent)}
+.inkpop .pop-g button.nok{opacity:.55}
+.hand-row{display:flex;gap:16px;align-items:stretch;flex-wrap:wrap}
+.hand-target{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:140px;gap:2px;text-align:center}
+.ht-sym{font:400 3.6rem/1.15 "KaTeX_Main","Source Sans 3","Segoe UI Symbol",serif;color:var(--ink)}
+.hand-cv{flex:1 1 240px;min-width:0;max-width:380px;height:190px;border:2px solid var(--line);border-radius:10px;background:var(--sheet);cursor:crosshair;display:block}
+.hand-btns{margin-top:10px}
+.hand-fb{margin-top:8px;min-height:1.4em}
+@media (max-width:520px){ main{padding:16px 10px} .task{padding:12px 10px} .sheet{padding:6px 4px 8px} .ln{grid-template-columns:22px minmax(0,1fr);gap:4px} .ln .st{width:20px;height:20px;font-size:.78rem}
+  .ink-tools{gap:4px} .ink-tools .grow{min-width:0} .ink-tools .lbl{display:none} .ink-tools .lbs{display:inline} .ink-tools .btn{min-width:36px;padding:3px 7px;justify-content:center} .ink-cv{height:140px} .inkp.tall .ink-cv{height:210px} }
+@media print{ .inkp,.ink-seg,.ink-alts{display:none} }
