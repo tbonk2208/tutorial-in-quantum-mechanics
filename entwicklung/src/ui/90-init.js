@@ -6,6 +6,12 @@
   setupPalette();
   window.addEventListener('hashchange', () => { CUR = null; render(); });
   window.addEventListener('popstate', () => { CUR = null; render(); });
+  // „Nachlesen“ und Begriffe im Text: als Dialog, damit man an der Stelle bleibt (Strg/⌘-Klick öffnet die Seite)
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[data-lex], a[data-seg]'); if (!a || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (a.dataset.seg) segDlg(a.dataset.tid, a.dataset.seg); else lexDlg(a.dataset.lex);
+  });
   // interne Links (#/…) ohne Seitenwechsel
   document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[href^="#/"]'); if (!a) return; e.preventDefault(); go(a.getAttribute('href').slice(2)); });
   if (!location.hash && store.data.last && /^#\/(learn|practice|review)/.test(store.data.last)) { /* Startseite zeigt „Weitermachen“ */ }

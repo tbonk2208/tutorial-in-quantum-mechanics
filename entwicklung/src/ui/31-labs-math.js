@@ -32,7 +32,8 @@ function squareFrame(P, xr, step, opt){
 const showIf = (inp, on) => { const l = inp.closest('label'); if (l) l.style.display = on ? '' : 'none'; };
 
 /* δ-Folgen: ∫ δ_ε(x − a) f(x) dx → f(a) */
-LABS.delta = el => {
+LABS.delta = (el, L, o) => {
+  const I = labInit(o);
   const {P, ctrl, ro} = labShell(el, 0.55);
   const FORMS = {
     gauss:{name:'Gauß', f:(x, e) => Math.exp(-x * x / (2 * e * e)) / (Math.sqrt(2 * Math.PI) * e), tex:'\\delta_\\varepsilon(x) = \\frac{1}{\\sqrt{2\\pi}\\,\\varepsilon}e^{-x^2/(2\\varepsilon^2)}', peak:e => 1 / (Math.sqrt(2 * Math.PI) * e)},
@@ -44,7 +45,7 @@ LABS.delta = el => {
     gx:{name:'(1 + x)·e^(−x²)', f:x => (1 + x) * Math.exp(-x * x), tex:'(1+x)e^{-x^2}'},
     lo:{name:'1/(1 + x²)', f:x => 1 / (1 + x * x), tex:'\\frac{1}{1+x^2}'}
   };
-  let form = 'gauss', fn = 'cos', eps = 0.5, a = 0;
+  let form = I.form in FORMS ? I.form : 'gauss', fn = I.fn in FUNCS ? I.fn : 'cos', eps = I.eps ?? 0.5, a = I.a ?? 0;
   // Integral mit angepasster Substitution, damit auch die langsam abfallende Lorentz-Form genau wird
   const integral = (g) => {
     if (form === 'lorentz' && g === FUNCS.cos.f) return Math.exp(-eps) * Math.cos(a); // exakt; numerisch schwierig wegen der Schwingungen in den langen Ausläufern
@@ -66,17 +67,18 @@ LABS.delta = el => {
     ro.innerHTML = texHTML(D.tex) + ' · ' + texHTML('\\int \\delta_\\varepsilon(x-a)\\,f(x)\\,dx \\approx ' + tf(I, 4) + ',\\quad f(a) = ' + tf(fa, 4) + ',\\quad \\text{Abweichung } ' + tf(Math.abs(I - fa), 4)) + ' · ' + texHTML('\\int\\delta_\\varepsilon\\,dx = ' + tf(N1, 3)) + ' · grün: ' + texHTML('f(x) = ' + F.tex) + ', blaue Fläche: ' + texHTML('\\delta_\\varepsilon(x-a)f(x)');
   };
   P.redraw = draw;
-  selectBox(ctrl, 'Form von δ_ε', Object.entries(FORMS).map(([k, v]) => [k, v.name]), v => { form = v; draw(); });
-  selectBox(ctrl, 'Testfunktion f', Object.entries(FUNCS).map(([k, v]) => [k, v.name]), v => { fn = v; draw(); });
+  selectBox(ctrl, 'Form von δ_ε', Object.entries(FORMS).map(([k, v]) => [k, v.name]), v => { form = v; draw(); }, form);
+  selectBox(ctrl, 'Testfunktion f', Object.entries(FUNCS).map(([k, v]) => [k, v.name]), v => { fn = v; draw(); }, fn);
   slider(ctrl, 'Breite ε', 0.05, 1, 0.01, eps, v => { eps = v; draw(); });
   slider(ctrl, 'Verschiebung a', -2, 2, 0.01, a, v => { a = v; draw(); });
   draw();
 };
 
 /* Vektor in einer gedrehten Orthonormalbasis */
-LABS.vectors = el => {
+LABS.vectors = (el, L, o) => {
+  const I = labInit(o);
   const {P, ctrl, ro} = labShell(el, 0.62);
-  let v1 = 1.6, v2 = 0.6, phi = 55;
+  let v1 = I.v1 ?? 1.6, v2 = I.v2 ?? 0.6, phi = I.phi ?? 55;
   const draw = () => {
     squareFrame(P, 2.6, 0.5, {xl:'1', yl:'2'});
     const f = phi * Math.PI / 180, c = Math.cos(f), s = Math.sin(f);
@@ -105,9 +107,10 @@ LABS.vectors = el => {
 };
 
 /* symmetrische 2×2-Matrix: Einheitskreis → Ellipse, Eigenvektoren */
-LABS.eigen = el => {
+LABS.eigen = (el, L, o) => {
+  const I = labInit(o);
   const {P, ctrl, ro} = labShell(el, 0.62);
-  let a = 1.5, b = 0.6, d = 0.5;
+  let a = I.a ?? 1.5, b = I.b ?? 0.6, d = I.d ?? 0.5;
   const draw = () => {
     squareFrame(P, 4.4, 1, {xl:'1', yl:'2'});
     const k = P.c;
@@ -142,7 +145,8 @@ LABS.eigen = el => {
 };
 
 /* Entwicklung nach φ_n = √(2/L) sin(nπx/L) auf [0, L] (L = 1) */
-LABS.expand = el => {
+LABS.expand = (el, L, o) => {
+  const I = labInit(o);
   const {P, ctrl, ro} = labShell(el, 0.5);
   const Q = plotCanvas(el, 0.22); el.insertBefore(Q.cv, ctrl);
   const pi = Math.PI, S2 = Math.SQRT2;
@@ -152,7 +156,7 @@ LABS.expand = el => {
     step:{name:'Stufe (1 für x < L/2)', f:x => x < 0.5 ? 1 : 0, c:n => S2 * (1 - Math.cos(n * pi / 2)) / (n * pi), norm:0.5, tex:'f = 1 \\text{ für } x < L/2,\\ \\text{sonst } 0'},
     one:{name:'Konstante 1', f:() => 1, c:n => S2 * (1 - (n % 2 ? -1 : 1)) / (n * pi), norm:1, tex:'f = 1'}
   };
-  let key = 'par', N = 3;
+  let key = I.key in F ? I.key : 'par', N = I.N ?? 3;
   const draw = () => {
     const G = F[key];
     const cs = []; for (let n = 1; n <= 30; n++) cs.push(G.c(n));
@@ -174,13 +178,14 @@ LABS.expand = el => {
     ro.innerHTML = texHTML(G.tex) + ' (grün, gestrichelt) · blau: ' + texHTML('S_N = \\sum_{n=1}^{N} c_n\\varphi_n,\\ \\varphi_n = \\sqrt{2/L}\\sin(n\\pi x/L),\\ c_n = \\langle\\varphi_n|f\\rangle') + ' · ' + texHTML('\\sum_{n=1}^{' + N + '}|c_n|^2 = ' + tf(sum, 5)) + ' von ' + texHTML('\\int_0^L|f|^2dx = ' + tf(G.norm, 5)) + ' → ' + (100 * sum / G.norm).toFixed(2).replace('.', ',') + ' % (Einheiten mit L = 1) · Balken: ' + texHTML('|c_n|^2') + ' relativ zum größten, logarithmisch (blau: in der Summe enthalten)';
   };
   P.redraw = draw;
-  selectBox(ctrl, 'Funktion f', Object.entries(F).map(([k, v]) => [k, v.name]), v => { key = v; draw(); });
+  selectBox(ctrl, 'Funktion f', Object.entries(F).map(([k, v]) => [k, v.name]), v => { key = v; draw(); }, key);
   slider(ctrl, 'Zahl der Terme N', 1, 30, 1, N, v => { N = v; draw(); });
   draw();
 };
 
 /* Fourier-Reihe (Teilsummen, Gibbs) und Fourier-Transformation einer Gauß-Funktion */
-LABS.fourier = el => {
+LABS.fourier = (el, L, o) => {
+  const I = labInit(o);
   const {P, ctrl, ro} = labShell(el, 0.5);
   const pi = Math.PI;
   const R = {
@@ -188,7 +193,7 @@ LABS.fourier = el => {
     saw:{name:'Sägezahn', f:x => ((x % (2 * pi)) + 3 * pi) % (2 * pi) - pi, S:(x, N) => { let s = 0; for (let n = 1; n <= N; n++) s += 2 * (n % 2 ? 1 : -1) / n * Math.sin(n * x); return s; }, y:[-4.4, 4.4], tex:'f(x) = x:\\ \\ S_N = \\sum_{n=1}^{N}\\frac{2(-1)^{n+1}}{n}\\sin nx', jump:2 * pi, at:pi},
     tri:{name:'Dreieck', f:x => Math.abs(((x % (2 * pi)) + 3 * pi) % (2 * pi) - pi), S:(x, N) => { let s = pi / 2; for (let n = 1; n <= N; n += 2) s -= 4 / (pi * n * n) * Math.cos(n * x); return s; }, y:[-0.6, 3.9], tex:'f(x) = |x|:\\ \\ S_N = \\frac{\\pi}{2} - \\frac{4}{\\pi}\\sum_{n\\ \\text{ungerade}}^{N}\\frac{\\cos nx}{n^2}', jump:0}
   };
-  let mode = 'reihe', key = 'rect', N = 5, sg = 1;
+  let mode = I.mode === 'trafo' ? 'trafo' : 'reihe', key = I.key in R ? I.key : 'rect', N = I.N ?? 5, sg = I.sg ?? 1;
   const piTick = v => { const r = Math.round(v / pi * 2) / 2; return r === 0 ? '0' : (r === 1 ? '' : r === -1 ? '−' : String(r).replace('.', ',').replace('-', '−')) + 'π'; };
   const draw = () => {
     if (mode === 'reihe'){
@@ -223,8 +228,8 @@ LABS.fourier = el => {
     }
   };
   P.redraw = draw;
-  const mSel = selectBox(ctrl, 'Modus', [['reihe', 'Fourier-Reihe'], ['trafo', 'Fourier-Transformation (Gauß)']], v => { mode = v; upd(); draw(); });
-  const fSel = selectBox(ctrl, 'Funktion', Object.entries(R).map(([k, v]) => [k, v.name]), v => { key = v; draw(); });
+  const mSel = selectBox(ctrl, 'Modus', [['reihe', 'Fourier-Reihe'], ['trafo', 'Fourier-Transformation (Gauß)']], v => { mode = v; upd(); draw(); }, mode);
+  const fSel = selectBox(ctrl, 'Funktion', Object.entries(R).map(([k, v]) => [k, v.name]), v => { key = v; draw(); }, key);
   const nIn = slider(ctrl, 'höchste Ordnung N', 1, 40, 1, N, v => { N = v; draw(); });
   const sIn = slider(ctrl, 'Breite σ', 0.3, 3, 0.01, sg, v => { sg = v; draw(); });
   const upd = () => { showIf(fSel, mode === 'reihe'); showIf(nIn, mode === 'reihe'); showIf(sIn, mode === 'trafo'); };
@@ -233,9 +238,10 @@ LABS.fourier = el => {
 };
 
 /* Anfangswertproblem y'' = ∓k²y, y(0) = 0, y'(0) = 1: wann gilt y(1) = 0? */
-LABS.ode = el => {
+LABS.ode = (el, L, o) => {
+  const I = labInit(o);
   const {P, ctrl, ro} = labShell(el, 0.5);
-  let eq = 'osc', k = 2;
+  let eq = I.eq === 'exp' ? 'exp' : 'osc', k = I.k ?? 2;
   const y = x => eq === 'osc' ? (k < 1e-9 ? x : Math.sin(k * x) / k) : (k < 1e-9 ? x : Math.sinh(k * x) / k);
   const draw = () => {
     let ym = 0; for (let i = 0; i <= 200; i++) ym = Math.max(ym, Math.abs(y(i / 200)));
@@ -250,13 +256,14 @@ LABS.ode = el => {
     ro.innerHTML = texHTML((eq === 'osc' ? "y'' = -k^2y" : "y'' = +k^2y") + ',\\ y(0) = 0,\\ y\'(0) = 1:\\ \\ ' + sol) + ' · ' + texHTML('y(1) = ' + tf(y1, 4)) + ' · ' + (eq === 'osc' ? (hit ? '<b>Randbedingung y(1) = 0 erfüllt</b>: ' + texHTML('k \\approx ' + n + '\\pi = ' + tf(n * Math.PI, 3)) : 'Randbedingung y(1) = 0 nicht erfüllt. Eigenwerte: ' + texHTML('k = n\\pi \\approx 3{,}14;\\ 6{,}28;\\ 9{,}42')) : 'Hier ist y(1) > 0 für jedes k: keine Lösung außer y = 0 erfüllt y(0) = y(1) = 0.');
   };
   P.redraw = draw;
-  selectBox(ctrl, 'Gleichung', [['osc', "y'' = −k²y"], ['exp', "y'' = +k²y"]], v => { eq = v; draw(); });
+  selectBox(ctrl, 'Gleichung', [['osc', "y'' = −k²y"], ['exp', "y'' = +k²y"]], v => { eq = v; draw(); }, eq);
   slider(ctrl, 'k', 0, 12, 0.01, k, v => { k = v; draw(); });
   draw();
 };
 
 /* Hermite, Legendre, Laguerre: Bild, Nullstellen, Orthogonalität */
-LABS.special = el => {
+LABS.special = (el, L, o) => {
+  const I = labInit(o);
   const {P, ctrl, ro} = labShell(el, 0.55);
   const fact = n => n < 2 ? 1 : n * fact(n - 1);
   const rec = {
@@ -274,7 +281,7 @@ LABS.special = el => {
     legendre:{name:'Legendre-Polynome', sym:'P', x:[-1, 1], y:[-1.2, 1.2], ny:6, plot:(n, x) => rec.legendre(n, x), plotTex:n => 'P_{' + n + '}(x)', w:() => 1, I:[-1, 1], wTex:(n, m) => '\\int_{-1}^{1} P_{' + n + '}P_{' + m + '}\\,dx', norm:n => 2 / (2 * n + 1), normTex:'\\frac{2}{2n+1}'},
     laguerre:{name:'Laguerre-Polynome', sym:'L', x:[0, 25], y:[-1.2, 1.2], ny:6, plot:(n, x) => rec.laguerre(n, x) * Math.exp(-x / 2), plotTex:n => 'L_{' + n + '}(x)\\,e^{-x/2}', w:x => Math.exp(-x), I:[0, 90], wTex:(n, m) => '\\int_0^{\\infty} L_{' + n + '}L_{' + m + '}\\,e^{-x}dx', norm:() => 1, normTex:'1'}
   };
-  let fam = 'hermite', n = 2, m = 3;
+  let fam = I.fam in FAM ? I.fam : 'hermite', n = I.n ?? 2, m = I.m ?? 3;
   const draw = () => {
     const F = FAM[fam];
     P.frame(F.x[0], F.x[1], F.y[0], F.y[1], {nx:10, ny:F.ny, xl:'x', lx:2});
@@ -288,7 +295,7 @@ LABS.special = el => {
     ro.innerHTML = 'blau: ' + texHTML(F.plotTex(n)) + ' mit ' + texHTML(F.sym + '_' + n + '(x) = ' + TEX[fam][n]) + ' · Nullstellen: <b>' + zeros + '</b> (= Grad ' + n + ')' + (m !== n ? ' · rot gestrichelt: m = ' + m : '') + ' · ' + texHTML(F.wTex(n, m) + ' \\approx ' + tf(Math.abs(I) < 5e-7 ? 0 : I, 4)) + (n === m ? ' (erwartet ' + texHTML(F.normTex + ' = ' + tf(exp, 4)) + ')' : ' (erwartet 0: orthogonal)');
   };
   P.redraw = draw;
-  selectBox(ctrl, 'Familie', Object.entries(FAM).map(([k, v]) => [k, v.name]), v => { fam = v; draw(); });
+  selectBox(ctrl, 'Familie', Object.entries(FAM).map(([k, v]) => [k, v.name]), v => { fam = v; draw(); }, fam);
   slider(ctrl, 'Grad n', 0, 5, 1, n, v => { n = v; draw(); });
   slider(ctrl, 'Vergleich m', 0, 5, 1, m, v => { m = v; draw(); });
   draw();

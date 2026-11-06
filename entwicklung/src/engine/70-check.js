@@ -158,7 +158,7 @@ function unknownsIn(ast, ctx){
   const walk = n => {
     if (!n || typeof n !== 'object') return;
     if (Array.isArray(n)){ n.forEach(walk); return; }
-    if (n.t === 'sym' && ctx.unknowns[n.name + (n.sub ? '_' + subKey(n.sub, {}) : '')]) out.add(n.name + (n.sub ? '_' + subKey(n.sub, {}) : ''));
+    if (n.t === 'sym'){ const k = symKeyOf(n, {}); if (ctx.unknowns[k]) out.add(k); }
     for (const v of Object.values(n)) if (v && typeof v === 'object') walk(v);
   };
   walk(ast);
@@ -169,7 +169,7 @@ function astHas(ast, pred){
   const walk = n => { if (hit || !n || typeof n !== 'object') return; if (Array.isArray(n)){ n.forEach(walk); return; } if (pred(n)){ hit = true; return; } for (const v of Object.values(n)) if (v && typeof v === 'object') walk(v); };
   walk(ast); return hit;
 }
-const isClosedForm = (ast, ctx) => !astHas(ast, n => ['int', 'sum', 'deriv', 'braket', 'expect', 'comm', 'unc', 'evalbr', 'lap', 'prime'].includes(n.t) || ((n.t === 'ket' || n.t === 'bra') && !(ctx && ctx.rep === 'mat')) || (n.t === 'sym' && n.hat));
+const isClosedForm = (ast, ctx) => !astHas(ast, n => ['int', 'sum', 'deriv', 'braket', 'expect', 'comm', 'unc', 'evalbr', 'lap', 'prime', 'norm'].includes(n.t) || ((n.t === 'ket' || n.t === 'bra') && !(ctx && ctx.rep === 'mat')) || (n.t === 'sym' && n.hat));
 
 /* Branches der Unbekannten */
 function branchCombos(ctx, names){
@@ -186,6 +186,7 @@ class Checker {
   constructor(ctx, opts){
     this.ctx = ctx; this.opts = opts || {};
     this.samples = makeSamples(ctx, this.opts.K || K_SAMPLES, this.opts.seed || 'qm');
+    this.known = new Set((this.opts.known || []).filter(u => ctx.unknowns[u]));   // in früheren Teilaufgaben bestimmte Unbekannte
   }
   scope(i, mode, user, extra){ const S = makeScope(this.ctx, Object.assign({}, this.samples[i]), mode, {user}); if (extra) Object.assign(S, extra); return S; }
   /* beide Seiten in allen Stichproben vergleichen; Ergebnis true/false/null (nicht auswertbar) */
@@ -284,6 +285,8 @@ class Checker {
     const unkPrev = [...this.compare(prev.P, prev.Q, '=', user, 'rand').used];
     if (unk.length !== 1 || unkPrev.length !== 1 || unk[0] !== unkPrev[0]) return false;
     const u = unk[0];
+    // schon bestimmt (z. B. A aus Teil a): nicht aus der falschen Zeile neu bestimmen
+    if (this.known.has(u)) return false;
     const roots = this.solveFor(prev.P, prev.Q, u, user);
     if (!roots) return false;
     const nr = Math.max(...roots.map(r => r.length));
@@ -295,8 +298,10 @@ class Checker {
     return false;
   }
   /* Hinweise bei einem falschen Schritt */
+  /* Hinweise bei einem falschen Schritt. Ergebnis: Liste von Meldungen; msgs.lex = Lexikon-id (oder null), msgs.kind = erkannter Fehltyp */
   diagnose(P, Q, user, goal){
-    const msgs = [];
+    const msgs = []; msgs.lex = null; msgs.kind = null;
+    const hit = r => { msgs.push(r.msg); msgs.lex = r.lex || null; msgs.kind = r.kind || null; return msgs; };
     const mode = this.compare(P, Q, '=', user, 'rand').used.size ? 'ref' : 'rand';
     const pairs = [];
     for (let i = 0; i < this.samples.length; i++){
@@ -304,15 +309,22 @@ class Checker {
       try { const [a, b] = evalPair(P, Q, S); pairs.push([a, b, i]); } catch(e){}
     }
     if (pairs.length < 2) return msgs;
+    // beide Seiten haben (hier) denselben Wert, z. B. die geänderte linke Seite ⟨x⟩ → L/2: dann liegt der Fehler woanders
+    if (pairs.every(([a, b]) => valuesEqual(a, b, 1e-6, this.ctx.M) === true)) return msgs;
     // eigene typische Fehler der Aufgabe
     if (goal && goal.mistakes){
       for (const m of goal.mistakes){
         try {
           const ast = parseExprStr(m.expr, this.ctx.pctx);
           const r = this.compare(Q, ast, '=', user, mode);
-          if (r.res === true){ msgs.push(m.msg); return msgs; }
+          if (r.res === true) return hit({msg:m.msg, lex:m.lex ? lexId(m.lex) : null, kind:'mistake'});
         } catch(e){}
       }
+    }
+    // Fehlerbibliothek: typische Fehltransformationen (ψ statt |ψ|², fehlendes *, fehlendes r² …)
+    if (pairs.every(([a, b]) => isC(a) && isC(b)) || this.ctx.rep === 'mat'){
+      const lib = dgRepair(this, P, Q, user, mode, pairs);
+      if (lib) return hit(lib);
     }
     if (!pairs.every(([a, b]) => isC(a) && isC(b))){
       const ka = kindOf(pairs[0][0]), kb = kindOf(pairs[0][1]);
@@ -340,20 +352,26 @@ class Checker {
     // Betragsquadrat vergessen (Amplitude statt Wahrscheinlichkeit)?
     const sq = (x, y) => cabs(csub(cx(cabs(x) * cabs(x)), y)) < 1e-6 * (cabs(y) + 1e-12) && Math.abs(y.im) < 1e-9 * (cabs(y) + 1e-12);
     if (pairs.every(([a, b]) => cabs(a) > 1e-12 && cabs(b) > 1e-12) && !pairs.every(([a, b]) => cabs(csub(a, b)) < 1e-9)){
-      if (pairs.every(([a, b]) => sq(b, a)) || pairs.every(([a, b]) => sq(a, b))){ msgs.push('Eine Seite ist das Betragsquadrat der anderen: Hier fehlt ein $|\\dots|^2$ oder es ist eins zu viel. (In der Quantenmechanik: Wahrscheinlichkeit $= |\\text{Amplitude}|^2$.)'); return msgs; }
+      if (pairs.every(([a, b]) => sq(b, a)) || pairs.every(([a, b]) => sq(a, b))) return hit({msg:'Eine Seite ist das Betragsquadrat der anderen: Hier fehlt ein $|\\dots|^2$ oder es ist eins zu viel. (In der Quantenmechanik: Wahrscheinlichkeit $= |\\text{Amplitude}|^2$.)', lex:lexId('born'), kind:'absAll'});
     }
     const ratios = pairs.filter(([a]) => cabs(a) > 1e-12).map(([a, b]) => cdiv(b, a));
     const conjOk = pairs.every(([a, b]) => cabs(csub(cconj(a), b)) <= 1e-7 * (cabs(a) + 1e-12)) && pairs.some(([a]) => Math.abs(a.im) > 1e-9 * cabs(a));
-    if (conjOk){ msgs.push('Rechts steht das komplex Konjugierte von links: Ein „*“ fehlt oder ist zu viel (bei i, bei ψ oder bei der Exponentialfunktion).'); return msgs; }
-    if (ratios.length >= 2 && ratios.every(r => cabs(csub(r, ratios[0])) <= 1e-6 * cabs(ratios[0]))){
+    if (conjOk) return hit({msg:'Rechts steht das komplex Konjugierte von links: Ein „*“ fehlt oder ist zu viel (bei i, bei ψ oder bei der Exponentialfunktion).', lex:lexId('komplexe-zahlen'), kind:'conjAll'});
+    if (ratios.length >= 2 && ratios.every(r => cabs(csub(r, ratios[0])) <= 1e-6 * cabs(ratios[0])) && cabs(csub(ratios[0], cx(1))) > 1e-6){
       const r = ratios[0];
+      const sph = dgConstFactor(r, this.ctx, P, Q);
+      if (sph) return hit(sph);
       const name = factorName(r);
+      const fk = factorKind(r);
+      if (fk){ msgs.kind = fk; if (fk === 'i') msgs.lex = lexId('komplexe-zahlen'); }
       if (name) msgs.push(name);
       else if (this._who) msgs.push('Die ' + this._who + ' Seite hat sich gegenüber der vorigen Zeile um den Faktor ' + fmtC(r) + ' verändert. Prüfe diesen Umformungsschritt.');
       else msgs.push('Beide Seiten unterscheiden sich um einen festen Faktor (etwa ' + fmtC(r) + '). Prüfe Vorfaktoren und Klammern.');
       return msgs;
     }
     if (pairs.every(([a, b]) => cabs(b) < 1e-12 && cabs(a) > 1e-9)){ msgs.push('Rechts kommt 0 heraus, links nicht.'); return msgs; }
+    // Faktor ħ, −iħ, ħ² oder q/k (Fehlerbibliothek)
+    { const pf = dgParamFactor(this, pairs, user, mode); if (pf) return hit(pf); }
     // Potenz einer Unbekannten vergessen (z. B. A statt |A|²)?
     if (mode === 'ref'){
       const used = [...this.compare(P, Q, '=', user, 'rand').used];
@@ -474,17 +492,32 @@ class Checker {
               if (!folge && (prevLineBad || chainBad) && prevExpr && !st.cont && j === 0){
                 const c1 = this.compare(Q, prevExpr, '=', user, 'rand');
                 const c2 = this.compare(P, prevExpr, '=', user, 'rand');
-                if (c1.res === true || c2.res === true) folge = true;
+                if (c1.res === true || c2.res === true){
+                  // Hängt der Schritt nur von schon bestimmten Unbekannten ab, ist er eine Aussage über feste Zahlen:
+                  // dann nur ein Wiederaufgreifen der vorigen Zeile (⟨x⟩ = … erneut bzw. umgedreht) als folgerichtig werten.
+                  const usedHere = this.compare(P, Q, rel, user, 'rand').used;
+                  const knownOnly = usedHere.size > 0 && [...usedHere].every(u => this.known.has(u));
+                  if (!knownOnly) folge = true;
+                  else if (lastEqWrong && c1.res === true && !isClosedForm(P, ctx) && this.stepTruth(P, lastEqWrong.P, '=', user).truth === true) folge = true;
+                  else if (lastEqWrong && c2.res === true && tex(Q, 0) === tex(lastEqWrong.P, 0)) folge = true;
+                }
               }
               if (folge) stp = {status:'folge', msg:'Folgerichtig aus deiner vorigen Zeile – der Fehler liegt weiter oben.'};
               else {
                 let msgs = null;
                 if (!st.cont && j === 0 && lastStmt && lastStmt.parts.length === 2 && rels.length === 1){
                   const [lp, lq] = lastStmt.parts;
+                  this._refOk = !prevLineBad;   // Bezug ist die vorige, richtige Zeile
                   if (this.compare(Q, lq, '=', user, 'rand').res === true){ this._who = 'linke'; const d = this.diagnose(lp, P, user, goal); this._who = null; if (d.length) msgs = d; }
                   else if (this.compare(P, lp, '=', user, 'rand').res === true){ this._who = 'rechte'; const d = this.diagnose(lq, Q, user, goal); this._who = null; if (d.length) msgs = d; }
                 }
-                stp = {status:'wrong', msgs:msgs || this.diagnose(P, Q, user, goal)}; lastEqWrong = {P, Q};
+                // P ist schon geprüft, wenn es aus einem richtigen Schritt stammt (Kette „= …“)
+                const lastSt = r.steps[r.steps.length - 1];
+                this._refOk = (j > 0 && lastSt && lastSt.status === 'ok') || (j === 0 && st.cont && !prevLineBad);
+                msgs = msgs || this.diagnose(P, Q, user, goal);
+                this._refOk = false;
+                stp = {status:'wrong', msgs}; if (msgs.lex) stp.lex = msgs.lex; if (msgs.kind) stp.kind = msgs.kind;
+                lastEqWrong = {P, Q};
               }
             }
           }
@@ -498,6 +531,7 @@ class Checker {
         lastStmt = {parts, rels, chainStart};
       }
       r.status = lineBad ? 'wrong' : lineFolge ? 'folge' : lineNA ? 'na' : (r.steps.length && r.steps.every(s => s.status === 'def')) ? 'def' : r.steps.length ? 'ok' : 'info';
+      { const ls = r.steps.find(s => s.lex); if (ls) r.lex = ls.lex; const ks = r.steps.find(s => s.kind); if (ks) r.kind = ks.kind; }
       if (lineBad){ chainBad = true; }
       prevLineBad = lineBad || (prevLineBad && lineFolge);
       res.push(r);
@@ -621,9 +655,13 @@ class Checker {
     }
     if (info.chainBad && !info.lastBad) return {state:'folge', msg:'Dein Ergebnis passt zu deinem Rechenweg, aber in einer Zeile davor steckt ein Fehler.'};
     // passt der Wert zu einem typischen Fehler?
-    if (goal.mistakes) for (const m of goal.mistakes){ try { if (this.compare(expr, parseExprStr(m.expr, ctx.pctx), '=', user, 'ref').res === true) return {state:'wrong', msg:m.msg}; } catch(e){} }
+    if (goal.mistakes) for (const m of goal.mistakes){ try { if (this.compare(expr, parseExprStr(m.expr, ctx.pctx), '=', user, 'ref').res === true){ const o = {state:'wrong', msg:m.msg}; const lx = m.lex ? lexId(m.lex) : null; if (lx) o.lex = lx; return o; } } catch(e){} }
+    this._refOk = true;   // Bezug ist die Musterlösung
     const d = this.diagnose(targets[0], expr, user, null);
-    return {state:'wrong', msg:'Das Ergebnis stimmt noch nicht.' + (d.length ? ' ' + d[0] : '')};
+    this._refOk = false;
+    const o = {state:'wrong', msg:'Das Ergebnis stimmt noch nicht.' + (d.length ? ' ' + d[0] : '')};
+    if (d.lex) o.lex = d.lex;
+    return o;
   }
 }
 function artikel(k){ return {zahl:'eine Zahl', ket:'ein Ket (Zustand)', bra:'ein Bra', matrix:'ein Operator (Matrix)', op:'ein Operator'}[k] || 'etwas anderes'; }
@@ -641,6 +679,13 @@ function factorName(r){
     if (is(r, cx(v)) || is(r, cx(1 / v))) return 'Es fehlt ein Faktor ' + nm + ' (oder einer ist zu viel).';
     if (is(r, cx(-v)) || is(r, cx(-1 / v))) return 'Faktor ' + nm + ' und Vorzeichen prüfen.';
   }
+  return null;
+}
+function factorKind(r){
+  const is = (z, w) => cabs(csub(z, w)) < 1e-6 * cabs(w);
+  if (is(r, cx(-1))) return 'sign';
+  if (is(r, cx(0, 1)) || is(r, cx(0, -1))) return 'i';
+  if (is(r, cx(2)) || is(r, cx(0.5)) || is(r, cx(-2)) || is(r, cx(-0.5))) return 'two';
   return null;
 }
 function explainErr(e){
@@ -679,6 +724,28 @@ function checkTask(taskCtxSpec, goal, lines, seed){
     }
     ctx = goal.__ctxL;
   }
-  const ch = new Checker(ctx, {seed:seed || 'qm'});
+  const ch = new Checker(ctx, {seed:seed || 'qm', known:knownUnknowns(goal)});
   return ch.run(lines, goal);
+}
+/* Unbekannte, die in einer früheren Teilaufgabe derselben Aufgabe bestimmt wurden (Ziel „solve“ davor).
+   Inhalte können das mit goal.known = ['A', …] auch ausdrücklich angeben. */
+function knownUnknowns(goal){
+  if (!goal) return [];
+  if (Array.isArray(goal.known)) return goal.known;
+  if (goal.__known) return goal.__known;
+  let res = [];
+  try {
+    if (typeof TOPICS !== 'undefined' && Array.isArray(TOPICS)){
+      const tk = x => x && x.task;
+      outer: for (const t of TOPICS){
+        const tasks = [...(t.practice || []), ...(t.final || []).map(tk), ...(t.finalB || []).map(tk), t.example && t.example.faded].filter(k => k && Array.isArray(k.goals));
+        for (const k of tasks){
+          const i = k.goals.indexOf(goal);
+          if (i >= 0){ res = k.goals.slice(0, i).filter(g => g && g.type === 'solve' && g.unknown).map(g => g.unknown); break outer; }
+        }
+      }
+    }
+  } catch(e){ res = []; }
+  try { Object.defineProperty(goal, '__known', {value:res, enumerable:false, configurable:true, writable:true}); } catch(e){}
+  return res;
 }

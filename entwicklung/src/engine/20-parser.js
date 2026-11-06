@@ -24,7 +24,7 @@ function parseExprStr(src, ctx){
 class Parser {
   constructor(toks, ctx){
     this.T = toks; this.p = 0; this.ctx = ctx;
-    this.intDepth = 0; this.bk = 0; this.absD = 0; this.subMode = 0;
+    this.intDepth = 0; this.bk = 0; this.absD = 0; this.subMode = 0; this.normD = 0;
     this.funcs = new Set([...DEFAULT_FUNCS, ...((ctx && ctx.funcs) || [])]);
     this.notFuncs = new Set((ctx && ctx.notFuncs) || []);
     this.dvars = new Set([...DIFF_VARS, ...((ctx && ctx.coords) || [])]);
@@ -97,6 +97,7 @@ class Parser {
     if (t.k === 'id') return true;
     if (t.k !== 'op') return false;
     if (t.v === '|') return !this.bk && !this.absD;
+    if (t.v === '‖') return !this.normD;
     if (t.v === '<') return this.hasLater('>');
     return ['(', '[', '{', '⟨', '∫', 'Σ', '√', '∂', '∇', 'Δ', '∞', '↑', '↓'].includes(t.v);
   }
@@ -190,6 +191,11 @@ class Parser {
       case '{': return this.brace();
       case '|': return this.barOpen();
       case '⟨': case '<': return this.braOpen();
+      case '‖': { // Norm ‖f‖ = sqrt(⟨f|f⟩), bei Zahlen der Betrag
+        this.p++; this.normD++; const sb = this.bk, sa = this.absD; this.bk = 0; this.absD = 0;
+        const a = this.expr(); this.bk = sb; this.absD = sa; this.normD--;
+        this.expect('‖', 'Zweiter Normstrich „‖“ fehlt'); return {t:'norm', a};
+      }
       case '∫': return this.integral();
       case 'Σ': return this.sum();
       case '√': { this.p++; let a; if (this.isOp('(') || this.isOp('{')){ const br = this.next().v; a = this.expr(); this.expect(br === '(' ? ')' : '}'); } else a = this.postfixNoPow(); return {t:'call', fn:'sqrt', args:[a]}; }
@@ -379,11 +385,13 @@ class Parser {
     const a = this.term();
     return {t:'sum', v, lo, hi, a};
   }
-  labelList(){
+  labelList(mode){
     const labs = [];
     for (;;){
       const t = this.peek(), n = this.peek(1);
-      if (t.k === 'op' && ['+', '-', '±'].includes(t.v) && (n.k === 'op' && ['⟩', '>', '|', ','].includes(n.v) || (n.k === 'id' && 'xyz'.includes(n.v) && !n.s && this.isLabelEnd(2)))){
+      // Spin-Richtung: |+x⟩, auch mit Leerzeichen „| + x⟩“ oder „|+ x⟩“. Mit Leerzeichen und „|“ dahinter bleibt es im Betrag ein Ausdruck: | - x| = |−x|
+      const dirLabel = n.k === 'id' && n.v.length === 1 && 'xyz'.includes(n.v) && !n.hat && !n.autoSub && this.isLabelEnd(2) && (!n.s || mode !== 'bar' || !this.isOp('|', 2));
+      if (t.k === 'op' && ['+', '-', '±'].includes(t.v) && (n.k === 'op' && ['⟩', '>', '|', ','].includes(n.v) || dirLabel)){
         this.p++; let v = t.v; if (n.k === 'id'){ this.p++; v += n.v; } labs.push({t:'spec', v});
       } else if (t.k === 'op' && (t.v === '↑' || t.v === '↓')){
         let v = ''; while (this.isOp('↑') || this.isOp('↓')) v += this.next().v; labs.push({t:'spec', v});
@@ -402,9 +410,11 @@ class Parser {
       this.absD++; const a = this.expr(); this.absD--;
       this.expect('|', 'Betragsstrich „|“ fehlt'); return {t:'abs', a};
     }
-    const labs = this.labelList();
+    const labs = this.labelList('bar');
     if (this.isOp('⟩') || this.isOp('>')){ this.p++; return {t:'ket', lab:labs}; }
     if (this.isOp('|')){
+      // |-x| ist der Betrag von −x, kein Spin-Zustand
+      if (labs.length === 1 && labs[0].t === 'spec' && /^[+-][xyz]$/.test(labs[0].v)){ this.p++; const s = {t:'sym', name:labs[0].v[1], hat:false, sub:null}; return {t:'abs', a:labs[0].v[0] === '-' ? {t:'neg', a:s} : s}; }
       if (labs.length !== 1 || labs[0].t === 'spec') throw new ParseError('Betrag unklar', at);
       this.p++; return {t:'abs', a:labs[0]};
     }
@@ -416,23 +426,26 @@ class Parser {
   }
   braOpen(){
     const at = this.peek().at; this.p++;
-    const first = this.labelList();
+    const first = this.labelList('bra');
     if (this.isOp('⟩') || this.isOp('>')){
       this.p++;
+      // ⟨-x⟩ = −⟨x⟩ (Erwartungswert, kein Spin-Zustand)
+      if (first.length === 1 && first[0].t === 'spec' && /^[+-][xyz]$/.test(first[0].v)){ const s = {t:'sym', name:first[0].v[1], hat:false, sub:null}; return first[0].v[0] === '-' ? {t:'neg', a:{t:'expect', a:s}} : {t:'expect', a:s}; }
       if (first.length !== 1 || first[0].t === 'spec') throw new ParseError('Erwartungswert unklar', at);
       return {t:'expect', a:first[0]};
     }
     this.expect('|', '„|“ oder „⟩“ fehlt');
     const t = this.peek();
-    const specNext = t.k === 'op' && (t.v === '+' || t.v === '-') && (this.isLabelEnd(1) || (this.peek(1).k === 'id' && 'xyz'.includes(this.peek(1).v) && !this.peek(1).s && this.isLabelEnd(2)));
+    // Ket-Label nach dem Bra: ⟨a|+⟩, ⟨a|+x⟩, ⟨a| + x⟩. Nicht bei „⟨+x| + |-x⟩⟨-x|“: dort beginnt nach „+“ ein neuer Summand.
+    const specNext = t.k === 'op' && (t.v === '+' || t.v === '-') && ((this.isLabelEnd(1) && !this.isOp('|', 1)) || (this.peek(1).k === 'id' && this.peek(1).v.length === 1 && 'xyz'.includes(this.peek(1).v) && this.isLabelEnd(2)));
     if (!specNext && (t.k === 'eof' || (t.k === 'op' && ([')', ']', '}', '=', '+', '-', ',', ';', '⇒', '⇔', '*'].includes(t.v) || RELOPS.has(t.v))))) return {t:'bra', lab:first};
     const save = this.p;
     try {
-      const second = this.labelList();
+      const second = this.labelList('ket');
       if (this.isOp('⟩') || this.isOp('>')){ this.p++; return {t:'braket', bra:first, op:null, ket:second}; }
       if (this.isOp('|')){
         this.p++;
-        const third = this.labelList();
+        const third = this.labelList('ket');
         if (this.isOp('⟩') || this.isOp('>')){ this.p++; if (second.length !== 1) throw new ParseError('Operator unklar', at); return {t:'braket', bra:first, op:second[0], ket:third}; }
       }
     } catch(e){ /* zurück */ }

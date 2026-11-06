@@ -1,6 +1,6 @@
 # Tutorial in Quantum Mechanics
 
-Quantenmechanik I und ihre mathematischen Grundlagen im Eigenstudium.
+Quantenmechanik I und ihre mathematischen Grundlagen im Selbststudium – auch ohne Vorlesung.
 
 Interaktives Tutorial für Quantenmechanik I im Physik-Bachelor, im Aufbau der [Mathe-Lernhilfe](https://github.com/tbonk2208/mathe-lernhilfe). Die Inhalte sind deutschsprachig. Herleitungen werden Zeile für Zeile geprüft – wie von einer wohlwollenden Tutorin: richtige Umformungen werden anerkannt, auch ungewöhnliche Wege, Folgefehler werden als folgerichtig markiert, und bei falschen Schritten gibt es eine Rückfrage statt der Lösung.
 
@@ -18,6 +18,7 @@ Zwei Kapitel, als Reiter wählbar.
 - M6 Fourier-Reihen und Fourier-Transformation
 - M7 Differentialgleichungen und Randwertprobleme
 - M8 Kugelkoordinaten und spezielle Funktionen
+- M9 Wahrscheinlichkeit und Statistik
 
 **Quantenmechanik**
 
@@ -47,21 +48,17 @@ Nach dem ersten Öffnen läuft das Tutorial ohne Internet. Der Lernstand bleibt 
 
 ## Aufbau
 
-Startseite mit **Neues lernen**, **Üben**, **Wiederholen** (verteilte Wiederholung nach 1, 3, 7, 14, 30 Tagen) und **Klausur vorbereiten** (Tagesplan und Probeklausur ohne Hilfe). Jedes Thema folgt demselben Lernweg:
+Startseite mit **Neues lernen**, **Üben**, **Wiederholen** (verteilte Wiederholung, Fehlerheft) und **Klausur vorbereiten** (Tagesplan und Probeklausur ohne Hilfe). Jedes Thema erklärt den Stoff selbst und folgt demselben Lernweg:
 
-1. **Ziel und Check:** Lernziele und vier Fragen zum Vorwissen; fehlt etwas, verlinkt das Ergebnis den passenden Eintrag oder das passende Thema.
-2. **Einstieg:** vorgerechnetes Beispiel mit Warum-Fragen und anschließender Lückenaufgabe – oder eine Knobelaufgabe vor der Erklärung.
-3. **Klären:** Kernidee, worauf es ankommt, typische Fehler (nach der physikdidaktischen Forschung zur QM).
-4. **Darstellen:** Labor mit Simulation (z. B. δ-Folgen, Eigenvektoren, Fourier-Teilsummen, Wellenpaket, Tunneln, Bloch-Kugel), danach eine Frage ohne Bild.
-5. **Vergleichen:** zwei richtige Lösungswege und wann welcher besser ist.
-6. **Üben:** Herleitungen mit zeilenweiser Prüfung, gestuften Hinweisen und Musterlösung nach eigenem Versuch.
-7. **Abschluss:** vier Aufgaben ohne Hilfe; ab 3 von 4 gilt das Thema als sicher.
+1. **Ziel und Diagnose:** Lernziele, „Wozu?“, was aus früheren Themen wiederkommt; Fragen zu den Voraussetzungen (bei Lücken eine kurze Auffrischung) und zum Thema selbst, die den Einstieg bestimmen.
+2. **Vorhersage:** ein Phänomen oder eine Situation – erst selbst begründen und vorhersagen, dann Rückmeldung und Auflösung.
+3. **Erklären:** Lerntext in Abschnitten (je Thema etwa 1 400–2 200 Wörter) mit Herleitungen Zeile für Zeile, Warum-Fragen, Abbildungen aus dem Labor und Fragen nach jedem Abschnitt; am Ende eine Zusammenfassung.
+4. **Beispiel:** vorgerechnetes Beispiel mit Warum-Fragen, danach eine Lückenaufgabe; für Fortgeschrittene eine Knobelaufgabe.
+5. **Labor:** erst vorhersagen, dann ausprobieren (z. B. δ-Folgen, Fourier-Teilsummen, Wellenfunktion an der Barriere, Messfolgen, Bloch-Kugel), dann Fragen mit und ohne Bild.
+6. **Üben:** Herleitungen mit zeilenweiser Prüfung und gestuften Hinweisen, Konzeptaufgaben zu typischen Lernschwierigkeiten der Quantenmechanik, zwei Lösungswege im Vergleich, Fehler finden.
+7. **Abschluss:** fünf Aufgaben unter Prüfungsbedingungen (ohne Rückmeldung bis zur Abgabe), mit Sicherheitsurteil je Aufgabe. „Vorläufig sicher“ ab 80 % und mit allen Lernzielen; „sicher“ erst nach einer bestandenen Wiederholung frühestens zwei Tage später. Für einen neuen Versuch gibt es eine Parallelform.
 
-## Mit dem Stift schreiben
-
-Jede Rechenzeile lässt sich mit ✎ auf Stift umschalten (Voreinstellung unter „Einstellungen → Stift und Handschrift“: Tastatur, Stift oder automatisch). Man schreibt wie auf Papier: Brüche als echten Bruch, Grenzen an Integral und Summe, Hoch- und Tiefstellungen, Matrizen mit großen Klammern, Dirac-Klammern ⟨ | ⟩, ein Dach über den Buchstaben. Nach einer kurzen Pause steht unter der Schrift, wie das Tutorial sie liest; andere Lesarten und einzelne Zeichen lassen sich antippen und korrigieren, und das Eingabefeld bleibt editierbar.
-
-Gelesen wird im Gerät mit einem eigenen Erkennungsnetz (103 Zeichen, trainiert mit CROHME 2011–2013 und HASYv2, siehe `LICENSE-Handschriftmodell.txt`). Gemessen an fremden Schreibern werden einzelne Zeichen zu 87–91 % richtig erkannt; ganze Zeilen eines Schreibers sind zu etwa 67 % sofort fehlerfrei und zu 75 % unter den ersten drei Lesarten. Unter „Handschrift anlernen“ schreibt man selten trainierte Zeichen (ψ, ħ, ∂, ⟨ ⟩, ω …) ein paarmal selbst; Korrekturen werden ebenfalls gemerkt (nur im Browser). Mit eigenem API-Schlüssel kann eine schwierige Zeile auf Knopfdruck von Claude gelesen werden; dabei geht das Bild der Zeile an Anthropic. Ausgelegt ist die Stifteingabe für Windows mit Stift; Maus geht auch.
+Die Abfolge stützt sich auf Lern- und Physikdidaktik-Forschung (siehe „Quellen“ in der App).
 
 ## Formeln eingeben
 
@@ -73,7 +70,7 @@ Jede Zeile wird an mehreren zufälligen Parameterwerten ausgewertet; Operatorgle
 
 ## Optionale KI-Hilfe
 
-Ohne Schlüssel sendet das Tutorial nichts ins Internet. Unter „Einstellungen“ kann man einen eigenen Anthropic-API-Schlüssel eintragen; dann gehen Fragen unter „? Frage“ mit Aufgabe und Rechenweg an `api.anthropic.com`. Die KI gibt Hinweise, keine fertigen Lösungen.
+Ohne Schlüssel sendet das Tutorial nichts ins Internet. Mit der Schreibprobe (Einstellungen) lässt sich die Erkennung an der eigenen Handschrift messen und als Datei sichern. Unter „Einstellungen“ kann man einen eigenen Anthropic-API-Schlüssel eintragen; dann gehen Fragen unter „? Frage“ mit Aufgabe und Rechenweg an `api.anthropic.com`. Die KI gibt Hinweise, keine fertigen Lösungen.
 
 ## Dateien
 

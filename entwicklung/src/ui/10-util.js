@@ -36,7 +36,7 @@ function inl(s){
   s = s.replace(/\$([^$]+?)\$/g, (m, t) => { parts.push(texHTML(t, false)); return '\u0000' + (parts.length - 1) + '\u0000'; });
   s = s.replace(/`([^`]+)`/g, (m, t) => { parts.push('<code class="inp-ex">' + escH(t) + '</code>'); return '\u0000' + (parts.length - 1) + '\u0000'; });
   s = escH(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\s][^*]*?)\*/g, '$1<i>$2</i>')
-    .replace(/\[\[lex:([\w-]+)\|([^\]]+)\]\]/g, '<a href="#/lex/$1" class="lexlink">$2</a>')
+    .replace(/\[\[lex:([\w-]+)\|([^\]]+)\]\]/g, '<a href="#/lex/$1" class="lexlink" data-lex="$1">$2</a>')
     .replace(/(^|[\s(])(https?:\/\/[^\s<]*[^\s<.,;:)])/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>')
     .replace(/\n/g, '<br>');
   return s.replace(/\u0000(\d+)\u0000/g, (m, k) => parts[+k]);
@@ -52,18 +52,35 @@ function ctxOf(spec){ if (!spec) return null; if (!spec.__ctx) spec.__ctx = make
 const store = {
   key:'qm-lernhilfe-1',
   data:null,
-  load(){
-    try { this.data = JSON.parse(localStorage.getItem(this.key) || 'null'); } catch(e){ this.data = null; }
+  /* load(): aus localStorage; load(daten): übernimmt eingelesene bzw. leere Daten (Einlesen, Zurücksetzen) */
+  load(given){
+    if (given !== undefined) this.data = given;
+    else { try { this.data = JSON.parse(localStorage.getItem(this.key) || 'null'); } catch(e){ this.data = null; } }
     if (!this.data || typeof this.data !== 'object') this.data = {};
     const d = this.data;
     d.topics = d.topics || {}; d.tasks = d.tasks || {}; d.review = d.review || {}; d.settings = d.settings || {}; d.exam = d.exam || {}; d.log = d.log || []; d.errs = d.errs || {};
+    d.errbook = Array.isArray(d.errbook) ? d.errbook : []; d.calib = Array.isArray(d.calib) ? d.calib : []; d.refl = d.refl || {};
     return d;
   },
   save(){ try { localStorage.setItem(this.key, JSON.stringify(this.data)); } catch(e){ /* privater Modus: nur im Speicher */ } },
   topic(id){ const t = this.data.topics; return t[id] || (t[id] = {done:{}, step:1}); },
   task(id){ const t = this.data.tasks; return t[id] || (t[id] = {goals:{}}); },
   goal(tid, gid){ const t = this.task(tid); return t.goals[gid] || (t.goals[gid] = {lines:[{m:'', w:''}], state:null, points:0, help:0, tries:0}); },
-  event(e){ this.data.log.push({d:new Date().toISOString(), e}); if (this.data.log.length > 400) this.data.log.splice(0, 100); }
+  event(e){ this.data.log.push({d:new Date().toISOString(), e}); if (this.data.log.length > 400) this.data.log.splice(0, 100); },
+  /* Fehlerheft: e = {k:'line'|'concept'|'seg'|'final', t:Themen-id, ref, goal?, pos?, text, msg?, ans?, right?, lex?, seg?} */
+  errAdd(e){
+    const B = this.data.errbook;
+    const key = e.key || [e.k, e.t || '', e.ref || '', e.goal || '', e.pos != null ? e.pos : (e.text || '')].join('|');
+    const old = B.find(x => x.key === key);
+    const d = new Date().toISOString();
+    if (old){ Object.assign(old, e, {key, n:(old.n || 1) + 1, d, done:false, solved:false}); }
+    else { B.push(Object.assign({key, n:1, d}, e)); if (B.length > 300) B.splice(0, B.length - 300); }
+    this.save();
+  },
+  /* Ziel gelöst: zugehörige Einträge als „später gelöst“ markieren */
+  errSolved(ref, goal){ let ch = false; for (const x of this.data.errbook) if (x.k === 'line' && x.ref === ref && x.goal === goal && !x.solved){ x.solved = true; ch = true; } if (ch) this.save(); },
+  /* Sicherheitsurteil: c = 0 (geraten) … 3 (sicher), ok = richtig gelöst */
+  calibAdd(c, ok, t, src){ if (c == null) return; this.data.calib.push({d:today(), c, ok:!!ok, t, src}); if (this.data.calib.length > 600) this.data.calib.splice(0, 100); }
 };
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2600); }
 const ICONS = {
@@ -81,3 +98,5 @@ const icon = k => '<svg viewBox="0 0 24 24" class="ic" aria-hidden="true">' + (I
 const shuffle = (arr, R) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor((R ? R() : Math.random()) * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const today = () => new Date().toISOString().slice(0, 10);
 const addDays = (d, n) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+/* Datum für die Anzeige: 2026-11-07 → 7. 11. 2026 */
+const fmtD = d => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ''); return m ? (+m[3]) + '. ' + (+m[2]) + '. ' + m[1] : String(d || ''); };

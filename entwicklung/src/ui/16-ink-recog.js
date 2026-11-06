@@ -428,32 +428,74 @@ function estimateH(S){
   const ok = hs.filter(h => h < 2.2 * md && h > 0.25 * md);
   return Math.max(10, pct(ok.length ? ok : hs, 0.8));
 }
-/* Bruchstriche: flach, breit, darüber und darunter Zeichen */
+/* Bruchstrich: flach, oder lang, gerade und höchstens leicht schräg (echte Striche steigen oft an) */
+const isBarShape = (s, H) => isFlat(s, H) || (s.w > 1.0 * H && s.h < 0.25 * s.w && s.len < 1.15 * Math.max(s.chord, 1));
+/* Höhe des (ggf. schrägen) Bruchstrichs an der Stelle x */
+function barLine(bar){
+  const P = bar.pd || bar.pts;
+  let a = P[0], b = P[0]; for (const p of P){ if (p.x < a.x) a = p; if (p.x > b.x) b = p; }
+  const k = b.x > a.x ? (b.y - a.y) / (b.x - a.x) : 0;
+  return x => a.y + k * (x - a.x);
+}
+/* Bruchstriche: darüber und darunter Zeichen; Abstände an CROHME-Trainingsausdrücken geprüft
+   (Nenner/Zähler bis 1,25 Zeichenhöhen vom Strich, Nenner oft breiter als der Strich, Strich oft schräg) */
 function fracParts(bar, pool, H, tight){
-  const ext = 0.06 * bar.w + 0.08 * H;
+  const ext = 0.06 * bar.w + 0.08 * H, by = barLine(bar);
   /* kleine Striche (Hochzahl, Punkt) des Zeichens davor/danach nicht mitnehmen */
   const inX = o => Math.max(o.w, o.h) < 0.5 * H ? o.cx >= bar.x0 + 0.02 * bar.w && o.cx <= bar.x1 - 0.02 * bar.w
     : o.cx >= bar.x0 - ext && o.cx <= bar.x1 + ext && o.x0 >= bar.x0 - 0.4 * H - 0.2 * bar.w && o.x1 <= bar.x1 + 0.4 * H + 0.2 * bar.w;
-  let above = pool.filter(o => o !== bar && !o.bigop && inX(o) && o.cy < bar.cy && o.y1 <= bar.cy + 0.25 * H && bar.cy - o.cy < 2.6 * H);
-  let below = pool.filter(o => o !== bar && !o.bigop && inX(o) && o.cy > bar.cy && o.y0 >= bar.cy - 0.25 * H && o.cy - bar.cy < 2.6 * H);
+  const dUp = o => by(o.cx) - o.y1, dDn = o => o.y0 - by(o.cx);
+  let above = pool.filter(o => o !== bar && !o.bigop && inX(o) && o.cy < by(o.cx) && dUp(o) >= -0.25 * H && by(o.cx) - o.cy < 2.6 * H);
+  let below = pool.filter(o => o !== bar && !o.bigop && inX(o) && o.cy > by(o.cx) && dDn(o) >= -0.25 * H && o.cy - by(o.cx) < 2.6 * H);
   /* zusammenhängend vom Strich aus: nächste zuerst */
+  const first = tight ? 0.7 : 1.25;
   const chain = (arr, up) => {
-    const srt = arr.slice().sort((a, b) => up ? b.y1 - a.y1 : a.y0 - b.y0);
-    const out = []; let edge = bar.cy;
-    for (const o of srt){ const gap = up ? edge - o.y1 : o.y0 - edge; if (gap > (out.length ? (tight ? 0.3 : 0.6) : (tight ? 0.7 : 1.05)) * H) break; out.push(o); edge = up ? Math.min(edge, o.y0) : Math.max(edge, o.y1); }
+    const dist = up ? dUp : dDn, far = o => up ? by(o.cx) - o.y0 : o.y1 - by(o.cx);
+    const srt = arr.slice().sort((a, b) => dist(a) - dist(b));
+    const out = []; let edge = 0;
+    for (const o of srt){ const gap = dist(o) - edge; if (gap > (out.length ? (tight ? 0.3 : 0.6) : first) * H) break; out.push(o); edge = Math.max(edge, far(o)); }
     return out;
   };
   /* Bruch als Grenze rechts an ∫/Σ: nicht über die Mitte des Operators hinaus (dort steht die andere Grenze) */
   const op = pool.find(o => o.bigop && o.x1 > bar.x0 - 0.8 * H && o.x1 < bar.x0 + 0.4 * H && bar.cy > o.y0 - 0.5 * H && bar.cy < o.y1 + 0.5 * H && (bar.cy < o.y0 + 0.3 * o.h || bar.cy > o.y1 - 0.3 * o.h));
   if (op){ if (bar.cy < op.cy) below = below.filter(o => o.y1 < op.cy + 0.1 * H); else above = above.filter(o => o.y0 > op.cy - 0.1 * H); }
   above = chain(above, true); below = chain(below, false);
+  /* Zähler/Nenner seitlich fortsetzen: nächster Strich neben dem Block, ganz auf derselben Seite, kleine Lücke;
+     nicht, wenn dazwischen oder darunter/darüber ein Zeichen auf Höhe des Strichs steht (Hochzahl/Index/i-Punkt eines Zeichens außerhalb) */
+  const extend = (arr, up) => {
+    if (tight || !arr.length) return arr;
+    for (let guard = 0; guard < 12; guard++){
+      const b = box(arr); let add = null;
+      for (const dir of [1, -1]){
+        let best = null, bd = Infinity;
+        for (const o of pool){
+          if (o === bar || o.bigop || arr.includes(o) || above.includes(o) || below.includes(o)) continue;
+          if (!(o.cy > b.y0 - 0.5 * H && o.cy < b.y1 + 0.5 * H)) continue;     /* auch Hoch-/Tiefgestelltes am Blockende */
+          const gap = dir > 0 ? o.x0 - b.x1 : b.x0 - o.x1;
+          if ((gap > -0.25 * H || (o.cx > b.x0 && o.cx < b.x1)) && gap < bd){ bd = gap; best = o; }     /* auch Striche im schon erweiterten Block (Querstrich des A) */
+        }
+        if (!best || bd > 0.6 * H) continue;
+        if (!(up ? best.y1 < by(best.cx) - 0.08 * H : best.y0 > by(best.cx) + 0.08 * H)) continue;
+        /* Grenzen eines ∫/Σ links davon gehören nicht zum Bruch */
+        if (pool.some(q => q.bigop && best.x0 > q.x0 - 0.2 * H && best.x0 < q.x1 + 1.5 * H && (best.y0 > q.y1 - 0.35 * q.h || best.y1 < q.y0 + 0.35 * q.h))) continue;
+        const lo = dir > 0 ? b.x1 - 0.1 * H : best.x0 - 0.2 * H, hi = dir > 0 ? best.x1 + 0.2 * H : b.x0 + 0.1 * H;
+        const foreign = pool.some(q => q !== bar && q !== best && !arr.includes(q) && !above.includes(q) && !below.includes(q) && q.x1 > lo && q.x0 < hi && (up ? q.y1 > by(q.cx) - 0.05 * H : q.y0 < by(q.cx) + 0.05 * H) && Math.abs(q.cy - by(q.cx)) < 1.3 * H);
+        if (foreign) continue;
+        add = best; break;
+      }
+      if (!add) break;
+      arr.push(add);
+    }
+    return arr;
+  };
+  above = extend(above, true); below = extend(below, false);
   /* ein Bruchstrich berührt Zähler und Nenner nicht (Querstrich von σ, Σ, π, ±, 4, τ …) */
   /* gilt, wenn ein Strich den Strich kreuzt oder an einem Ende ansetzt; Zähler/Nenner dürfen in der Mitte nahe kommen */
   const touch = o => {
-    if (!(o.y1 > bar.cy - 0.4 * H && o.y0 < bar.cy + 0.4 * H)) return false;
+    if (!(o.y1 > by(o.cx) - 0.4 * H && o.y0 < by(o.cx) + 0.4 * H)) return false;
     const P = o.pd || o.pts, Q = bar.pd || bar.pts;
     let up = false, dn = false;
-    for (const p of P) if (p.x > bar.x0 && p.x < bar.x1){ if (p.y < bar.cy - 0.08 * H) up = true; if (p.y > bar.cy + 0.08 * H) dn = true; }
+    for (const p of P) if (p.x > bar.x0 && p.x < bar.x1){ if (p.y < by(p.x) - 0.08 * H) up = true; if (p.y > by(p.x) + 0.08 * H) dn = true; }
     if (up && dn) return true;
     const ends = [Q[0], Q[Q.length - 1]].sort((a, b) => a.x - b.x), m = 0.15 * bar.w;
     for (const p of P) if (Math.hypot(p.x - ends[0].x, p.y - ends[0].y) < 0.07 * H + 0.05 * m || Math.hypot(p.x - ends[1].x, p.y - ends[1].y) < 0.07 * H + 0.05 * m) return true;
@@ -464,7 +506,7 @@ function fracParts(bar, pool, H, tight){
   if (!above.length || !below.length || !real(above) || !real(below)) return null;
   const ba = box(above), bb = box(below);
   if (bar.w < 0.62 * Math.max(ba.w, bb.w)) return null;
-  if (bar.cy - ba.y1 > 0.9 * H || bb.y0 - bar.cy > 0.9 * H) return null;
+  if (Math.min(...above.map(dUp)) > first * H || Math.min(...below.map(dDn)) > first * H) return null;
   return {above, below};
 }
 /* Inhalt in Zeilen teilen (Matrizen/Spaltenvektoren); Brüche bleiben eine Einheit */
@@ -552,6 +594,13 @@ function pairFeat(a, b, H){
     isTiny(a, H) ? 1 : 0, isTiny(b, H) ? 1 : 0, isFlat(a, H) ? 1 : 0, isFlat(b, H) ? 1 : 0,
     clip(ov / Math.max(0.05 * H, b.w), -3, 1), clip(ov / Math.max(0.05 * H, a.w), -3, 1), d < 0.04 ? 1 : 0, clip(Math.log((Math.max(b.w, b.h) + 0.02 * H) / (Math.max(a.w, a.h) + 0.02 * H)), -3, 3)];
 }
+/* „=“ aus zwei flachen Strichen ähnlicher Länge übereinander (auch mit großem Abstand oder versetzt) */
+const flatBarS = (s, H) => s.w > 0.2 * H && s.w < 2.5 * H && s.h < 0.3 * s.w + 0.05 * H && s.len < 1.3 * Math.max(s.chord, 1);
+function stackedBars(a, b, H){
+  if (!flatBarS(a, H) || !flatBarS(b, H)) return false;
+  const ov = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), dy = Math.abs(a.cy - b.cy), wr = a.w / b.w;
+  return ov > 0.5 * Math.min(a.w, b.w) && dy > 0.08 * H && dy < 0.7 * H && wr > 0.45 && wr < 2.2;
+}
 function groupStrokes(S, R){
   const H = R.H;
   if (!S.length) return [];
@@ -574,6 +623,8 @@ function groupStrokes(S, R){
   const WC = R.wCls !== undefined ? R.wCls : 2.5, WG = R.wGeo !== undefined ? R.wGeo : 1, FLOOR = 0.02;
   const PS = new Array(n).fill(0.5);
   for (let q = 1; q < n; q++) PS[q] = pairSame(ord[q - 1], ord[q], H);
+  /* zwei übereinanderliegende kurze flache Striche ähnlicher Länge sind ein „=“, auch weit auseinander oder versetzt */
+  for (let q = 1; q < n; q++) if (stackedBars(ord[q - 1], ord[q], H)) PS[q] = Math.max(PS[q], 0.9);
   /* Punkt (i, j), der schon zum Strich davor gehört: der nächste Strich wird gegen diesen Strich bewertet */
   const dotty = s => Math.max(s.w, s.h) < 0.3 * H && s.len < 0.45 * H;
   for (let q = 2; q < n; q++) if (dotty(ord[q - 1]) && PS[q - 1] > 0.5 && !dotty(ord[q - 2]) && ord[q - 1].cy < ord[q - 2].y0 + 0.3 * ord[q - 2].h) PS[q] = Math.min(PS[q], pairSame(ord[q - 2], ord[q], H));
@@ -592,7 +643,7 @@ function groupStrokes(S, R){
       if (k > 1){
         /* zusammenhängend als Graph (H: zwei Senkrechte erst über den Querstrich verbunden) */
         const seen = [0], rest = g.slice(1).map((x, q) => q + 1); let grow = true;
-        while (grow && rest.length){ grow = false; for (let q = rest.length - 1; q >= 0; q--){ if (seen.some(a => near(g[a], g[rest[q]], H))){ seen.push(rest[q]); rest.splice(q, 1); grow = true; } } }
+        while (grow && rest.length){ grow = false; for (let q = rest.length - 1; q >= 0; q--){ if (seen.some(a => near(g[a], g[rest[q]], H) || (k === 2 && stackedBars(g[a], g[rest[q]], H)))){ seen.push(rest[q]); rest.splice(q, 1); grow = true; } } }
         if (rest.length) continue;
       }
       let alts;
@@ -625,6 +676,8 @@ function recogRegion(S, R, depth){
   S.forEach(s => {
     if (!isHatShape(s, H)) return;
     const under = S.filter(o => o !== s && !isTiny(o, H) && o.x1 > s.x0 + 0.1 * s.w && o.x0 < s.x1 - 0.1 * s.w && o.y0 > s.cy - 0.05 * H && o.y0 - s.y1 < 0.6 * H && o.y0 > s.y1 - 0.3 * H && (o.h > 0.25 * H || o.w > 0.3 * H));
+    /* darunter (oder knapp daneben) steht ein Buchstabe, nicht nur ein flacher Strich: gewölbter oberer Strich eines „=“ ist kein Dach */
+    if (!S.some(o => o !== s && !isTiny(o, H) && !isFlat(o, H) && o.x1 > s.x0 - 0.3 * H && o.x0 < s.x1 + 0.3 * H && o.y0 > s.cy - 0.05 * H && o.y0 - s.y1 < 0.6 * H)) return;
     if (under.length && !(R.rctx.oracle && (R.rctx.oracle([s.pts]) || [['?']])[0][0] !== '^')) hats.push(s);
   });
   /* ∫ und Σ (hohe Einzelstriche) gehören nie in Zähler oder Nenner */
@@ -642,7 +695,7 @@ function recogRegion(S, R, depth){
     else if (stack.length){ const L = stack.pop(); const ov = Math.min(L.y1, b.y1) - Math.max(L.y0, b.y0); if (ov > 0.5 * Math.min(L.h, b.h)) cands.push({k:'mat', L, R:b, w:b.x1 - L.x0}); }
   }
   /* b) Bruchstriche */
-  S.filter(s => isFlat(s, H) && s.w > 0.42 * H).forEach(bar => cands.push({k:'frac', bar, w:bar.w}));
+  S.filter(s => isBarShape(s, H) && s.w > 0.3 * H).forEach(bar => cands.push({k:'frac', bar, w:bar.w}));
   /* c) Wurzeln */
   S.filter(s => s.w > 0.6 * H && s.h > 0.5 * H && !isFlat(s, H)).forEach(r => {
     let isR = isRadicalShape(r, H), bar = null;
@@ -663,6 +716,17 @@ function recogRegion(S, R, depth){
       const P = r.pd || r.pts, last = P[P.length - 1];
       const bar = S.find(b => b !== r && isFlat(b, H) && Math.abs(b.x0 - last.x) < 0.35 * H && Math.abs(b.cy - last.y) < 0.35 * H);
       cands.push({k:'sqrt', r, bar, w:(bar ? bar.x1 : r.x1) - r.x0});
+    }
+  });
+  /* Bruchstrich über oder unter einer Wurzel (Wurzel im Nenner/Zähler): Bruch zuerst, auch wenn die Wurzel breiter ist */
+  cands.forEach(c => {
+    if (c.k !== 'frac') return;
+    const bar = c.bar;
+    for (const q of cands){
+      if (q.k !== 'sqrt' || q.bar === bar) continue;
+      const r = q.r, x1 = q.bar ? Math.max(r.x1, q.bar.x1) : r.x1, ov = Math.min(bar.x1, x1) - Math.max(bar.x0, r.x0);
+      const y0 = q.bar ? Math.min(r.y0, q.bar.y0) : r.y0;
+      if (ov > 0.6 * Math.min(bar.w, x1 - r.x0) && (y0 > bar.cy - 0.05 * H || r.y1 < bar.cy + 0.05 * H)) c.w = Math.max(c.w, q.w + 1e-3);
     }
   });
   cands.sort((a, b) => b.w - a.w);
@@ -695,6 +759,9 @@ function recogRegion(S, R, depth){
       if (used.has(r) || (c.bar && used.has(c.bar))) continue;
       let hx = r.x0 + 0.25 * r.w;
       for (const q of (r.pd || r.pts)) if (q.y <= r.y0 + 0.25 * r.h && q.x > r.x0 + 0.04 * r.w){ hx = Math.min(hx, q.x); break; }
+      /* schräger Überstrich: Radikand beginnt dort, wo der Haken nach dem tiefsten Punkt oben ankommt */
+      { const P = r.pd || r.pts; let kLo = 0; for (let k = 0; k < Math.ceil(0.7 * P.length); k++) if (P[k].y > P[kLo].y) kLo = k;
+        for (let k = kLo; k < P.length; k++) if (P[k].y <= r.y0 + 0.4 * r.h){ hx = Math.min(hx, Math.max(P[kLo].x, P[k].x)); break; } }
       if (c.bar) hx = Math.min(hx, c.bar.x0);
       const xr = (c.bar ? c.bar.x1 : r.x1) + 0.1 * H, ytop = Math.min(r.y0, c.bar ? c.bar.y0 : r.y0);
       const rad = avail().filter(o => o !== r && o !== c.bar && o.cx > hx && o.cx < xr && o.y0 >= ytop - 0.15 * H && o.cy <= r.y1 + 0.15 * H);
@@ -801,7 +868,8 @@ function layout(items, R){
   return nodes;
 }
 /* Lesereihenfolge: Mitte statt linker Rand (schräge hohe Striche wie | und ⟩ ragen weit nach links) */
-const sortX = it => it.k === 'sym' && it.st && it.st.length <= 2 && it.h > 2 * it.w ? it.cx : 0.6 * it.x0 + 0.4 * it.cx;
+/* j: der Haken unten ragt weit nach links (T_ij würde sonst T_ji) */
+const sortX = it => it.k === 'sym' && it.st && ((it.st.length <= 2 && it.h > 2 * it.w) || (it.alts && it.alts[0][0] === 'j')) ? it.cx : 0.6 * it.x0 + 0.4 * it.cx;
 function levelOf(arr, E0){
   /* Anker: Rechenzeichen (=, +, −) und die großen Buchstaben/Ziffern; Hoch-/Tiefgestelltes ist kleiner */
   const rel = arr.filter(it => it.rel === 'ok' && it.alts && /[0-9A-Za-zα-ωΑ-Ωħ∂]/.test(it.alts[0][0]));
@@ -826,6 +894,26 @@ function layoutSeq(arr, lvl, R, E0){
   const nodes = [];
   let i = 0;
   const yb = it => it.rel === 'ok' || it.rel === 'weak' || it.rel === 'frac' || it.rel === 'sqrt' ? it.b : it.rel === 'tiny' ? it.cy + 0.1 * lvl.e : it.cy + 0.28 * lvl.e;
+  /* Buchstaben eines Funktionsworts (sin, cos …) stehen auf der Grundlinie */
+  const inWord = new Set();
+  for (let k = 0; k < arr.length; k++) for (const w of FUNCWORDS){
+    if (k + w.length > arr.length) continue;
+    let ok = true;
+    for (let q = 0; q < w.length && ok; q++){ const it = arr[k + q]; ok = it.k === 'sym' && !!it.alts && it.alts.slice(0, 3).some(([c, p]) => p > 0.05 && (c === w[q] || WORDCH[c] === w[q] || (c === '5' && w[q] === 's'))); }
+    if (ok){ for (let q = 0; q < w.length; q++) inWord.add(arr[k + q]); break; }
+  }
+  /* kleiner Index, der kaum tiefer sitzt: Oberkante gegen die Lage, die das Zeichen in voller Größe auf der Grundlinie hätte.
+     Vorsichtigste Lesart unter den plausiblen (0 auch als o, 5 auch als s); nur Buchstaben und Ziffern.
+     An CROHME-Trainingsausdrücken abgestimmt (Indizes 88 % statt 48 % erkannt, 3 % Fehlalarme) */
+  const smallLow = (Y, B, E, yB) => {
+    if (Y.k !== 'sym' || !Y.alts || inWord.has(Y) || !/^[0-9A-Za-zα-ωΑ-Ωħ]$/.test(Y.alts[0][0]) || Y.alts[0][0] === 'Σ') return false;
+    const r = (Y.e || E) / E, dy = (yB - B) / E;
+    if (!(dy > -0.1 && r < 0.8 && Y.y0 > B - 0.62 * E)) return false;
+    const p0 = Y.alts[0][1];
+    let top = 1;
+    for (const [c, p] of Y.alts.slice(0, 3)){ if (p < 0.2 * p0) continue; for (const cc of c === '0' ? ['0', 'o'] : c === '5' ? ['5', 's'] : [c]) top = Math.min(top, Math.abs(VT[vtype(cc)][0])); }
+    return dy + top * (1 - r) > 0.3;
+  };
   const relTo = (B, E, Y, base) => {
     const bY = yb(Y);
     /* Grenzen rechts an ∫ und Σ: unten = Tief, oben = Hoch */
@@ -857,6 +945,7 @@ function layoutSeq(arr, lvl, R, E0){
     if ((dy < -0.3 && r < 0.92) || dy < -0.55) return (Y.rel === 'frac' ? Y.bar.cy < B - 0.45 * E : Y.y1 < B - 0.12 * E) ? 'sup' : 'right';
     if (dy > 0.13 && r < 0.88 && Y.y0 > B - 0.62 * E) return 'sub';
     if (dy > 0.3 && r < 1.0 && Y.y0 > B - 0.45 * E) return 'sub';
+    if (smallLow(Y, B, E, bY) && !(base && base.k === 'sym' && inWord.has(base))) return 'sub';
     return 'right';
   };
   while (i < arr.length){
@@ -887,6 +976,8 @@ function layoutSeq(arr, lvl, R, E0){
         const zb = yb(Z);
         const dMain = Math.abs(zb - B) / E, dScr = Math.abs(zb - sl.b) / Math.max(sl.e, 0.3 * E);
         const ze = Z.e || sl.e;
+        /* „=“ gehört nie in eine Hoch-/Tiefstellung (Grenzen von Σ kommen über die Grenzen-Erkennung) */
+        if (Z.k === 'sym' && Z.alts && Z.alts[0][0] === '=') break;
         if (r === 'sup'){
           if (Z.rel === 'flat' || Z.rel === 'tiny' || Z.rel === 'op'){ if (Z.cy < B - 0.45 * E) { run.push(Z); right = Math.max(right, Z.x1); j++; continue; } break; }
           if (zb < B - 0.28 * E && ze < 1.0 * E) { run.push(Z); right = Math.max(right, Z.x1); j++; continue; }
@@ -895,6 +986,9 @@ function layoutSeq(arr, lvl, R, E0){
         } else {
           if (Z.rel === 'flat' || Z.rel === 'tiny' || Z.rel === 'op'){ if (Z.cy > B - 0.1 * E && Z.cy < B + 0.6 * E && j + 1 < arr.length) { const nx = arr[j + 1]; if (yb(nx) > B + 0.12 * E && (nx.e || E) < 0.9 * E){ run.push(Z); right = Math.max(right, Z.x1); j++; continue; } } break; }
           if (zb > B + 0.12 * E && ze < 0.9 * E && Z.y0 > B - 0.6 * E){ run.push(Z); right = Math.max(right, Z.x1); j++; continue; }
+          /* weitere Indexzeichen (S_max, T_fus): klein, Oberkante deutlich tiefer als in voller Größe, oder auf der Linie des Index */
+          if (smallLow(Z, B, E, zb)){ run.push(Z); right = Math.max(right, Z.x1); j++; continue; }
+          if (dScr < 0.35 && dScr < dMain * 0.7 && ze < 0.85 * E){ run.push(Z); right = Math.max(right, Z.x1); j++; continue; }
           break;
         }
       }
@@ -941,9 +1035,13 @@ function layoutSeq(arr, lvl, R, E0){
   nodes.forEach((n, k) => {
     const it = n.it;
     if (it.k === 'sym' && it.rel === 'tiny' && it.alts[0][0] === '.'){
-      const mid = it.cy < lvl.b - 0.14 * lvl.e;
-      const pd = nodes[k - 1] && nodes[k - 1].it.k === 'sym' && isDigit(nodes[k - 1].it.alts[0][0]), nd = nodes[k + 1] && nodes[k + 1].it.k === 'sym' && isDigit(nodes[k + 1].it.alts[0][0]);
-      it.alts = mid ? [['·', 0.9], ['', 0.1]] : (pd && nd ? [['.', 0.95], ['·', 0.04], ['', 0.01]] : [['', 0.7], ['·', 0.3]]);
+      let mid = it.cy < lvl.b - 0.14 * lvl.e;
+      /* Ziffer davor/danach (auch wenn 1 zunächst als | gelesen wird) */
+      const dig = m => m && m.it.k === 'sym' && !m.sup && !m.sub && m.it.alts.slice(0, 3).some(([c, p]) => isDigit(c) && p > 0.2);
+      const pd = dig(nodes[k - 1]), nd = dig(nodes[k + 1]);
+      /* zwischen eng stehenden Ziffern ist ein Punkt fast immer ein Dezimalpunkt, auch etwas über der Grundlinie */
+      if (pd && nd && mid){ const g1 = it.x0 - nodes[k - 1].it.x1, g2 = nodes[k + 1].it.x0 - it.x1; if (!(it.cy < lvl.b - 0.4 * lvl.e) && !(g1 > 0.35 * lvl.e && g2 > 0.35 * lvl.e)) mid = false; }
+      it.alts = mid ? [['·', 0.9], ['', 0.1]] : (pd && nd ? [['.', 0.75], ['·', 0.24], ['', 0.01]] : [['', 0.7], ['·', 0.3]]);
     }
   });
   return nodes;
@@ -1085,6 +1183,8 @@ function genText(nodes, picks, R, role){
       }
     }
     if (kind !== 'big'){
+      /* Bruch mit Hoch-/Tiefstellung klammern: „v/R^2“ hieße v/R² */
+      if (kind === 'frac' && (n.sub || n.sup)) s = '(' + s + ')';
       if (n.sub) s += subText(n.sub, picks, R);
       if (n.sup) s += supText(n.sup, picks, R, n);
     }
@@ -1118,7 +1218,11 @@ function genText(nodes, picks, R, role){
       sep = scr || (qUnary && q.s !== '=') ? '' : ' ';
     }
     else if (p.k === 'post' || p.k === 'close' || p.k === 'comma') sep = '';
-    else if (q.k === 'comma') sep = scr ? '' : ' ';
+    else if (q.k === 'comma'){
+      /* Dezimalkomma: Ziffern eng um ein Komma (2,91) – mit Leerzeichen wäre es eine Aufzählung */
+      const a = P[k - 2], g1 = a ? q.n.it.x0 - a.n.it.x1 : 1e9, g2 = p.n.it.x0 - q.n.it.x1;
+      sep = scr || (a && a.k === 'num' && !a.scr && p.k === 'num' && g2 < 0.45 * R.E && g1 + g2 < 0.6 * R.E) ? '' : ' ';
+    }
     else if (q.k === 'open') sep = '';
     else if (p.k === 'mulop' || q.k === 'mulop') sep = p.s === '/' || q.s === '/' ? '' : ' ';
     else if (p.k === 'frac' || q.k === 'frac' || p.k === 'sqrt' || q.k === 'sqrt' || p.k === 'big' || q.k === 'big' || p.k === 'mat' && factor(q) && q.k !== 'close' || p.k === 'dvar' || q.k === 'dvar' && p.k !== 'close') sep = ' ';
@@ -1172,7 +1276,8 @@ function supText(sup, picks, R, base){
 function subText(sub, picks, R){
   const t = genText(sub, picks, R, 'sub');
   if (!t) return '';
-  if (/^[0-9A-Za-zα-ωΑ-Ω]+$/.test(t) || /^[+-]$/.test(t)) return '_' + t;
+  /* ohne Klammer nur ein Zeichen oder eine Zahl: „S_max“ hieße S_m·a·x */
+  if (/^([0-9]+|[A-Za-zα-ωΑ-Ωħ]̂?|[+-])$/.test(t)) return '_' + t;
   return '_{' + t + '}';
 }
 
@@ -1270,6 +1375,33 @@ function beamSearch(flat, R, beamW){
 }
 function parseOk(text, R){ if (!text.trim()) return false; try { parseLine(text, R.pctx); return true; } catch(e){ return false; } }
 
+/* Neigung der Grundlinie (Bogenmaß, positiv = fällt nach rechts): Grundlinienpunkt je sicherem Buchstaben/Ziffer (Lagetabelle),
+   kleine Zeichen (Hoch/Tief) weglassen; Gerade mit den meisten Punkten innerhalb 0,1 Geviert (RANSAC über Punktpaare),
+   nur wenn mindestens 5 Punkte und 60 % darauf liegen (Brüche, Hochzahlen und kurze Zeilen bleiben ungedreht) */
+function baselineAngle(groups, H){
+  const P = [];
+  for (const g of groups){
+    const c = g.alts[0][0];
+    if (!(g.alts[0][1] > 0.3) || !/^[0-9A-Za-zα-ωΑ-Ωħ∂]$/.test(c) || c === 'Σ' || g.tiny) continue;
+    const v = VT[vtype(c)], e = g.h / (v[1] - v[0]);
+    P.push({x:g.cx, b:g.y1 - v[1] * e, e});
+  }
+  if (P.length < 5) return 0;
+  const me = median(P.map(p => p.e)), Q = P.filter(p => p.e > 0.7 * me), tol = 0.1 * me;
+  if (Q.length < 5) return 0;
+  let best = null;
+  for (let a = 0; a < Q.length; a++) for (let b = a + 1; b < Q.length; b++){
+    const dx = Q[b].x - Q[a].x; if (Math.abs(dx) < 0.8 * H) continue;
+    const m = (Q[b].b - Q[a].b) / dx; if (Math.abs(m) > 0.3) continue;
+    const inl = Q.filter(p => Math.abs(p.b - (Q[a].b + m * (p.x - Q[a].x))) < tol);
+    if (!best || inl.length > best.length || (inl.length === best.length && Math.abs(m) < Math.abs(best.m))){ best = inl; best.m = m; }
+  }
+  if (!best || best.length < Math.max(5, 0.6 * Q.length)) return 0;
+  const mx = best.reduce((t, p) => t + p.x, 0) / best.length, mb = best.reduce((t, p) => t + p.b, 0) / best.length;
+  let sxy = 0, sxx = 0; best.forEach(p => { sxy += (p.x - mx) * (p.b - mb); sxx += (p.x - mx) * (p.x - mx); });
+  const m = sxx > 0 ? sxy / sxx : 0;
+  return Math.abs(m) > 0.3 ? 0 : Math.atan(m);
+}
 /* ---------------- Hauptfunktion ---------------- */
 function recognize(strokes, rctx, opts){
   const t0 = Date.now();
@@ -1279,23 +1411,42 @@ function recognize(strokes, rctx, opts){
   if (!strokes || !strokes.length) return empty;
   if (!rctx.oracle && !model()) return Object.assign(empty, {err:'Kein Modell geladen'});
   const clean = strokes.map(pts => pts && pts.length ? (typeof pts[0].x === 'number' ? pts : pts.map(p => ({x:+p.x, y:+p.y}))) : null);
-  const k = opts.noDeslant ? 0 : slantOf(clean.filter(Boolean));
-  const S = clean.map((pts, i) => pts ? sInfo(pts, i, k) : null).filter(Boolean);
+  let k = opts.noDeslant ? 0 : slantOf(clean.filter(Boolean));
+  let S = clean.map((pts, i) => pts ? sInfo(pts, i, k) : null).filter(Boolean);
   S.forEach(s => { s.orig = strokes[s.i]; });
   if (!S.length) return empty;
   let H = estimateH(S);
   const R = {rctx, H, E:H / 0.75, wCls:opts.wCls, wGeo:opts.wGeo, lmW:opts.lmW !== undefined ? opts.lmW : 0.6, posW:opts.posW !== undefined ? opts.posW : 0.5, wN:opts.wN, fnB:opts.fnB, W:classWeights(rctx), pctx:rctx.pctx || {}, funcs:rctx.funcs || new Set(), dvars:new Set([...(typeof DIFF_VARS !== 'undefined' ? DIFF_VARS : ['x', 't', 'r', 'k', 'p', 'θ', 'φ']), ...(rctx.coords || [])])};
   /* Geviert aus einer ersten Zeichengruppierung schätzen (Buchstaben und Ziffern, Lage nach Klasse); bei großer Abweichung einmal wiederholen */
-  for (let pass = 0; pass < 2; pass++){
-    const es = [];
-    groupStrokes(S, R).forEach(g => { const c = g.alts[0][0]; if (g.alts[0][1] > 0.3 && /^[0-9A-Za-zα-ωΑ-Ωħ∂]$/.test(c) && c !== 'Σ'){ const v = VT[vtype(c)]; es.push(g.h / (v[1] - v[0])); } });
-    if (!es.length) break;
-    /* Hoch-/Tiefgestelltes ist kleiner: obere Werte zählen (Grundlinie), aber höchstens 1,3 × Median */
-    const E1 = Math.min(pct(es, 0.8), 1.3 * median(es));
-    if (!(E1 > 4)) break;
-    const H1 = 0.75 * E1, changed = Math.abs(H1 - R.H) / R.H > 0.2;
-    R.E = E1; R.H = H = H1;
-    if (!changed) break;
+  const emPass = () => {
+    let groups = [];
+    for (let pass = 0; pass < 2; pass++){
+      const es = [];
+      groups = groupStrokes(S, R);
+      groups.forEach(g => { const c = g.alts[0][0]; if (g.alts[0][1] > 0.3 && /^[0-9A-Za-zα-ωΑ-Ωħ∂]$/.test(c) && c !== 'Σ'){ const v = VT[vtype(c)]; es.push(g.h / (v[1] - v[0])); } });
+      if (!es.length) break;
+      /* Hoch-/Tiefgestelltes ist kleiner: obere Werte zählen (Grundlinie), aber höchstens 1,3 × Median */
+      const E1 = Math.min(pct(es, 0.8), 1.3 * median(es));
+      if (!(E1 > 4)) break;
+      const H1 = 0.75 * E1, changed = Math.abs(H1 - R.H) / R.H > 0.2;
+      R.E = E1; R.H = H = H1;
+      if (!changed) break;
+    }
+    return groups;
+  };
+  const groups0 = emPass();
+  /* schräge Grundlinie: Neigung aus den Grundlinienpunkten der ersten Gruppierung (Theil–Sen), ab 2° die Zeile zurückdrehen.
+     Kästchen der Ergebnis-Zeichen liegen dann im gedrehten System; die Striche (items[].strokes) bleiben die Originale. */
+  const ang = opts.noRotate ? 0 : baselineAngle(groups0, R.H);
+  if (Math.abs(ang) > 0.052){
+    const all = S.flatMap(s => s.pts), cx = all.reduce((t, p) => t + p.x, 0) / all.length, cy = all.reduce((t, p) => t + p.y, 0) / all.length;
+    const c = Math.cos(ang), sn = Math.sin(ang);
+    const rot = clean.map(pts => pts ? pts.map(p => ({x:cx + (p.x - cx) * c + (p.y - cy) * sn, y:cy - (p.x - cx) * sn + (p.y - cy) * c})) : null);
+    k = opts.noDeslant ? 0 : slantOf(rot.filter(Boolean));
+    S = rot.map((pts, i) => pts ? sInfo(pts, i, k) : null).filter(Boolean);
+    S.forEach(s => { s.orig = strokes[s.i]; });
+    R.H = H = estimateH(S); R.E = H / 0.75;
+    emPass();
   }
   if (opts.groupsOnly) return {groups:groupStrokes(S, R).map(g => g.st.map(s => s.i)), H:R.H};
   const nodes = recogRegion(S, R, 0);

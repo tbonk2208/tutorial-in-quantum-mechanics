@@ -306,8 +306,22 @@ function evalM(n, S){
       return matOf(rows);
     }
     case 'spec': return ketM([n], S, false);
+    case 'norm': {
+      const v = evalM(n.a, S);
+      if (isC(v)) return cx(cabs(v));
+      if (isVec(v)){ let q = 0; for (const z of v.v) q += z.re * z.re + z.im * z.im; return cx(Math.sqrt(q)); }
+      throw new EvalError('Die Norm gibt es hier nur für Zustände und Zahlen');
+    }
     case 'lap': throw new EvalError('∇² gibt es hier nicht');
-    case 'prime': throw new EvalError('Ableitungsstriche gibt es hier nicht');
+    case 'prime': {
+      // gestrichener Matrixname wie H' (Störung), wenn er in mats oder ops definiert ist
+      if (n.a.t === 'sym'){
+        const key = symKeyOf(n.a, S).replace(/̂/g, '') + "'".repeat(n.n);
+        if (S.ctx.M.user[key]){ const ck = 'm:' + key; if (!S.cache[ck]) S.cache[ck] = evalM(S.ctx.M.user[key], S); return S.cache[ck]; }
+        if (S.ctx.ops[key]) return evalM(S.ctx.ops[key], S);
+      }
+      throw new EvalError('Ableitungsstriche gibt es hier nicht');
+    }
     case 'evalbr': {
       const v = n.v || 't'; const lo = evalM(n.lo, S), hi = evalM(n.hi, S);
       const at = x => withMLocal(S, v, x, () => evalM(n.a, S));

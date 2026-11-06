@@ -125,8 +125,10 @@ function withLocal(S, name, value, fnc){
   try { return fnc(); } finally { if (old === undefined) delete S.locals[name]; else S.locals[name] = old; }
 }
 function symKeyOf(node, S){
-  if (!node.sub) return node.name;
-  return node.name + '_' + subKey(node.sub, S);
+  // Kennzeichnung wie E^(1), E^(2) gehört zum Namen (sonst wären E^(1) und E^(2) dieselbe Größe)
+  const sup = node.sup ? '^(' + node.sup + ')' : '';
+  if (!node.sub) return node.name + sup;
+  return node.name + '_' + subKey(node.sub, S) + sup;
 }
 function subKey(sub, S){
   if (sub.t === 'num') return String(sub.v);
@@ -229,6 +231,13 @@ function elab(n, S, slot){
     case 'bra': throw new ElabError('Ein Bra ⟨…| allein hat in der Ortsdarstellung keinen Wert', 'type');
     case 'braket': return val(braketPos(n.bra, n.op, n.ket, S));
     case 'expect': return val(expectPos(n.a, S));
+    case 'norm': {
+      // L²-Norm einer Funktion (‖ψ‖ = sqrt(∫|ψ|² dx)); hängt der Ausdruck nicht vom Ort ab: Betrag
+      const r = elab(n.a, S); if (isOp(r)) throw new ElabError('Norm eines Operators gibt es hier nicht', 'type');
+      const fv = freeVars(r.e);
+      if (S.ctx.space.some(v => fv.has ? fv.has(v) : fv.includes(v))) return val(fn('sqrt', innerPos(r.e, r.e, S)));
+      return val(fnSimplify('abs', [r.e]));
+    }
     case 'unc': {
       const st = S.ctx.state;
       const A = n.a;
@@ -319,7 +328,7 @@ function elabSym(n, S, slot){
     return val(V(key));
   }
   if (ctx.coords.includes(key)) return val(V(key));
-  if (n.sub && ctx.fam[n.name]){
+  if (n.sub && ctx.fam[n.name] && !n.sup){
     const d = ctx.fam[n.name];
     const idx = intValue(n.sub.t === 'list' ? n.sub.a[0] : n.sub, S);
     return withLocal(S, d.idx, val(N(idx)), () => {
@@ -327,7 +336,7 @@ function elabSym(n, S, slot){
       return cleanElab(S, {[d.idx]:val(N(idx))}, () => elab(d.body, S, slot));
     });
   }
-  if (ctx.abstract[n.name] && !n.sub){ const a = ctx.abstract[n.name]; return val(abstractCall(n.name, a, (a.args || ctx.coords).map(v => V(v)), S)); }
+  if (ctx.abstract[n.name] && !n.sub && !n.sup){ const a = ctx.abstract[n.name]; return val(abstractCall(n.name, a, (a.args || ctx.coords).map(v => V(v)), S)); }
   if (n.name === 'δ' && n.sub && n.sub.t === 'list' && n.sub.a.length === 2){
     const a = elab(n.sub.a[0], S).e, b = elab(n.sub.a[1], S).e;
     return val(fnSimplify('kdelta', [a, b]));
@@ -642,9 +651,29 @@ function braketPos(bra, op, ket, S){
   if (op){ const O = elab(op, S, 'op'); g = isOp(O) ? O.ap(g) : mul(O.e, g); }
   return innerPos(f, g, S);
 }
+/* Wellenfunktion mit Knick (|x − a| im Ausdruck): ψ'' enthält dann einen δ-Anteil, den die symbolische Ableitung nicht liefert.
+   Erwartungswerte mit zweiten Ableitungen (p̂², T̂, Ĥ, d²/dx²) werden dort nicht ausgewertet, statt ein falsches Urteil zu geben. */
+function hasKink(e, vars){
+  let hit = false;
+  const walk = x => { if (hit || !x || typeof x !== 'object') return; if (Array.isArray(x)){ x.forEach(walk); return; }
+    if (x.k === 'f' && x.name === 'abs' && x.a && vars.some(v => dependsOn(x.a[0], v))) { hit = true; return; }
+    for (const k of Object.keys(x)) if (x[k] && typeof x[k] === 'object') walk(x[k]); };
+  walk(e); return hit;
+}
+function needsSecondDeriv(A){
+  let hit = false;
+  const walk = n => { if (hit || !n || typeof n !== 'object') return; if (Array.isArray(n)){ n.forEach(walk); return; }
+    if (n.t === 'sym' && !n.sub && (n.name === 'T' || n.name === 'H')) { hit = true; return; }
+    if (n.t === 'pow' && n.a && n.a.t === 'sym' && (n.a.name === 'p' || n.a.name === 'p_x')) { hit = true; return; }
+    if (n.t === 'deriv' && (n.n || 1) >= 2) { hit = true; return; }
+    if (n.t === 'lap') { hit = true; return; }
+    for (const k of Object.keys(n)) if (n[k] && typeof n[k] === 'object') walk(n[k]); };
+  walk(A); return hit;
+}
 function expectPos(A, S){
   const st = S.ctx.state;
   const psi = elab({t:'sym', name:st, hat:false, sub:null}, S).e;
+  if (needsSecondDeriv(A) && hasKink(psi, S.ctx.space)) throw new ElabError('Diese Wellenfunktion hat einen Knick (Betrag |x|). Dort steckt in ψ\'\' ein δ-Anteil, den ich nicht auswerte – rechne ⟨p²⟩ hier als ħ²∫|ψ\'|²dx.', 'unsupported');
   const O = elab(A, S, 'op');
   const g = isOp(O) ? O.ap(psi) : mul(O.e, psi);
   const num = innerPos(psi, g, S);

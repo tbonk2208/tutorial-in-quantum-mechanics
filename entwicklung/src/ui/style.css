@@ -46,7 +46,7 @@ p{margin:0}
 .side button.on{background:var(--sheet);color:var(--ink);border-left-color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .side hr{border:0;border-top:1px solid var(--line);margin:8px 6px}
 main{background:var(--sheet);border:1px solid var(--line);border-radius:16px;padding:28px 30px 34px;min-height:60vh;outline:none}
-@media (max-width:900px){ .layout{grid-template-columns:1fr;padding:12px 10px 150px} .side{display:none} main{padding:20px 16px} .bar{width:70px} .chip{display:none} }
+@media (max-width:900px){ .layout{grid-template-columns:minmax(0,1fr);padding:12px 10px 150px} .side{display:none} main{padding:20px 16px} .bar{width:70px} .chip{display:none} }
 .back{border:0;background:none;color:var(--accent);font:600 1rem var(--f-body);cursor:pointer;padding:0;margin-bottom:10px}
 .muted{color:var(--muted)} .small{font-size:.9rem} .tiny{font-size:.8rem}
 .stack>*+*{margin-top:14px}
@@ -253,3 +253,131 @@ table.tb th,table.tb td{border-bottom:1px solid var(--line);padding:7px 8px;text
 .probe-tb tr.bad td:last-child{color:var(--bad);font-weight:700}
 .probe-tb tr.skip,.probe-tb tr.open{opacity:.6}
 @media (max-width:520px){ .probe-tex .katex{font-size:1.15em} .probe-target{padding:6px 10px} }
+/* ===== Lernweg Version 4 (Agent L) ===== */
+/* Auswahl im Prüfungsmodus und festgelegte Antwort */
+.mc .opt.sel{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.mc.exam{border-color:var(--line);border-left:4px solid var(--accent)}
+.mc.exam .qh{color:var(--accent)}
+.mc.held{border-color:var(--line)}
+.mc.held .opt:disabled{cursor:default}
+.mc .opt:disabled{cursor:default}
+.mc .fbx{color:var(--muted)}
+/* Sicherheitsurteil */
+.conf{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.conf .cf{border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:4px 12px;font:600 .88rem var(--f-body);cursor:pointer;min-height:32px}
+.conf .cf:hover{border-color:var(--accent)}
+.conf .cf.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+/* Konzeptaufgaben */
+.concept{border:1.5px solid var(--c5);border-radius:12px;padding:14px 16px;max-width:780px;margin-top:16px}
+.concept>.qh{font-size:.75rem;font-weight:700;letter-spacing:.06em;color:var(--c5);text-transform:uppercase;margin-bottom:6px}
+.concept .mc{border:0;padding:6px 0 0;max-width:none;border-radius:0}
+.concept .mc .qh{color:var(--muted)}
+.concept .csit{margin-bottom:8px}
+.talk{display:flex;flex-direction:column;gap:8px;margin:8px 0 6px}
+.say{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;max-width:92%}
+.say .who{font:700 .85rem var(--f-display);background:color-mix(in srgb,var(--c5) 16%,var(--sheet));color:var(--ink);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.say .said{background:var(--info-soft);border-radius:4px 12px 12px 12px;padding:8px 12px}
+.say.s1{margin-left:auto;grid-template-columns:1fr auto}
+.say.s1 .who{order:2}.say.s1 .said{order:1;border-radius:12px 4px 12px 12px;background:color-mix(in srgb,var(--c2) 10%,var(--sheet))}
+.cnach:not(:empty){margin-top:8px}
+a.nachlesen{font-weight:600}
+a.nachlesen::before{content:"↗ ";font-weight:400}
+.nachl{margin-top:4px}
+/* Dialoge */
+.dlg-back{position:fixed;inset:0;background:rgba(10,14,30,.35);z-index:69}
+.dlg{position:fixed;left:50%;top:9vh;transform:translateX(-50%);z-index:70;width:min(94vw,640px);max-height:82vh;overflow:auto;background:var(--sheet);box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.dlg.dlg-wide{width:min(94vw,820px)}
+.dlg-h{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.dlg-x{min-width:36px;justify-content:center;font-size:1.2rem}
+.dlg .segfig{max-width:520px}
+/* Kästen */
+.box-wozu{background:color-mix(in srgb,var(--c4) 11%,var(--sheet));border-left:4px solid var(--c4)}
+.box-refl{background:color-mix(in srgb,var(--c5) 8%,var(--sheet));border-left:4px solid var(--c5)}
+.refresh{margin:-4px 0 4px;padding:8px 12px;border:1px dashed var(--warn);border-radius:10px;background:var(--warn-soft);max-width:760px}
+.selfstudy ul.clean li+li{margin-top:.45em}
+.tag.pre{color:var(--warn);background:var(--warn-soft)}
+.topic.prelim .num{background:var(--warn-soft);color:var(--warn)}
+/* Vorhersage */
+.why-ta{font:inherit;width:100%;max-width:760px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--sheet);color:var(--ink);resize:vertical}
+.why-ta:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+.why-ta[readonly]{background:var(--info-soft)}
+/* Erklären: Abschnitte */
+.segnav{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;scroll-margin-top:80px}
+.segnav button{border:1px solid var(--line);background:var(--sheet);border-radius:10px;padding:4px 10px 4px 5px;font:600 .86rem var(--f-body);color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer;max-width:240px}
+.segnav button .n{width:22px;height:22px;flex:none;border-radius:50%;background:var(--paper);display:grid;place-items:center;font-size:.76rem}
+.segnav button .tl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.segnav button.on{border-color:var(--accent);color:var(--ink);background:var(--accent-soft)} .segnav button.on .n{background:var(--accent);color:var(--accent-ink)}
+.segnav button.done .n{background:var(--good);color:#fff}
+.segnav button:disabled{opacity:.45;cursor:not-allowed}
+.seghead{margin-top:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;font-size:.75rem}
+.segtitle{font-size:1.3rem;margin-top:2px}
+.segbody{display:block}
+.segtext{max-width:760px}
+.segtext p{line-height:1.6}
+.segfig{margin:14px 0 0}
+.segfig .lab{margin-top:0}
+.segfig figcaption{margin-top:6px}
+@media (min-width:1000px){
+  .segbody.withfig{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,1fr);gap:22px;align-items:start}
+  .segbody.withfig .segfig{margin:0;position:sticky;top:84px}
+}
+.dm{overflow-x:auto;overflow-y:hidden}
+.drvh{margin-top:18px}
+/* Labor als Abbildung */
+.lab.fig{padding:8px}
+.lab.fig .readout{font-size:.86rem}
+.lab.fig .ctrl{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 12px}
+.lab.fig:not(.more) .ctrl>.xtra{display:none}
+.lab .morectl{margin-top:4px}
+.lab canvas[hidden]{display:none}
+.lab canvas+canvas{margin-top:8px}
+/* Messfolge */
+.mseq{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.mseq .mbars{display:flex;align-items:flex-end;gap:8px;margin:6px 14px 6px 0;display:inline-flex}
+.mseq .ml{font-size:.85rem;color:var(--muted);align-self:center;margin-right:4px}
+.mseq .mb{display:flex;flex-direction:column;align-items:center;width:34px;height:84px;justify-content:flex-end;position:relative}
+.mseq .mb i{display:block;width:22px;background:color-mix(in srgb,var(--c2) 45%,transparent);border-radius:3px 3px 0 0;min-height:1px}
+.mseq .mb em{font-style:normal;font-size:.8rem;color:var(--muted)}
+.mseq .mb small{font-size:.72rem;color:var(--ink)}
+/* Zusammenfassung als Seitenfeld */
+.sumtab{position:fixed;right:0;top:42%;z-index:35;writing-mode:vertical-rl;transform:rotate(180deg);border:1px solid var(--accent);border-right:0;background:var(--accent);color:var(--accent-ink);font:700 .92rem var(--f-body);padding:14px 8px;border-radius:0 10px 10px 0;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.sumtab.on{background:var(--sheet);color:var(--accent)}
+.sumpanel{position:fixed;right:0;top:64px;bottom:0;z-index:36;width:min(440px,94vw);overflow:auto;background:var(--sheet);border-left:1px solid var(--line);box-shadow:-8px 0 30px rgba(0,0,0,.16);padding:16px 18px 120px}
+.sumhead{position:sticky;top:-16px;background:var(--sheet);padding:6px 0;z-index:1}
+@media (max-width:700px){ .sumtab{position:static;writing-mode:horizontal-tb;transform:none;border-radius:10px;padding:8px 14px;border:1px solid var(--accent);margin:4px 0 8px} .sumpanel{top:0;width:100vw;z-index:75} }
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+/* Abschluss */
+.fitem{margin-top:22px;border-top:2px solid var(--line);padding-top:12px}
+.fhead{font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.fitem .task{margin-top:6px}
+.fres.good{color:var(--good)} .fres.bad{color:var(--bad)}
+.fres b{color:var(--ink)}
+.submitbar{margin-top:24px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--info-soft)}
+.finsum h3{margin-bottom:4px}
+/* Rechenblatt: unsicher gelesene Handschrift */
+.ln.unsure .st{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.ln.unsure .fbk{background:var(--warn-soft);border-left:3px solid var(--warn)}
+.ln.unsure .fbk .btn{margin-left:4px;vertical-align:middle}
+.ink-msg.warn{color:var(--warn);font-weight:600}
+.hint-wait{background:var(--warn-soft)}
+.task.flash,.concept.flash{animation:flash 1.6s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 4px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+/* Gemischte Runde, Fehlerheft, Kalibrierung, Fortschritt */
+.mixlab{margin-top:20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.eblist{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.eb-item{border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}
+.eb-item.done{border-left-color:var(--good);opacity:.8}
+.eb-item .ebline{overflow-x:auto;padding:2px 0}
+.eb-item .ebmsg{background:var(--bad-soft);border-radius:8px;padding:5px 9px}
+.eb-item.done .ebmsg{background:var(--info-soft)}
+.okc{color:var(--good)}
+.calrows{display:flex;flex-direction:column;gap:8px;max-width:640px}
+.calrow{display:grid;grid-template-columns:120px 1fr 190px;gap:10px;align-items:center;font-size:.92rem}
+.calrow .cbar{height:12px;border-radius:6px;background:var(--line);overflow:hidden}.calrow .cbar>i{display:block;height:100%;background:var(--accent)}
+@media (max-width:560px){ .calrow{grid-template-columns:96px 1fr} .calrow .cv{grid-column:1 / -1;color:var(--muted)} }
+.tbw{overflow-x:auto}
+.box.adv>summary{cursor:pointer}
+@media (max-width:520px){ .concept{padding:12px 10px} .say{max-width:100%} .segnav button{max-width:46vw} }
+@media print{ .sumtab,.sumpanel,.conf{display:none} }
+.tag.synth{margin:0 0 6px;color:var(--c5);background:color-mix(in srgb,var(--c5) 12%,var(--sheet))}
+.segnav .tl .katex{font-size:1em}

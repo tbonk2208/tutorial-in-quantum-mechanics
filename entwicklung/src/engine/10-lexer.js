@@ -33,7 +33,8 @@ function fromLatex(s){
     else if (cmd === 'mathrm' || cmd === 'mathit' || cmd === 'text' || cmd === 'operatorname' || cmd === 'mathbf' || cmd === 'boldsymbol'){ const [a, j] = arg(s, i); out += fromLatex(a); i = j; }
     else if (cmd === 'left' || cmd === 'right' || cmd === 'big' || cmd === 'Big' || cmd === 'bigg' || cmd === 'Bigg' || cmd === 'displaystyle' || cmd === 'limits'){ if (s[i] === '.') i++; }
     else if (cmd === 'langle') out += '⟨'; else if (cmd === 'rangle') out += '⟩';
-    else if (cmd === 'vert' || cmd === 'lvert' || cmd === 'rvert' || cmd === 'mid' || cmd === '|') out += '|';
+    else if (cmd === 'vert' || cmd === 'lvert' || cmd === 'rvert' || cmd === 'mid') out += '|';
+    else if (cmd === '|' || cmd === 'Vert' || cmd === 'lVert' || cmd === 'rVert') out += '‖';
     else if (cmd === 'cdot' || cmd === 'times') out += '*';
     else if (cmd === 'dagger') out += '†'; else if (cmd === 'hbar') out += 'ħ'; else if (cmd === 'infty') out += '∞';
     else if (cmd === 'partial') out += '∂'; else if (cmd === 'int') out += '∫'; else if (cmd === 'sum') out += 'Σ'; else if (cmd === 'nabla') out += '∇';
@@ -57,7 +58,7 @@ function normalize(src){
        .replace(/ϕ/g, 'φ').replace(/ϑ/g, 'θ').replace(/ϵ/g, 'ε').replace(/∆/g, 'Δ').replace(/〈/g, '⟨').replace(/〉/g, '⟩')
        .replace(/<=>|⟺|↔/g, '⇔').replace(/=>|⟹/g, '⇒').replace(/<=/g, '≤').replace(/>=/g, '≥').replace(/!=/g, '≠').replace(/~=/g, '≈')
        .replace(/\^\s*dagger/g, '†').replace(/\^\s*†/g, '†').replace(/≡/g, '=').replace(/′/g, "'").replace(/″/g, "''")
-       .replace(/∑/g, 'Σ').replace(/ℓ/g, 'l').replace(/√\s*/g, '√');
+       .replace(/∑/g, 'Σ').replace(/ℓ/g, 'l').replace(/√\s*/g, '√').replace(/∥/g, '‖');
   // Hochgestellte und tiefgestellte Zeichen
   let out = '';
   for (let i = 0; i < s.length; ){
@@ -146,7 +147,7 @@ function lex(src){
     }
     if ('([{⟨'.includes(ch)) depth++;
     if (')]}⟩'.includes(ch)) depth = Math.max(0, depth - 1);
-    if ("+-/^_()[]{},;|⟨⟩<>=!'≈≠≤≥⇒⇔∫Σ√∂∇Δ∞↑↓→←⊗†±∓∈:&.~?".includes(ch)){
+    if ("+-/^_()[]{},;|‖⟨⟩<>=!'≈≠≤≥⇒⇔∫Σ√∂∇Δ∞↑↓→←⊗†±∓∈:&.~?".includes(ch)){
       if (ch === '&' || ch === '~'){ i++; sp = true; continue; }
       if (ch === '.'){ i++; continue; }
       push('op', ch); i++; continue;

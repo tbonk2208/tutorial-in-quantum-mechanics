@@ -15,7 +15,7 @@ const texCheck = (s, where) => {
   for (const m of parts){ const t = m[1] || m[2]; try { katex.renderToString(t, {throwOnError:true, strict:'ignore'}); } catch(e){ err('KaTeX', where, JSON.stringify(t).slice(0, 80), e.message.slice(0, 100)); } }
 };
 const plain = s => String(s || '').replace(/\$[^$]*\$/g, m => m.slice(1, -1).replace(/\\[a-zA-Z]+/g, 'x').replace(/[{}^_ ]/g, '')).replace(/\s+/g, ' ').trim();
-const lenCheck = (q, where) => { if (!q || !q.opts || q.opts.length < 2 || !(q.a >= 0)) return; const L = q.opts.map(o => plain(o).length); const other = Math.max(...L.filter((_, i) => i !== q.a)); if (L[q.a] > 1.3 * other + 3) warn('MC: richtige Option deutlich am längsten', where, L.join('/')); };
+const lenCheck = (q, where) => { if (!q || !q.opts || q.opts.length < 2 || !(q.a >= 0) || q.type === 'dialog') return; const L = q.opts.map(o => plain(o).length); const other = Math.max(...L.filter((_, i) => i !== q.a)); if (L[q.a] > 1.3 * other + 3) warn('MC: richtige Option deutlich am längsten', where, L.join('/')); };
 const mcCheck = (q, where) => { if (!q) return; lenCheck(q, where); texCheck(q.q, where); (q.opts || []).forEach(o => texCheck(o, where)); texCheck(q.ex, where); if (!(q.a >= 0 && q.a < q.opts.length)) err('MC-Antwort', where); };
 function runGoal(task, g, where, given){
   nGoals++;

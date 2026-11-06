@@ -95,13 +95,14 @@ function tex0(n){
       if (base.t === 'sym' && base.sub) bs = '{' + bs + '}';
       if (base.t === 'call' || base.t === 'conj' || base.t === 'dag') bs = (base.t === 'call' && !TEXFN[base.fn] && base.fn !== 'sqrt') ? wrap(bs) : bs;
       if (base.t === 'grp' && base.br === '(') bs = wrap(tex(base.a, 0));
-      else if (base.t === 'abs' || base.t === 'grp' || base.t === 'expect' || base.t === 'braket') bs = '{' + bs + '}';
+      else if (base.t === 'abs' || base.t === 'norm' || base.t === 'grp' || base.t === 'expect' || base.t === 'braket') bs = '{' + bs + '}';
       return bs + '^{' + tex(stripGrp(n.b), 0) + '}';
     }
     case 'conj': return (n.a.t === 'sym' || n.a.t === 'call' || n.a.t === 'grp' || n.a.t === 'abs' || n.a.t === 'braket') ? '{' + tex(n.a, 9) + '}^{*}' : wrap(tex0(n.a)) + '^{*}';
     case 'dag': return (n.a.t === 'sym' || n.a.t === 'grp' || n.a.t === 'ket' || n.a.t === 'bra') ? '{' + tex(n.a, 9) + '}^{\\dagger}' : wrap(tex0(n.a)) + '^{\\dagger}';
     case 'fact': return (n.a.t === 'sym' || (n.a.t === 'num' && n.a.v >= 0) ? tex(n.a, 9) : '\\left(' + tex(stripGrp(n.a), 0) + '\\right)') + '!';
     case 'prime': return '{' + tex(n.a, 9) + '}^{' + '\\prime'.repeat(n.n) + '}';
+    case 'norm': return '\\left\\lVert ' + tex(n.a, 0) + '\\right\\rVert ';
     case 'abs': return '\\left|' + tex(n.a, 0) + '\\right|';
     case 'call': {
       if (n.fn === 'sqrt') return '\\sqrt{' + tex(stripGrp(n.args[0]), 0) + '}';

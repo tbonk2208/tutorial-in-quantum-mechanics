@@ -308,6 +308,10 @@ const INKUI = (() => {
     return {label:String(label ?? o.text ?? '?'), cls:o.cls ?? o.c ?? o.sym ?? label, text:o.line ?? (label != null ? o.text : null) ?? null, res:o.res || null, ok:o.ok !== false, p:o.p};
   }
 
+  /* Lesart prüfen (Gutachten E11.1): Unter dieser Sicherheit (oder ok === false) wird die Zeile nicht automatisch geprüft.
+     Messung an 600 synthetischen Musterzeilen fremder Schreiber: Schwelle 0,35 fängt 52 % der Fehllesungen ab
+     und markiert 4,7 % der richtig gelesenen Zeilen (Agent L, 5. 11. 2026). */
+  const CONF_MIN = 0.35;
   /* ---------- Rechenzeile mit Stift (eine je Zeile des Blatts) ----------
      R = {row, inp, why, pv, fbk}; o = {mode, task, ctx(), extra() (Zeilen darüber), onText(text, src), onEnter()} */
   class InkLine {
@@ -359,6 +363,7 @@ const INKUI = (() => {
         else if (a === 'tall'){ const on = !p.classList.contains('tall'); p.classList.toggle('tall', on); b.setAttribute('aria-pressed', on); const s = S(); s.inkTall = on; store.save(); }
         else if (a === 'ki') this.askKI(b);
         else if (a === 'enter'){ this.flush(); this.o.onEnter && this.o.onEnter(); }
+        else if (a === 'okread') this.confirm();
       });
     }
     setMode(m, manual){
@@ -378,7 +383,10 @@ const INKUI = (() => {
       const b = this.panel.querySelector('.ink-er'); b.setAttribute('aria-pressed', on);
       this.panel.classList.toggle('erasing', on);
     }
-    msg(t, bad){ if (!this.msgEl) return; this.msgEl.innerHTML = t || ''; this.msgEl.hidden = !t; this.msgEl.classList.toggle('bad', !!bad); }
+    msg(t, bad){ if (!this.msgEl) return; this.msgEl.innerHTML = t || ''; this.msgEl.hidden = !t; this.msgEl.classList.toggle('bad', !!bad && bad !== 'warn'); this.msgEl.classList.toggle('warn', bad === 'warn'); }
+    /* unsicher gelesen und noch nicht bestätigt oder geändert → nicht automatisch prüfen */
+    needsConfirm(){ const v = this.R.inp.value.trim(); return !!(this.unsure && !this.confirmed && v && v === String(this.lastText || '').trim()); }
+    confirm(){ this.confirmed = true; this.unsure = false; this.msg(''); if (this.o.onConfirm) this.o.onConfirm(); }
     changed(){ this.res = null; this.sched(); }
     /* Lesen erst nach einer Schreibpause: kein Strich läuft, Stift ~0,7 s nicht mehr geschrieben oder geschwebt (höchstens 3 s warten) */
     sched(){
@@ -405,9 +413,12 @@ const INKUI = (() => {
       let text = String(r.text || '').trim();
       /* Auch wenn keine Lesart für den Prüfkern lesbar ist (ok === false): die beste Lesart ins Feld, damit man sie korrigieren kann */
       if (!text && Array.isArray(r.items) && r.items.length) text = r.items.map(labelOf).join('').trim();
-      this.unsure = !!text && r.ok === false;
+      const low = typeof r.conf === 'number' && isFinite(r.conf) && r.conf < CONF_MIN;
+      this.unsure = !!text && (r.ok === false || low); this.confirmed = false;
+      const okBtn = ' <button type="button" class="btn btn-sm" data-a="okread">Stimmt so</button>';
       this.msg(!text ? 'Nichts lesbar. Schreib etwas größer und deutlicher – oder tipp die Zeile.'
-        : this.unsure ? 'Unsicher gelesen: So versteht das Tutorial die Zeile noch nicht. Korrigiere sie im Feld oder tippe unten ein Zeichen an.' : '', !text || this.unsure);
+        : r.ok === false ? 'Unsicher gelesen: So versteht das Tutorial die Zeile noch nicht. Korrigiere sie im Feld oder tippe unten ein Zeichen an.' + okBtn
+        : this.unsure ? 'Unsicher gelesen: Prüf die Vorschau. Stimmt sie nicht, korrigiere im Feld oder tippe unten ein Zeichen an.' + okBtn : '', !text ? true : this.unsure ? 'warn' : false);
       this.apply(text, 'ink');
     }
     /* gelesenen Text ins Eingabefeld; vorher Getipptes bleibt als Vorschlag erhalten */
@@ -439,9 +450,11 @@ const INKUI = (() => {
     }
     altClick(e){
       const b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.alt != null){ const a = this._alts && this._alts[+b.dataset.alt]; if (a){ const dev = this.res && String(this.res.text || '').trim(); this.apply(a[0], a[0] === dev ? 'ink' : 'alt'); } return; }
+      if (b.dataset.alt != null){ const a = this._alts && this._alts[+b.dataset.alt]; if (a){ const dev = this.res && String(this.res.text || '').trim(); this.apply(a[0], a[0] === dev ? 'ink' : 'alt'); this.chosen(); } return; }
       if (b.dataset.k != null) this.popFor(+b.dataset.k, b);
     }
+    /* Lesart selbst gewählt (Chip oder „Gemeint war“): gilt als geprüft */
+    chosen(){ if (this.unsure){ this.unsure = false; this.confirmed = true; this.msg(''); } }
     popFor(k, el){
       const P = pop();
       let L;
@@ -464,7 +477,7 @@ const INKUI = (() => {
         /* eigene Handschrift: die Korrektur als Beispiel merken */
         const it = this._syms && this._syms[k], H = hand();
         if (H && it && Array.isArray(it.strokes) && it.strokes.length && c.cls && c.cls !== (it.c ?? labelOf(it))) { try { H.add(it.strokes, c.cls, 'fix'); } catch(err){} }
-        if (text != null){ const keep = this.res; this.apply(String(text).trim(), 'ink'); this.res = keep; this.renderAlts(); }
+        if (text != null){ const keep = this.res; this.apply(String(text).trim(), 'ink'); this.res = keep; this.renderAlts(); this.chosen(); }
         else this.msg('Diese Korrektur kann die Erkennung noch nicht übernehmen. Ändere das Zeichen im Feld darunter.', true);
       };
     }

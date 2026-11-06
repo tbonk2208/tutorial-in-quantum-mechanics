@@ -42,6 +42,20 @@ const SOURCES_TEXT = `**Fachliche Grundlage (Standardstoff Quantenmechanik I).**
 
 **Wie geprüft wird.** Jede Zeile wird an mehreren zufällig gewählten Parameterwerten (und für Operatorgleichungen an zufälligen Testfunktionen) numerisch ausgewertet; zwei Ausdrücke gelten als gleich, wenn sie überall bis auf eine relative Abweichung von $10^{-7}$ übereinstimmen. Integrale werden adaptiv nach Gauß-Kronrod berechnet, Ableitungen symbolisch. Das erkennt jede gültige Umformung, auch ungewöhnliche Wege. Grenzen: Eine Zeile, die zufällig an allen Stichproben stimmt, aber allgemein falsch ist, wäre extrem unwahrscheinlich, ist aber nicht ausgeschlossen; Näherungen ($\\approx$) und Grenzwerte werden nicht geprüft; ob ein Schritt *begründet* ist, beurteilt der Prüfkern nicht – dafür ist die Spalte „Begründung“ da.
 
+**Aufbau des Lernwegs für das Selbststudium** (ab Version 4: Erklärtext vor dem Beispiel, Diagnose nach Themenkenntnis, Vorhersagen, Konzeptaufgaben, Abschluss unter Prüfungsbedingungen mit Parallelform, Sicherheitsurteil und Fehlerheft):
+
+- P. A. Kirschner, J. Sweller, R. E. Clark (2006): Why minimal guidance during instruction does not work. *Educational Psychologist* 41(2), 75–86 – und die Gegenposition C. E. Hmelo-Silver, R. G. Duncan, C. A. Chinn (2007), *Educational Psychologist* 42(2), 99–107.
+- J. J. G. van Merriënboer, P. A. Kirschner (2018): *Ten Steps to Complex Learning*, 3. Aufl., Routledge.
+- S. Kalyuga, P. Ayres, P. Chandler, J. Sweller (2003): The expertise reversal effect. *Educational Psychologist* 38(1), 23–31; S. Kalyuga, J. Sweller (2005): Rapid dynamic assessment of expertise. *ETR&D* 53(3), 83–93.
+- G. Ashman, S. Kalyuga, J. Sweller (2020): Problem-solving or explicit instruction: Which should go first when element interactivity is high? *Educational Psychology Review* 32, 229–247. https://doi.org/10.1007/s10648-019-09500-5
+- K. Loibl, I. Roll, N. Rummel (2017): Towards a theory of when and how problem solving followed by instruction supports learning. *Educational Psychology Review* 29, 693–715.
+- R. J. C. M. Salden, V. Aleven, R. Schwonke, A. Renkl (2010): The expertise reversal effect and worked examples in tutored problem solving. *Instructional Science* 38, 289–307. https://doi.org/10.1007/s11251-009-9107-8
+- L. E. Richland, N. Kornell, L. S. Kao (2009): The pretesting effect. *Journal of Experimental Psychology: Applied* 15(3), 243–257; C. H. Crouch, A. P. Fagen, J. P. Callan, E. Mazur (2004): Classroom demonstrations. *American Journal of Physics* 72(6), 835–838 – Vorhersagen.
+- C. Singh (2001): Student understanding of quantum mechanics. *American Journal of Physics* 69(8), 885–895; G. Zhu, C. Singh (2011): Improving students' understanding of quantum mechanics via the Stern–Gerlach experiment. *American Journal of Physics* 79(5), 499–507 – Konzeptaufgaben.
+- C.-L. C. Kulik, J. A. Kulik, R. L. Bangert-Drowns (1990): Effectiveness of mastery learning programs. *Review of Educational Research* 60(2), 265–299; K. A. Rawson, J. Dunlosky, S. M. Sciartelli (2013): The power of successive relearning. *Educational Psychology Review* 25, 523–548 – Abschluss und „sicher“ erst nach Wiederholung.
+- T. M. Haladyna, S. M. Downing, M. C. Rodriguez (2002): A review of multiple-choice item-writing guidelines. *Applied Measurement in Education* 15(3), 309–333.
+- J. Dunlosky, K. A. Rawson (2012): Overconfidence produces underachievement. *Learning and Instruction* 22(4), 271–280; J. Broadbent, W. L. Poon (2015): Self-regulated learning strategies & academic achievement in online higher education. *The Internet and Higher Education* 27, 1–13 – Sicherheitsurteil, Fehlerheft, Lernplan.
+
 **Handschrifterkennung.** Das Erkennungsnetz für die Stifteingabe (103 Zeichen, Faltungsnetz, läuft im Browser) wurde für dieses Tutorial neu trainiert mit:
 
 30. CROHME 2011–2013, Competition on Recognition of Online Handwritten Mathematical Expressions (H. Mouchère u. a., ICDAR; Université de Nantes/CNRS), Lizenz CC BY-NC-SA 3.0.
