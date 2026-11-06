@@ -1,4 +1,16 @@
 /* ===== Thema 8: Drehimpuls ===== */
+/* Skizzen (SKIZZE.md): θ-Teil der Kugelflächenfunktionen, |e^{imφ}|² = 1.
+   |Y_1^0|² = 3/(4π) cos²θ, |Y_1^1|² = 3/(8π) sin²θ, |Y_2^0|² = 5/(16π)(3cos²θ − 1)², |Y_2^1|² = 15/(8π) sin²θ cos²θ, |Y_2^2|² = 15/(32π) sin⁴θ.
+   Dichte des Polarwinkels p(θ) = 2π|Y|² sinθ (Fläche 1): Y_1^0 → (3/2)cos²θ sinθ, Maximum bei tan²θ = 1/2 (θ ≈ 0,6155); Y_2^0 → (5/8)(3cos²θ − 1)² sinθ. */
+const DREH_SK = (() => {
+  const P = Math.PI;
+  const Y = {Y10:t => 3 / (4 * P) * Math.cos(t) ** 2, Y11:t => 3 / (8 * P) * Math.sin(t) ** 2, Y20:t => 5 / (16 * P) * (3 * Math.cos(t) ** 2 - 1) ** 2,
+    Y21:t => 15 / (8 * P) * (Math.sin(t) * Math.cos(t)) ** 2, Y22:t => 15 / (32 * P) * Math.sin(t) ** 4};
+  return Object.assign(Y, {
+    p:k => t => 2 * P * Y[k](t) * Math.sin(t),
+    T:[{x:0, lab:'0'}, {x:P / 4, lab:'\\pi/4'}, {x:P / 2, lab:'\\pi/2'}, {x:3 * P / 4, lab:'3\\pi/4'}, {x:P, lab:'\\pi'}],
+    TP:[{x:0, lab:'0'}, {x:P / 2, lab:'\\pi/2'}, {x:P, lab:'\\pi'}, {x:3 * P / 2, lab:'3\\pi/2'}, {x:2 * P, lab:'2\\pi'}]});
+})();
 const DREH_JM = (extra) => Object.assign({rep:'mat', mat:{preset:'jm'}, coords:['t'], params:{l:{int:[0, 3]}, m:{int:[-3, 3], range:['-l', 'l']}}}, extra || {});
 const DREH_SPH = (unk) => ({coords:['θ', 'φ'], space:['θ', 'φ'], measure:'sin(θ)', params:{}, abstract:{f:{args:['θ', 'φ']}}, unknowns:unk || {}});
 const DREH_XYZ = () => ({coords:['x', 'y', 'z'], params:{}, abstract:{f:{args:['x', 'y', 'z']}},
@@ -343,6 +355,41 @@ topic({
           model:['ΔL_x = sqrt(⟨L_x^2⟩ - ⟨L_x⟩^2)', '= sqrt(ħ^2 - 0)', '= ħ']}
       ]}
   ],
+  sketch:[
+    {id:'dreh-s1', title:'$|Y_2^1|^2$ über $\\theta$', kind:'curve', draw:'abs2',
+      text:'Skizziere $|Y_2^1(\\theta, \\varphi)|^2$ als Funktion des Polarwinkels $\\theta$ von $0$ (Nordpol) bis $\\pi$ (Südpol). Die Höhe ist frei. $Y_2^1$ erhältst du mit $\\hat L_-$ aus $Y_2^2 \\propto \\sin^2\\theta\\,e^{2i\\varphi}$ (Abschnitt ‚Bahndrehimpuls in Kugelkoordinaten‘).',
+      plot:{x:[0, Math.PI], xlab:'\\theta', ylab:'|Y_2^1|^2', ticks:DREH_SK.T},
+      f:DREH_SK.Y21,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann $|Y_l^m|^2$ irgendwo negativ sein? Was bedeutet das Betragsquadrat?'},
+        {id:'pol', name:'Pole', type:'zero', at:[0, Math.PI], msg:'Welchen Wert hat $|Y_2^1|^2$ auf der $z$-Achse, also bei $\\theta = 0$ und $\\theta = \\pi$? Welcher Faktor von $Y_2^1$ entscheidet das?'},
+        {id:'knoten', type:'nodes', n:1, msg:'Wie viele Knoten in $\\theta$ hat $Y_l^m$ zwischen den Polen? Deine Skizze hat {got}. (Abschnitt ‚Kugelflächenfunktionen lesen‘)'},
+        {id:'sym', type:'parity', p:'even', about:Math.PI / 2, msg:'Ändert sich $|Y_l^m|^2$, wenn du am Äquator spiegelst, also $\\theta \\to \\pi - \\theta$? Deine Skizze ist {got}.'}
+      ],
+      reveal:'$|Y_2^1|^2 = \\frac{15}{8\\pi}\\sin^2\\theta\\cos^2\\theta$. Der Faktor $\\sin^2\\theta$ macht sie an beiden Polen null, $\\cos^2\\theta$ gibt den einen Knoten ($l - |m| = 1$) am Äquator. Dazwischen liegen zwei gleich hohe Buckel bei $\\theta = \\pi/4$ und $3\\pi/4$; räumlich sind das zwei Kegel um die $z$-Achse. Die Kurve ist symmetrisch zum Äquator, weil $Y_l^m$ unter $\\vec r \\to -\\vec r$ nur den Faktor $(-1)^l$ bekommt.',
+      hints:['Wende $\\hat L_- = -\\hbar e^{-i\\varphi}(\\partial_\\theta - i\\cot\\theta\\,\\partial_\\varphi)$ auf $\\sin^2\\theta\\,e^{2i\\varphi}$ an und zerlege das Ergebnis in Faktoren.', 'Es ergibt sich $Y_2^1 \\propto \\sin\\theta\\cos\\theta\\,e^{i\\varphi}$. Was macht $\\sin\\theta$ an den Polen, was $\\cos\\theta$ am Äquator, und was bleibt von $e^{i\\varphi}$ im Betragsquadrat? In $\\theta$ hat $Y_l^m$ genau $l - |m|$ Knoten.'],
+      wrong:[
+        {f:DREH_SK.Y20, fails:['pol', 'knoten'], why:'mit $m = 0$ verwechselt: Wahrscheinlichkeit an den Polen'},
+        {f:DREH_SK.Y11, fails:['knoten'], why:'Knotenzahl falsch: ein Ring um den Äquator wie bei $|m| = l$'},
+        {f:DREH_SK.Y22, fails:['knoten'], why:'mit $|Y_2^2|^2 \\propto \\sin^4\\theta$ verwechselt: kein Knoten am Äquator'}
+      ]},
+    {id:'dreh-s2', title:'$|Y_1^1|^2$ entlang des Äquators', kind:'curve', draw:'abs2',
+      text:'Auf dem Äquator ($\\theta = \\pi/2$) läuft der Azimut $\\varphi$ von $0$ bis $2\\pi$ einmal um die $z$-Achse. Skizziere $|Y_1^1(\\pi/2, \\varphi)|^2$ als Funktion von $\\varphi$. Die Höhe ist frei.',
+      plot:{x:[0, 2 * Math.PI], xlab:'\\varphi', ylab:'|Y_1^1|^2', ticks:DREH_SK.TP},
+      f:p => DREH_SK.Y11(Math.PI / 2),
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann $|Y|^2$ negativ sein?'},
+        {id:'flach', type:'amp', a:[1.3, 1.85], b:[2.85, 3.45], cmp:'=', f:1.6, name:'bei π/2 wie bei π', msg:'Wie hängt $Y_1^1$ von $\\varphi$ ab, und was bleibt davon im Betragsquadrat übrig? Bei $\\varphi = \\pi/2$ und $\\varphi = \\pi$ ist deine Kurve verschieden hoch (Verhältnis {got}).'},
+        {id:'flach2', type:'amp', a:[4.45, 4.98], b:[2.85, 3.45], cmp:'=', f:1.6, name:'bei 3π/2 wie bei π', msg:'Wie hängt $Y_1^1$ von $\\varphi$ ab, und was bleibt davon im Betragsquadrat übrig? Bei $\\varphi = 3\\pi/2$ und $\\varphi = \\pi$ ist deine Kurve verschieden hoch (Verhältnis {got}).'}
+      ],
+      reveal:'$Y_1^1 \\propto \\sin\\theta\\,e^{i\\varphi}$, und $|e^{i\\varphi}|^2 = 1$. Auf dem Äquator ist $|Y_1^1|^2 = \\frac{3}{8\\pi}$ für jedes $\\varphi$: eine waagerechte Linie. Deshalb sind alle Bilder von $|Y_l^m|^2$ rotationssymmetrisch um die $z$-Achse. Das reelle Orbital $p_x \\propto \\sin\\theta\\cos\\varphi$ ist dagegen eine Überlagerung von $Y_1^1$ und $Y_1^{-1}$; erst bei ihm hängt die Dichte von $\\varphi$ ab.',
+      hints:['Schreibe $Y_1^1$ als Produkt aus einem $\\theta$-Teil und einem $\\varphi$-Teil. Welcher Teil ändert sich entlang des Äquators?', '$|e^{im\\varphi}|^2 = e^{-im\\varphi}e^{im\\varphi} = 1$ für jedes $\\varphi$.'],
+      wrong:[
+        {f:p => Math.cos(p) ** 2, fails:['flach', 'flach2'], why:'mit dem reellen Orbital $p_x \\propto \\sin\\theta\\cos\\varphi$ verwechselt'},
+        {f:p => Math.sin(p) ** 2, fails:['flach', 'flach2'], why:'mit dem reellen Orbital $p_y \\propto \\sin\\theta\\sin\\varphi$ verwechselt'},
+        {f:p => Math.cos(p), fails:['pos', 'flach', 'flach2'], why:'Realteil $\\cos\\varphi$ statt Betragsquadrat'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'dreh-f3', title:'Kommutator der Leiteroperatoren', text:'Zustände $|l,m\\rangle$; Operatoren `L_x`, `L_y`, `L_z`, `L_+`, `L_-` (ohne Dach). Es gilt $[L_x, L_y] = i\\hbar L_z$.',
       ctx:DREH_JM(),
@@ -371,7 +418,22 @@ topic({
         {name:'Jonas', says:'Eine Messung von $L_x$ liefert einen Eigenwert von $\\hat L_x$, also $-\\hbar$, $0$ oder $\\hbar$. In $Y_1^0$ kommen nur $\\pm\\hbar$ vor, je mit Wahrscheinlichkeit $\\tfrac12$.'}
       ],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], keep:true, a:1,
-      ex:'$\\hat L_x$ hat bei $l = 1$ dieselben Eigenwerte wie $\\hat L_z$. Zerlegt man $|1,0\\rangle$ in die Eigenzustände von $\\hat L_x$, haben die zu $\\pm\\hbar$ je das Gewicht $\\tfrac12$, der zu $0$ das Gewicht null. $\\sqrt2\\,\\hbar$ ist der Betrag $|\\vec L|$, kein Messwert einer Komponente.'}
+      ex:'$\\hat L_x$ hat bei $l = 1$ dieselben Eigenwerte wie $\\hat L_z$. Zerlegt man $|1,0\\rangle$ in die Eigenzustände von $\\hat L_x$, haben die zu $\\pm\\hbar$ je das Gewicht $\\tfrac12$, der zu $0$ das Gewicht null. $\\sqrt2\\,\\hbar$ ist der Betrag $|\\vec L|$, kein Messwert einer Komponente.'},
+    {aim:2, sketch:{id:'dreh-fs1', title:'Verteilung des Polarwinkels in $Y_1^0$', kind:'curve', draw:'abs2',
+      text:'Ein Teilchen ist im Drehimpulszustand $Y_1^0$. Skizziere die Wahrscheinlichkeitsdichte $p(\\theta)$ des Polarwinkels für $0 \\le \\theta \\le \\pi$. Dabei ist $p(\\theta)\\,d\\theta$ die Wahrscheinlichkeit, die Richtung des Teilchens zwischen $\\theta$ und $\\theta + d\\theta$ zu finden, gleich bei welchem $\\varphi$. Die Höhe ist frei.',
+      plot:{x:[0, Math.PI], xlab:'\\theta', ylab:'p(\\theta)', ticks:DREH_SK.T},
+      f:DREH_SK.p('Y10'),
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann $|Y_l^m|^2$ irgendwo negativ sein? Was bedeutet das Betragsquadrat?'},
+        {id:'pol', name:'Pole', type:'zero', at:[0, Math.PI], msg:'Welcher Anteil der Kugelfläche liegt in einem schmalen Streifen $d\\theta$ direkt am Pol? Welcher Faktor im Flächenelement $d\\Omega$ sorgt dafür?'},
+        {id:'knoten', type:'nodes', n:1, msg:'Wo ist $Y_1^0$ selbst null? Deine Skizze hat {got} Nullstellen zwischen den Polen.'},
+        {id:'max', name:'Lage des Maximums', type:'maxat', x:0.6155, tol:0.3, range:[0, Math.PI / 2], msg:'Liegt das Maximum von $p(\\theta)$ in der oberen Hälfte am Pol, am Äquator oder dazwischen? Zwei Faktoren arbeiten gegeneinander.'}
+      ],
+      reveal:'Die Dichte über $\\theta$ enthält das Flächenelement $d\\Omega = \\sin\\theta\\,d\\theta\\,d\\varphi$: $p(\\theta) = 2\\pi|Y_1^0|^2\\sin\\theta = \\tfrac32\\cos^2\\theta\\,\\sin\\theta$, mit Fläche 1. Der Faktor $\\sin\\theta$ macht $p$ an den Polen null, weil die Breitenkreise dort klein werden. $\\cos^2\\theta$ gibt den Knoten am Äquator. Das Maximum liegt bei $\\tan^2\\theta = \\tfrac12$, also $\\theta \\approx 35°$, und nicht am Pol, obwohl $|Y_1^0|^2$ dort am größten ist.',
+      wrong:[
+        {f:DREH_SK.Y10, fails:['pol', 'max'], why:'Flächenelement $\\sin\\theta$ vergessen: $|Y_1^0|^2$ statt $p(\\theta)$'},
+        {f:DREH_SK.p('Y11'), fails:['knoten', 'max'], why:'mit $|m| = 1$ verwechselt: Ring am Äquator statt Kegel um die Pole'}
+      ], points:3}}
   ],
   finalB:[
     {aim:0, task:{id:'dreh-f5', title:'$L_z$ und das Produkt $L_+L_-$', text:'Zustände $|l,m\\rangle$; Operatoren `L_x`, `L_y`, `L_z`, `L_+`, `L_-` (ohne Dach). Es gilt $[L_x, L_y] = i\\hbar L_z$ und zyklisch.',
@@ -401,7 +463,22 @@ topic({
         {name:'Jonas', says:'Weil $\\hat L^2$ und $\\hat L_z$ vertauschen, muss $\\psi$ dann auch Eigenfunktion von $\\hat L_z$ sein.'}
       ],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], keep:true, a:0,
-      ex:'$\\hat L^2\\psi = 6\\hbar^2\\psi$. Aber $\\hat L_z\\psi = \\hbar(Y_2^1 - Y_2^{-1})$ ist kein Vielfaches von $\\psi$. Vertauschende Operatoren haben eine gemeinsame Eigenbasis; bei Entartung ist nicht jede Eigenfunktion des einen auch eine des anderen.'}
+      ex:'$\\hat L^2\\psi = 6\\hbar^2\\psi$. Aber $\\hat L_z\\psi = \\hbar(Y_2^1 - Y_2^{-1})$ ist kein Vielfaches von $\\psi$. Vertauschende Operatoren haben eine gemeinsame Eigenbasis; bei Entartung ist nicht jede Eigenfunktion des einen auch eine des anderen.'},
+    {aim:2, sketch:{id:'dreh-fs2', title:'Verteilung des Polarwinkels in $Y_2^0$', kind:'curve', draw:'abs2',
+      text:'Ein Teilchen ist im Drehimpulszustand $Y_2^0 \\propto 3\\cos^2\\theta - 1$. Skizziere die Wahrscheinlichkeitsdichte $p(\\theta)$ des Polarwinkels für $0 \\le \\theta \\le \\pi$. Dabei ist $p(\\theta)\\,d\\theta$ die Wahrscheinlichkeit, die Richtung des Teilchens zwischen $\\theta$ und $\\theta + d\\theta$ zu finden, gleich bei welchem $\\varphi$. Die Höhe ist frei.',
+      plot:{x:[0, Math.PI], xlab:'\\theta', ylab:'p(\\theta)', ticks:DREH_SK.T},
+      f:DREH_SK.p('Y20'),
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann $|Y_l^m|^2$ irgendwo negativ sein? Was bedeutet das Betragsquadrat?'},
+        {id:'pol', name:'Pole', type:'zero', at:[0, Math.PI], msg:'Welcher Anteil der Kugelfläche liegt in einem schmalen Streifen $d\\theta$ direkt am Pol? Welcher Faktor im Flächenelement $d\\Omega$ sorgt dafür?'},
+        {id:'knoten', type:'nodes', n:2, msg:'Wo ist $Y_2^0$ selbst null? Deine Skizze hat {got} Nullstellen zwischen den Polen.'},
+        {id:'lage', name:'Lage der Knoten', type:'zero', at:[Math.acos(1 / Math.sqrt(3)), Math.PI - Math.acos(1 / Math.sqrt(3))], tol:0.15, msg:'Bei welchen Winkeln ist $3\\cos^2\\theta - 1 = 0$?'}
+      ],
+      reveal:'Die Dichte über $\\theta$ enthält das Flächenelement $d\\Omega = \\sin\\theta\\,d\\theta\\,d\\varphi$: $p(\\theta) = 2\\pi|Y_2^0|^2\\sin\\theta = \\tfrac58(3\\cos^2\\theta - 1)^2\\sin\\theta$, mit Fläche 1. Der Faktor $\\sin\\theta$ macht $p$ an den Polen null, obwohl $|Y_2^0|^2$ dort am größten ist. Die beiden Knoten ($l - |m| = 2$) liegen bei $\\cos^2\\theta = \\tfrac13$, also $\\theta \\approx 55°$ und $125°$. Die drei Buckel, zwei nahe den Polen und einer am Äquator, sind etwa gleich hoch.',
+      wrong:[
+        {f:DREH_SK.Y20, fails:['pol'], why:'Flächenelement $\\sin\\theta$ vergessen: $|Y_2^0|^2$ statt $p(\\theta)$'},
+        {f:DREH_SK.p('Y10'), fails:['knoten', 'lage'], why:'Knotenzahl falsch: ein Knoten am Äquator wie bei $l = 1$'}
+      ], points:3}}
   ],
   errors:[
     {id:'dreh-e1', title:'Ein Vorzeichen im Leiterfaktor',

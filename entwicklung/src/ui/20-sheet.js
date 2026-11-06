@@ -264,7 +264,9 @@ const NOTATION_HELP = `Tippe so, wie du auf Papier schreiben würdest. Unter jed
 - Matrizen und Spaltenvektoren: große Klammern über alle Zeilen, die Einträge sauber in Spalten.
 - Hochzahlen und Indizes deutlich kleiner und höher bzw. tiefer. Komplex konjugiert: ein kleines Sternchen oben rechts (\`ψ*\` oder \`ψ^*\`), adjungiert ein kleines † oder +.
 - Operatoren: das Dach ^ direkt über den Buchstaben (p̂, Ĥ). Dirac-Klammern ⟨ ⟩ spitz und so hoch wie der Inhalt, den Strich | lang.
-- Der Finger schreibt nicht (Schutz vor dem Handballen). Für Geräte ohne Stift lässt sich das in den Einstellungen einschalten. Dort kannst du auch seltene Zeichen wie ψ, ħ, ∂ anlernen.`;
+- Der Finger schreibt nicht (Schutz vor dem Handballen). Für Geräte ohne Stift lässt sich das in den Einstellungen einschalten. Dort kannst du auch seltene Zeichen wie ψ, ħ, ∂ anlernen.
+
+**Skizzen und Schmierzettel.** Skizzen zeichnest du mit Stift, Maus oder – auf Geräten ohne Stift – mit dem Finger; „Prüfen“ fragt nach, wenn ein Merkmal wie Knotenzahl oder Symmetrie nicht passt. Unter jeder Rechenaufgabe klappt „✎ Schmierzettel“ eine freie Fläche für Nebenrechnungen auf. Sie wird gespeichert, aber nicht ausgewertet und nie gesendet.`;
 
 /* ===== Rechenblatt für ein Ziel =====
    opts: slot, fresh, prefill, onResult(r)
@@ -534,6 +536,8 @@ function taskBox(task, opts){
     const el = sheetGoal(task, g, Object.assign({}, opts, {onResult:r => { results[g.id] = r; if (opts.onResult) opts.onResult(task, g, r, results); }}));
     box.append(el);
   }
+  /* Schmierzettel je Aufgabe und Kontext (17-sketch.js): ohne Erkennung, nie an die KI */
+  if (typeof SKUI !== 'undefined' && !opts.noScratch) box.append(SKUI.scratchBox(task, opts.slot || ''));
   box.results = results;
   return box;
 }

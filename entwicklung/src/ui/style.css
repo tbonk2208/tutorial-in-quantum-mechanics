@@ -381,3 +381,60 @@ a.nachlesen::before{content:"↗ ";font-weight:400}
 @media print{ .sumtab,.sumpanel,.conf{display:none} }
 .tag.synth{margin:0 0 6px;color:var(--c5);background:color-mix(in srgb,var(--c5) 12%,var(--sheet))}
 .segnav .tl .katex{font-size:1em}
+/* ===== Skizzen und Schmierzettel (17-sketch.js) ===== */
+.sketch{border:1.5px solid var(--c2);border-radius:12px;padding:14px 16px;margin-top:16px;max-width:900px}
+.sketch>.qh{font-size:.75rem;font-weight:700;letter-spacing:.06em;color:var(--c2);text-transform:uppercase;margin-bottom:6px}
+.sketch>h3{margin-bottom:6px}
+.sketch.flash{animation:flash 1.6s ease-out}
+.sk-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0 6px}
+.sk-tools .btn{min-height:34px;padding:3px 10px;gap:5px}
+.sk-seg{display:inline-flex;gap:0}
+.sk-seg .btn{border-radius:0}
+.sk-seg .btn:first-child{border-radius:9px 0 0 9px}
+.sk-seg .btn+.btn{border-left:0;border-radius:0 9px 9px 0}
+.sk-tools .btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.sk-tools .sk-er[aria-pressed="true"]{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.sk-tools .btn.sure{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.sketch .btn:focus-visible,.scr .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sk-wrap{position:relative;border:2px solid var(--line);border-radius:10px;overflow:hidden;background:var(--sheet);margin:0 auto}
+.sk-cv{display:block;width:100%;height:220px;cursor:crosshair;touch-action:none}
+.sk-wrap.erasing{border-color:var(--bad);border-style:dashed}
+.sk-wrap.erasing .sk-cv{cursor:cell}
+.sk-wrap.frozen .sk-cv{cursor:default}
+.sk-lab{position:absolute;inset:0;pointer-events:none}
+.sk-lab>span{position:absolute;white-space:nowrap;font-size:.9rem;line-height:1.1;color:var(--ink)}
+.sk-lab .katex{font-size:1.02em}
+.sk-lab .tk{color:var(--muted);font-size:.84rem}
+.sk-lab .rg{color:var(--c4);font-size:.8rem;font-weight:600}
+.sk-lab .en{color:var(--c1);font-size:.84rem}
+.sk-lab .gv{color:var(--muted)}
+.sk-lab .ml{color:var(--c2);font-weight:700}
+.sk-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.86rem;color:var(--muted);margin-top:5px}
+.sk-legend .lg::before{content:"";display:inline-block;width:22px;border-top:3px solid currentColor;vertical-align:middle;margin-right:6px;border-radius:2px}
+.sk-legend .lg-m{color:var(--c2);font-weight:600}
+.sk-legend .lg-o{color:var(--ink)}
+.sk-act{margin-top:10px}
+.sk-note:empty{display:none}
+.sk-note{margin-top:6px}
+.sk-fb{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;max-width:780px}
+.sk-fb:empty{display:none}
+.sk-fb li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:start;padding:6px 10px;border-radius:9px;font-size:.95rem;background:var(--info-soft)}
+.sk-fb li .i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.8rem;background:var(--info);color:var(--sheet)}
+.sk-fb li.ok,.sk-fb li.all{background:var(--good-soft)} .sk-fb li.ok .i,.sk-fb li.all .i{background:var(--good);color:#fff}
+.sk-fb li.ask{background:var(--warn-soft);border-left:3px solid var(--warn)} .sk-fb li.ask .i{background:var(--warn);color:#fff}
+.sk-fb.stale{opacity:.55}
+.sk-hints:empty,.sk-rev:empty{display:none}
+.sk-rev{margin-top:10px}
+/* Schmierzettel */
+.scr{margin-top:12px}
+.scr-head{gap:8px}
+.scr-tog{padding-left:6px}
+.scr-tog.on{background:var(--accent-soft)}
+.scr-p{margin-top:4px}
+.scr-cw{border:2px dashed var(--line);border-radius:10px;background:var(--sheet);overflow:hidden}
+.scr-cw.erasing{border-color:var(--bad)}
+.scr-cv{display:block;width:100%;height:280px;cursor:crosshair;touch-action:none}
+.scr-cw.erasing .scr-cv{cursor:cell}
+.scr-note{margin-top:4px}
+@media (max-width:520px){ .sketch{padding:12px 10px} .sk-tools,.scr .sk-tools{gap:4px} .sk-tools .lbl{display:none} .sk-tools .btn{min-width:38px;justify-content:center;padding:3px 8px} .sk-fb li{padding:6px 8px;font-size:.92rem} }
+@media print{ .scr,.sk-tools,.sk-act{display:none} }

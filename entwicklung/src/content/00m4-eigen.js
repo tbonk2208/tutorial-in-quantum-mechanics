@@ -165,6 +165,20 @@ topic({
     ]
   },
   lab:{type:'eigen', title:'Was eine symmetrische Matrix mit dem Einheitskreis macht',
+    sketch:{id:'me-lab-s', kind:'arrows', title:'Vorhersage: die Eigenpfeile des Labors',
+      text:'Das Labor zeichnet für $A = \\begin{pmatrix}a&b\\\\b&d\\end{pmatrix}$ die Pfeile $\\lambda_+e_+$ und $\\lambda_-e_-$: die normierten Eigenvektoren, mit ihren Eigenwerten gestreckt. Zeichne beide Pfeile für $a = d = 0{,}5$ und $b = 1{,}5$ vorher, je vom Ursprung aus. Das Vorzeichen eines Eigenvektors ist frei. Stell danach $a = 0{,}5$, $b = 1{,}5$ und $d = 0{,}5$ ein und vergleiche.',
+      plot:{x:[-2.5, 2.5], y:[-2, 2], abs:true, xlab:'1', ylab:'2', unit:true, grid:0.5},
+      // λ± = 0,5 ± 1,5, also 2 und −1; e+ = (1; 1)/√2, e− = (−1; 1)/√2; λ+e+ = (1,414; 1,414), λ−e− = (0,707; −0,707)
+      want:[
+        {from:[0, 0], to:[Math.SQRT2, Math.SQRT2], axis:true, lab:'\\lambda_+e_+', msg:'Bestimme $\\lambda_\\pm$ mit der Formel aus dem Lerntext. Welche Richtung wird um den größeren Eigenwert gestreckt? (Abschnitt „Eigenwerte und Eigenvektoren“)', msgLen:'Die Richtung passt. Wie lang ist $\\lambda_+e_+$, wenn $e_+$ normiert ist?'},
+        {from:[0, 0], to:[Math.SQRT1_2, -Math.SQRT1_2], axis:true, lab:'\\lambda_-e_-', msg:'In welche Richtung zeigt der zweite Eigenvektor? Prüfe deinen Kandidaten mit $Av = \\lambda v$.', msgLen:'Die Richtung passt. Wie lang ist $\\lambda_-e_-$? Denk an den Betrag $|\\lambda_-|$.'}],
+      reveal:'Für $a = d$ ist $\\lambda_\\pm = a \\pm |b|$, hier $2$ und $-1$, und die Eigenvektoren liegen auf den Diagonalen: $A(1;\\ 1) = 2\\,(1;\\ 1)$ und $A(1;\\ -1) = -(1;\\ -1)$. Der Pfeil $\\lambda_+e_+$ ist 2 lang, $\\lambda_-e_-$ ist 1 lang. Das Labor wählt $e_- = (-1;\\ 1)/\\sqrt2$; wegen $\\lambda_- < 0$ zeigt $\\lambda_-e_-$ dann gegen $e_-$, nach rechts unten. Weil das Vorzeichen eines Eigenvektors frei ist, sind die beiden Gegenpfeile ebenso richtig. Die Spalten von $A$ sind dagegen die Bilder der Basisvektoren, keine Eigenvektoren.',
+      hints:['Berechne zuerst beide Eigenwerte. Suche dann zu jedem einen Vektor, der von $A$ nur gestreckt wird.', 'Bei $a = d$ ist $A = a\\mathbb 1 + b\\,\\sigma_x$. Welche Eigenvektoren hat $\\sigma_x$?'],
+      wrong:[
+        {arrows:[{from:[0, 0], to:[Math.SQRT1_2, Math.SQRT1_2]}, {from:[0, 0], to:[Math.SQRT1_2, -Math.SQRT1_2]}], fails:[0], why:'Eigenvektoren nicht mit den Eigenwerten gestreckt'},
+        {arrows:[{from:[0, 0], to:[Math.SQRT1_2, Math.SQRT1_2]}, {from:[0, 0], to:[Math.SQRT2, -Math.SQRT2]}], fails:[0, 1], why:'Eigenwerte den falschen Eigenvektoren zugeordnet'},
+        {arrows:[{from:[0, 0], to:[0.5, 1.5]}, {from:[0, 0], to:[1.5, 0.5]}], fails:[0, 1], why:'Spalten der Matrix als Eigenvektoren'}
+      ]},
     text:'Die Matrix $A = \\begin{pmatrix}a&b\\\\b&d\\end{pmatrix}$ ist reell und symmetrisch, also hermitesch. Mit den Reglern stellst du $a$, $b$ und $d$ zwischen $-2$ und $2$ ein. Gezeichnet sind der Einheitskreis, sein Bild unter $A$ (eine Ellipse) und die Richtungen der beiden Eigenvektoren. Die Anzeige zeigt $\\lambda_\\pm = \\frac{a+d}{2} \\pm \\sqrt{\\left(\\frac{a-d}{2}\\right)^2 + b^2}$ sowie Spur und Determinante.',
     predict:{q:'Bevor du die Regler bewegst: Bei $a = d = 1$ und $b = 0$ ist $A = \\mathbb 1$. Was passiert mit den Eigenrichtungen, wenn du $b$ nur ein wenig auf $0{,}1$ erhöhst?', opts:['Sie springen sofort auf die Diagonalen $(1, \\pm1)$.', 'Sie drehen sich langsam von den Achsen weg, proportional zu $b$.', 'Sie bleiben auf den Koordinatenachsen liegen.'], a:0, ex:'Für $a = d$ ist $A = a\\mathbb 1 + b\\sigma_x$, und die Eigenvektoren von $\\sigma_x$ sind $(1, \\pm1)^T/\\sqrt2$, egal wie klein $b$ ist. Bei $b = 0$ ist jeder Vektor Eigenvektor (entartet). So wählt eine kleine Kopplung bei Entartung die passende Basis aus (Thema 11).'},
     questions:[
@@ -281,6 +295,21 @@ topic({
           note:'Startet das Teilchen links, $|L\\rangle = (1, 0)^T$, ist die Wahrscheinlichkeit rechts $\\sin^2(\\Delta t/\\hbar)$: Es tunnelt periodisch hin und her.'}
       ]}
   ],
+  sketch:[
+    {id:'me-s1', kind:'arrows', title:'Zwei Abbildungen nacheinander',
+      text:'$R = \\begin{pmatrix}0&-1\\\\1&0\\end{pmatrix}$ dreht um $90°$ gegen den Uhrzeigersinn, $S = \\begin{pmatrix}1&0\\\\0&-1\\end{pmatrix}$ spiegelt an der $x$-Achse. Gegeben ist $v = (1{,}5;\\ 0{,}5)$ (grau). Zeichne $SRv$ als Pfeil vom Ursprung aus.',
+      plot:{x:[-2, 2], y:[-2, 2], abs:true, xlab:'x', ylab:'y', grid:0.5},
+      given:[{from:[0, 0], to:[1.5, 0.5], lab:'v'}],
+      // Rv = (−0,5; 1,5), SRv = (−0,5; −1,5); zum Vergleich RSv = R(1,5; −0,5) = (0,5; 1,5)
+      want:[{from:[0, 0], to:[-0.5, -1.5], lab:'SRv', msg:'Welche Matrix wirkt in $SRv$ zuerst auf $v$? Wende sie an und danach die andere. (Abschnitt „Matrizen als lineare Abbildungen“)'}],
+      reveal:'Die rechte Matrix wirkt zuerst: $Rv = (-0{,}5;\\ 1{,}5)$, dann spiegelt $S$ an der $x$-Achse, $SRv = (-0{,}5;\\ -1{,}5)$. In der anderen Reihenfolge entsteht $RSv = (0{,}5;\\ 1{,}5)$, ein ganz anderer Pfeil. Also ist $SR \\ne RS$, und der Kommutator $[S, R]$ ist nicht null.',
+      hints:['Rechne von rechts nach links: erst $u = Rv$, dann $Su$.', 'In $(AB)v = A(Bv)$ wirkt die rechte Matrix zuerst.'],
+      wrong:[
+        {arrows:[{from:[0, 0], to:[0.5, 1.5]}], fails:[0], why:'Reihenfolge vertauscht: RSv statt SRv'},
+        {arrows:[{from:[0, 0], to:[-0.5, 1.5]}], fails:[0], why:'nur gedreht, Spiegelung vergessen'},
+        {arrows:[{from:[0, 0], to:[1.5, -0.5]}], fails:[0], why:'nur gespiegelt, Drehung vergessen'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'me-f2', title:'Kommutator', text:'Pauli-Matrizen $\\sigma_x = \\begin{pmatrix}0&1\\\\1&0\\end{pmatrix}$, $\\sigma_y = \\begin{pmatrix}0&-i\\\\i&0\\end{pmatrix}$, $\\sigma_z = \\begin{pmatrix}1&0\\\\0&-1\\end{pmatrix}$, in der Eingabe `σ_x`, `σ_y`, `σ_z`.',
       ctx:MAT({}),
@@ -304,7 +333,20 @@ topic({
       text:'Lena und Jonas bestimmen einen normierten Eigenvektor von $\\begin{pmatrix}2&1\\\\1&2\\end{pmatrix}$ zum Eigenwert $3$. Lena erhält $(1, 1)^T/\\sqrt2$, Jonas $(-1, -1)^T/\\sqrt2$.',
       people:[{name:'Lena', says:'Normierte Eigenvektoren sind eindeutig. Einer von uns hat sich verrechnet.'}, {name:'Jonas', says:'Beide Vektoren stimmen. Normiert ist ein Eigenvektor nur bis auf einen Faktor $e^{i\\alpha}$ festgelegt.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'Mit $v$ ist auch $cv$ Eigenvektor; die Normierung legt nur $|c| = 1$ fest. $-1 = e^{i\\pi}$ ist ein solcher Faktor. In der QM beschreiben $v$ und $e^{i\\alpha}v$ denselben physikalischen Zustand.'}
+      ex:'Mit $v$ ist auch $cv$ Eigenvektor; die Normierung legt nur $|c| = 1$ fest. $-1 = e^{i\\pi}$ ist ein solcher Faktor. In der QM beschreiben $v$ und $e^{i\\alpha}v$ denselben physikalischen Zustand.'},
+    {aim:1, sketch:{id:'me-fs-a', kind:'arrows', title:'Eigenvektoren, mit den Eigenwerten gestreckt', points:3,
+      text:'$A = \\begin{pmatrix}2&2\\\\2&-1\\end{pmatrix}$. Zeichne für jeden Eigenwert $\\lambda$ von $A$ den Pfeil $\\lambda e$ mit dem zugehörigen normierten Eigenvektor $e$, je vom Ursprung aus. Das Vorzeichen von $e$ ist frei.',
+      plot:{x:[-3.5, 3.5], y:[-3.5, 3.5], abs:true, xlab:'1', ylab:'2', unit:true, grid:1},
+      // tr A = 1, det A = −6: λ = 3 und −2; e_3 = (2; 1)/√5, e_{−2} = (1; −2)/√5
+      want:[
+        {from:[0, 0], to:[6 / Math.sqrt(5), 3 / Math.sqrt(5)], axis:true, msg:'Bestimme die Eigenwerte aus $\\lambda^2 - (\\operatorname{tr}A)\\lambda + \\det A = 0$. Welche Richtung wird um den Eigenwert mit dem größeren Betrag gestreckt?'},
+        {from:[0, 0], to:[2 / Math.sqrt(5), -4 / Math.sqrt(5)], axis:true, msg:'Setze den zweiten Eigenwert in $(A - \\lambda\\mathbb 1)v = 0$ ein. In welche Richtung zeigt $v$, und wie lang ist der Pfeil $\\lambda e$?'}],
+      reveal:'$\\operatorname{tr}A = 1$ und $\\det A = -6$ geben $\\lambda^2 - \\lambda - 6 = 0$, also $\\lambda = 3$ und $\\lambda = -2$. Für $\\lambda = 3$ verlangt die erste Zeile $-x + 2y = 0$, also $e \\propto (2;\\ 1)$; der Pfeil ist 3 lang. Für $\\lambda = -2$ verlangt sie $4x + 2y = 0$, also $e \\propto (1;\\ -2)$; der Pfeil ist 2 lang. Die beiden Richtungen stehen senkrecht, wie bei jeder symmetrischen Matrix. Weil das Vorzeichen von $e$ frei ist, ist jeder Pfeil auch in Gegenrichtung richtig.',
+      wrong:[
+        {arrows:[{from:[0, 0], to:[2, 2]}, {from:[0, 0], to:[2, -1]}], fails:[0, 1], why:'Spalten der Matrix als Eigenvektoren'},
+        {arrows:[{from:[0, 0], to:[4 / Math.sqrt(5), 2 / Math.sqrt(5)]}, {from:[0, 0], to:[3 / Math.sqrt(5), -6 / Math.sqrt(5)]}], fails:[0, 1], why:'Eigenwerte den falschen Eigenvektoren zugeordnet'},
+        {arrows:[{from:[0, 0], to:[2 / Math.sqrt(5), 1 / Math.sqrt(5)]}, {from:[0, 0], to:[1 / Math.sqrt(5), -2 / Math.sqrt(5)]}], fails:[0, 1], why:'nur normierte Eigenvektoren, nicht mit λ gestreckt'}
+      ]}}
   ],
   finalB:[
     {aim:0, task:{id:'me-f4', title:'Kommutator', text:'Pauli-Matrizen $\\sigma_x = \\begin{pmatrix}0&1\\\\1&0\\end{pmatrix}$, $\\sigma_y = \\begin{pmatrix}0&-i\\\\i&0\\end{pmatrix}$, $\\sigma_z = \\begin{pmatrix}1&0\\\\0&-1\\end{pmatrix}$, in der Eingabe `σ_x`, `σ_y`, `σ_z`.',
@@ -329,7 +371,20 @@ topic({
       text:'Lena und Jonas bestimmen einen normierten Eigenvektor von $\\sigma_y = \\begin{pmatrix}0&-i\\\\i&0\\end{pmatrix}$ zum Eigenwert $+1$. Lena erhält $(1, i)^T/\\sqrt2$, Jonas $(i, -1)^T/\\sqrt2$.',
       people:[{name:'Lena', says:'Normiert ist ein Eigenvektor bis auf das Vorzeichen eindeutig. Jonas’ Vektor ist weder $v$ noch $-v$, also falsch.'}, {name:'Jonas', says:'Beide stimmen: $(i, -1)^T = i\\,(1, i)^T$, und der Faktor $i$ hat den Betrag $1$.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'Probe: $\\sigma_y(i, -1)^T = ((-i)(-1),\\ i\\cdot i)^T = (i, -1)^T$. Mit $v$ ist auch $cv$ Eigenvektor; die Normierung legt nur $|c| = 1$ fest, also $c = e^{i\\alpha}$ – nicht nur $\\pm 1$. Hier ist $c = i = e^{i\\pi/2}$. „Bis auf das Vorzeichen“ gilt nur, wenn man sich auf reelle Vektoren beschränkt.'}
+      ex:'Probe: $\\sigma_y(i, -1)^T = ((-i)(-1),\\ i\\cdot i)^T = (i, -1)^T$. Mit $v$ ist auch $cv$ Eigenvektor; die Normierung legt nur $|c| = 1$ fest, also $c = e^{i\\alpha}$ – nicht nur $\\pm 1$. Hier ist $c = i = e^{i\\pi/2}$. „Bis auf das Vorzeichen“ gilt nur, wenn man sich auf reelle Vektoren beschränkt.'},
+    {aim:1, sketch:{id:'me-fs-b', kind:'arrows', title:'Eigenvektoren, mit den Eigenwerten gestreckt', points:3,
+      text:'$A = \\begin{pmatrix}-1&2\\\\2&2\\end{pmatrix}$. Zeichne für jeden Eigenwert $\\lambda$ von $A$ den Pfeil $\\lambda e$ mit dem zugehörigen normierten Eigenvektor $e$, je vom Ursprung aus. Das Vorzeichen von $e$ ist frei.',
+      plot:{x:[-3.5, 3.5], y:[-3.5, 3.5], abs:true, xlab:'1', ylab:'2', unit:true, grid:1},
+      // tr A = 1, det A = −6: λ = 3 und −2; e_3 = (1; 2)/√5, e_{−2} = (2; −1)/√5
+      want:[
+        {from:[0, 0], to:[3 / Math.sqrt(5), 6 / Math.sqrt(5)], axis:true, msg:'Bestimme die Eigenwerte aus $\\lambda^2 - (\\operatorname{tr}A)\\lambda + \\det A = 0$. Welche Richtung wird um den Eigenwert mit dem größeren Betrag gestreckt?'},
+        {from:[0, 0], to:[4 / Math.sqrt(5), -2 / Math.sqrt(5)], axis:true, msg:'Setze den zweiten Eigenwert in $(A - \\lambda\\mathbb 1)v = 0$ ein. In welche Richtung zeigt $v$, und wie lang ist der Pfeil $\\lambda e$?'}],
+      reveal:'$\\operatorname{tr}A = 1$ und $\\det A = -6$ geben $\\lambda^2 - \\lambda - 6 = 0$, also $\\lambda = 3$ und $\\lambda = -2$. Für $\\lambda = 3$ verlangt die erste Zeile $-4x + 2y = 0$, also $e \\propto (1;\\ 2)$; der Pfeil ist 3 lang. Für $\\lambda = -2$ verlangt sie $x + 2y = 0$, also $e \\propto (2;\\ -1)$; der Pfeil ist 2 lang. Die beiden Richtungen stehen senkrecht, wie bei jeder symmetrischen Matrix. Weil das Vorzeichen von $e$ frei ist, ist jeder Pfeil auch in Gegenrichtung richtig.',
+      wrong:[
+        {arrows:[{from:[0, 0], to:[-1, 2]}, {from:[0, 0], to:[2, 2]}], fails:[0, 1], why:'Spalten der Matrix als Eigenvektoren'},
+        {arrows:[{from:[0, 0], to:[2 / Math.sqrt(5), 4 / Math.sqrt(5)]}, {from:[0, 0], to:[6 / Math.sqrt(5), -3 / Math.sqrt(5)]}], fails:[0, 1], why:'Eigenwerte den falschen Eigenvektoren zugeordnet'},
+        {arrows:[{from:[0, 0], to:[1 / Math.sqrt(5), 2 / Math.sqrt(5)]}, {from:[0, 0], to:[2 / Math.sqrt(5), -1 / Math.sqrt(5)]}], fails:[0, 1], why:'nur normierte Eigenvektoren, nicht mit λ gestreckt'}
+      ]}}
   ],
   errors:[
     {id:'me-e1', title:'Vorzeichenfehler im charakteristischen Polynom',

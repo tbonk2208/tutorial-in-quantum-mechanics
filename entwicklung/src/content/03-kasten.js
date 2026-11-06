@@ -6,6 +6,108 @@ const BOX = (extra) => {
   const e = extra || {};
   return Object.assign(base, e, {defs:Object.assign({}, FAM, e.defs || {}), params:Object.assign({}, base.params, e.params || {})});
 };
+/* ---- Skizzenaufgaben (didaktik/SKIZZE.md): Musterfunktionen aus den exakten Lösungen, dimensionslos ---- */
+const SK = (() => {
+  const PI = Math.PI;
+  /* kasten-lab: ψ3 = √(2/L) sin(3πx/L), L = 1 */
+  const boxRange = {x:[-0.15, 1.15], dom:[0, 1], walls:[0, 1]};
+  const ticksL = [{x:0, lab:'0'}, {x:0.5, lab:'L/2'}, {x:1, lab:'L'}];
+  const lab = {
+    id:'kasten-sk-lab', title:'$\\psi_3$ im unendlich tiefen Kasten', kind:'curve', draw:'psi',
+    text:'Skizziere $\\psi_3(x)$ für den Kasten $0 < x < L$. Stell danach im Labor $n = 3$ und die Anzeige $\\psi_n(x)$ ein und vergleiche.',
+    plot:Object.assign({xlab:'x', ylab:'\\psi_3(x)', ticks:[{x:0, lab:'0'}, {x:1 / 3, lab:'L/3'}, {x:0.5, lab:'L/2'}, {x:2 / 3, lab:'2L/3'}, {x:1, lab:'L'}]}, boxRange),
+    f:x => Math.sin(3 * PI * x),
+    checks:[
+      {id:'rand', name:'Null an den Wänden', type:'zero', at:[0, 1], msg:'Was verlangt die unendlich hohe Wand von $\\psi$ bei $x = 0$ und $x = L$? (Abschnitt ‚Das Modell: unendlich hohe Wände‘)'},
+      {id:'knoten', type:'nodes', n:2, msg:'Wie viele Nullstellen hat $\\psi_3$ im Inneren des Kastens? Deine Skizze hat {got}.'},
+      {id:'sym', type:'parity', p:'even', about:0.5, msg:'Ist $\\psi_3$ zur Kastenmitte symmetrisch oder antisymmetrisch? Deine Skizze ist {got}.'},
+      {id:'buckel', name:'Zahl der Buckel', type:'extrema', n:3, msg:'Wie viele halbe Wellenlängen passen für $n = 3$ in den Kasten? Deine Skizze hat {got} Buckel.'}
+    ],
+    reveal:'$\\psi_3 = \\sqrt{2/L}\\,\\sin(3\\pi x/L)$: Aus $kL = 3\\pi$ folgt $L = 3\\lambda/2$, also drei halbe Wellen. Dazwischen liegen zwei Knoten bei $L/3$ und $2L/3$, an beiden Wänden ist $\\psi = 0$. Weil $n$ ungerade ist, ist $\\psi_3$ symmetrisch zur Mitte; dort liegt ein Maximum des Betrags.',
+    hints:['Wie viele halbe Wellenlängen passen in den Kasten, wenn $\\psi$ an beiden Wänden null ist?', 'Für $\\psi_n$ gilt $L = n\\,\\lambda_n/2$, und $\\psi_n$ hat $n - 1$ Knoten im Inneren.'],
+    wrong:[
+      {f:x => Math.sin(4 * PI * x), fails:['knoten', 'sym', 'buckel'], why:'n mit der Knotenzahl verwechselt: drei Knoten'},
+      {f:x => Math.cos(2.4 * PI * (x - 0.5)), fails:['rand'], why:'ψ an der unendlich hohen Wand nicht null'},
+      {f:x => Math.sin(2 * PI * x), fails:['knoten', 'sym', 'buckel'], why:'einen Knoten zu wenig'}
+    ]
+  };
+  /* kasten-s1: Zustand nach der Energiemessung. Vorher Ψ = (ψ1 + ψ2 + ψ3)/√3, Ergebnis E2 → danach ψ2, Dichte |ψ2|² = 2 sin²(2πx)/L */
+  const pre = x => (Math.sin(PI * x) + Math.sin(2 * PI * x) + Math.sin(3 * PI * x)) ** 2;
+  const s1 = {
+    id:'kasten-sk1', title:'Ortsdichte nach einer Energiemessung', kind:'curve', draw:'abs2',
+    text:'Ein Teilchen im Kasten ist im Zustand $\\Psi = \\frac{1}{\\sqrt3}(\\psi_1 + \\psi_2 + \\psi_3)$. Eine Energiemessung ergibt $E_2$. Skizziere die Ortsdichte $|\\psi(x)|^2$ unmittelbar nach dieser Messung.',
+    plot:Object.assign({xlab:'x', ylab:'|\\psi(x)|^2', ticks:[{x:0, lab:'0'}, {x:0.25, lab:'L/4'}, {x:0.5, lab:'L/2'}, {x:0.75, lab:'3L/4'}, {x:1, lab:'L'}]}, boxRange),
+    f:x => Math.sin(2 * PI * x) ** 2,
+    checks:[
+      {id:'pos', type:'nonneg', msg:'Deine Kurve wird negativ (Minimum {got}). Kann eine Ortsdichte negativ sein?'},
+      {id:'rand', name:'Nullstellen', type:'zero', at:[0, 0.5, 1], msg:'In welchem Zustand ist das Teilchen nach dem Messergebnis $E_2$? Wo hat dieser Zustand seine Nullstellen? (Abschnitt ‚Energiemessung und der Zustand danach‘)'},
+      {id:'sym', type:'parity', p:'even', about:0.5, msg:'Ist die Dichte nach der Messung symmetrisch zur Mitte? Spielt der alte Zustand $\\Psi$ noch eine Rolle?'},
+      {id:'buckel', name:'Zahl der Buckel', type:'extrema', n:2, kind:'max', msg:'Wie viele Buckel hat die Dichte des Zustands, in dem das Teilchen nach der Messung ist? Deine Skizze hat {got}.'}
+    ],
+    reveal:'Nach dem Messergebnis $E_2$ ist das Teilchen im Eigenzustand $\\psi_2$ (Kollaps). Die Dichte ist $|\\psi_2|^2 = \\frac2L\\sin^2(2\\pi x/L)$: zwei gleiche Buckel bei $L/4$ und $3L/4$, Nullstellen an den Wänden und in der Mitte. Vom alten Zustand $\\Psi$ ist danach nichts mehr zu sehen. Weil $\\psi_2$ stationär ist, bleibt diese Dichte, bis wieder gemessen wird.',
+    hints:['Frage zuerst: In welchem Zustand ist das System unmittelbar nach dem Messergebnis $E_2$?', 'Nach dem Messpostulat ist es im Eigenzustand zum gemessenen Eigenwert. Skizziere dessen Betragsquadrat.'],
+    wrong:[
+      {f:pre, fails:['sym', 'buckel'], why:'Dichte unverändert wie vor der Messung'},
+      {f:x => (Math.sin(PI * x) + 4 * Math.sin(2 * PI * x) + 9 * Math.sin(3 * PI * x)) ** 2, fails:['rand', 'buckel'], why:'ĤΨ statt Messung: Ĥ angewendet und normiert (Singh & Marshman 2015)'},
+      {f:x => Math.sin(2 * PI * x), fails:['pos', 'sym'], why:'ψ2 statt |ψ2|² gezeichnet'}
+    ]
+  };
+  /* kasten-s2: Kasten mit endlich hohen Wänden, Grundzustand (ħ = m = 1, L = 1, V0 = 8): Mitte bei L/2, Halbbreite a = 1/2, z0 = a√(2V0) = 2.
+     Gerade Lösung: z tan z = √(z0² − z²) → z ≈ 1,030, k = 2z ≈ 2,06, κ ≈ 3,43, E = k²/2 ≈ 2,12 (V0/E ≈ 3,8).
+     Innen cos(k(x − L/2)), außen cos(ka) e^{−κ(|x − L/2| − a)}; ψ und ψ' stetig an den Wänden. */
+  const WG = (() => {
+    const a = 0.5, V0 = 8, z0 = a * Math.sqrt(2 * V0);
+    let lo = 1e-9, hi = Math.min(PI / 2 - 1e-9, z0);
+    const g = z => z * Math.tan(z) - Math.sqrt(Math.max(0, z0 * z0 - z * z));
+    for (let i = 0; i < 200; i++){ const m = (lo + hi) / 2; if (g(m) > 0) hi = m; else lo = m; }
+    const z = (lo + hi) / 2, k = z / a, kap = Math.sqrt(z0 * z0 - z * z) / a, B = Math.cos(k * a);
+    const f = x => { const u = x - 0.5; return Math.abs(u) <= a ? Math.cos(k * u) : B * Math.exp(-kap * (Math.abs(u) - a)); };
+    return {f, k, kap, E:k * k / 2, V0, B};
+  })();
+  const s2 = {
+    id:'kasten-sk2', title:'Grundzustand bei endlich hohen Wänden', kind:'curve', draw:'psi',
+    text:'Die Wände sind jetzt nicht unendlich hoch: $V = 0$ für $0 < x < L$ und $V = V_0$ außerhalb, mit $V_0$ knapp viermal so groß wie die Energie $E$ des Grundzustands (Abbildung). Skizziere den Grundzustand $\\psi(x)$.',
+    plot:{x:[-1.1, 2.1], xlab:'x', ylab:'\\psi(x)', ticks:[{x:0, lab:'0'}, {x:0.5, lab:'L/2'}, {x:1, lab:'L'}], V:x => x > 0 && x < 1 ? 0 : WG.V0, Vr:[0, 10], E:WG.E,
+      regions:[{x:[-1.1, 0], lab:'E < V_0'}, {x:[1, 2.1], lab:'E < V_0'}]},
+    f:WG.f,
+    checks:[
+      {id:'links', name:'links außen', type:'decay', toward:'left', range:[-1.1, 0], msg:'Ist $\\psi$ links von der Wand null? Was macht $\\psi$ dort, wo $E < V_0$ ist? (Abschnitt ‚Das Modell: unendlich hohe Wände‘)'},
+      {id:'rechts', name:'rechts außen', type:'decay', toward:'right', range:[1, 2.1], msg:'Was macht $\\psi$ rechts von der Wand, wo $E < V_0$ ist?'},
+      {id:'glatt', name:'Übergang an den Wänden', type:'smooth', at:[0, 1], msg:'Die Wand ist endlich hoch. Was gilt dort für $\\psi$ und $\\psi\'$?'},
+      {id:'knoten', type:'nodes', n:0, msg:'Wie viele Knoten hat ein Grundzustand? Deine Skizze hat {got}.'}
+    ],
+    reveal:'Innen ist $\\psi = \\cos(k(x - L/2))$, außen fällt es wie $e^{-\\kappa d}$ ab, $d$ = Abstand von der Wand. An den Wänden passen Wert und Steigung zusammen, weil $V$ dort endlich ist. Das Eindringen in die Wände gibt $\\psi$ mehr Platz: Die Wellenlänge innen ist größer als im unendlich tiefen Kasten ($\\lambda/2 > L$), also liegt $E$ unter dessen $E_1$. Der Grundzustand hat wie dort keinen Knoten.',
+    hints:['Teile die $x$-Achse in drei Bereiche und überlege für jeden, ob $E > V$ oder $E < V$ ist.', 'Wo $E < V$ ist, krümmt sich $\\psi$ von der Achse weg und fällt ab. An einer endlich hohen Wand sind $\\psi$ und $\\psi\'$ stetig.'],
+    wrong:[
+      {f:x => x > 0 && x < 1 ? Math.sin(PI * x) : 0, fails:['links', 'rechts', 'glatt'], why:'wie im unendlich tiefen Kasten: ψ = 0 außerhalb'},
+      {f:x => { const u = x - 0.5; return Math.abs(u) <= 0.5 ? Math.cos(WG.k * u) : WG.B * Math.exp(-4 * WG.kap * (Math.abs(u) - 0.5)); }, fails:['glatt'], why:'Knick an der endlichen Wand'},
+      {f:x => { const u = x - 0.5; return Math.abs(u) <= 0.5 ? Math.cos(WG.k * u) : WG.B * Math.cos(5 * (Math.abs(u) - 0.5)) * Math.exp(-0.6 * (Math.abs(u) - 0.5)); }, fails:['links', 'rechts'], why:'Schwingung im klassisch verbotenen Bereich'},
+      {f:x => { const u = x - 0.5; return Math.abs(u) <= 0.5 ? Math.sin(2.7 * u) : Math.sign(u) * Math.sin(1.35) * Math.exp(-3 * (Math.abs(u) - 0.5)); }, fails:['knoten'], why:'Grundzustand mit Knoten'}
+    ]
+  };
+  /* Abschluss (Lernziel 0): Zustand zu gegebener Energie. A: E = 16E1 → n = 4; B: E = 25E1 → n = 5 */
+  const fin = (n, E, idp) => ({
+    id:idp, title:'Eigenfunktion zur Energie $' + E + 'E_1$', kind:'curve', draw:'psi', points:3,
+    text:'Ein Teilchen im unendlich tiefen Kasten $0 < x < L$ ist im Energie-Eigenzustand mit $E = ' + E + 'E_1$. Skizziere seine Wellenfunktion $\\psi(x)$.',
+    plot:Object.assign({xlab:'x', ylab:'\\psi(x)', ticks:ticksL}, boxRange),
+    f:x => Math.sin(n * PI * x),
+    checks:[
+      {id:'rand', name:'Null an den Wänden', type:'zero', at:[0, 1], msg:'Was verlangen die unendlich hohen Wände von $\\psi$?'},
+      {id:'knoten', type:'nodes', n:n - 1, msg:'Welches $n$ gehört zu $E = ' + E + 'E_1$, und wie viele Knoten hat $\\psi_n$ im Inneren? Deine Skizze hat {got}.'},
+      {id:'sym', type:'parity', p:n % 2 ? 'even' : 'odd', about:0.5, msg:'Ist $\\psi_n$ für dieses $n$ symmetrisch oder antisymmetrisch zur Mitte? Deine Skizze ist {got}.'},
+      {id:'buckel', name:'Zahl der Buckel', type:'extrema', n, msg:'Wie viele halbe Wellen passen für dieses $n$ in den Kasten? Deine Skizze hat {got} Buckel.'}
+    ],
+    reveal:'Aus $E_n = n^2E_1 = ' + E + 'E_1$ folgt $n = ' + n + '$. Also $\\psi_' + n + ' = \\sqrt{2/L}\\,\\sin(' + n + '\\pi x/L)$: ' + n + ' halbe Wellen, ' + (n - 1) + ' Knoten im Inneren, $\\psi = 0$ an beiden Wänden, ' + (n % 2 ? 'symmetrisch' : 'antisymmetrisch') + ' zur Mitte.',
+    hints:['Bestimme zuerst $n$ aus $E_n = n^2E_1$.', 'Für $\\psi_n$ gilt $L = n\\lambda_n/2$, mit $n - 1$ Knoten im Inneren.'],
+    wrong:[
+      {f:x => Math.sin((n + 1) * PI * x), fails:['knoten', 'sym', 'buckel'], why:'n mit der Knotenzahl verwechselt'},
+      {f:x => Math.sin((n - 1) * PI * x), fails:['knoten', 'sym', 'buckel'], why:'einen Knoten zu wenig'},
+      {f:x => Math.cos((n - 0.6) * PI * (x - 0.5)) * (n % 2 ? 1 : 0) + (n % 2 ? 0 : Math.sin((n - 0.4) * PI * (x - 0.5))), fails:['rand'], why:'ψ an der unendlich hohen Wand nicht null'}
+    ]
+  });
+  const fA = fin(4, 16, 'kasten-sk-A'), fB = fin(5, 25, 'kasten-sk-B');
+  return {lab, s1, s2, fA, fB};
+})();
 topic({
   id:'kasten', math:['m-dgl', 'm-hilbert'], title:'Unendlicher Potentialtopf', short:'Potentialtopf',
   src:'Griffiths & Schroeter Kap. 2.2 · Nolting 5/1 Kap. 4 · Schwabl Kap. 3 · Singh & Marshman 2015 (Lernschwierigkeiten zur Messung)',
@@ -149,7 +251,7 @@ topic({
       {q:'$\\Psi(x,0) = \\frac{1}{\\sqrt3}\\psi_1 + \\sqrt{\\frac23}\\psi_2$. Mit welcher Wahrscheinlichkeit misst man $E_2$?', opts:['$2/3$', '$\\sqrt{2/3}$', '$1/2$'], a:0, ex:'$P(E_2) = |c_2|^2 = 2/3$.'}
     ]
   },
-  lab:{type:'box', title:'Eigenfunktionen im Kasten',
+  lab:{type:'box', sketch:SK.lab, title:'Eigenfunktionen im Kasten',
     text:'Die Linien zeigen die Energien $E_n$ in Einheiten von $E_1$; auf der Linie des eingestellten $n$ ist $\\psi_n$ (oder $|\\psi_n|^2$) eingezeichnet.',
     predict:{q:'Vorhersage: Wie ändert sich der Abstand zwischen benachbarten Energieniveaus, wenn $n$ wächst?', opts:['Er wächst mit $n$.', 'Er bleibt gleich.', 'Er wird kleiner.'], a:0, ex:'$E_{n+1} - E_n = (2n + 1)E_1$: $3E_1$, $5E_1$, $7E_1$, … Beim Oszillator (Thema 7) sind die Abstände dagegen gleich.'},
     questions:[
@@ -250,6 +352,7 @@ topic({
           note:'Für $n = 1$: $\\Delta x\\,\\Delta p = \\hbar\\sqrt{\\pi^2/12 - 1/2} \\approx 0{,}57\\,\\hbar > \\hbar/2$.'}
       ]}
   ],
+  sketch:[SK.s1, SK.s2],
   final:[
     {aim:0, task:{id:'kasten-f1', title:'Ungerader Zustand im symmetrischen Kasten', text:'Ein Kasten reicht von $-a$ bis $a$ (dort $V = 0$, außen $V = \\infty$). Der tiefste Zustand, der um $x = 0$ ungerade ist, hat die Form $\\psi(x) = A\\sin(kx)$ mit $k > 0$.',
       ctx:{coords:['x'], domain:{x:['-a', 'a']}, params:{a:'pos', m:'pos', A:'pos'}, defs:{'ψ(x)':'A sin(k x)'}, unknowns:{k:{ref:'π/a'}, E:{ref:'π^2 ħ^2/(2m a^2)'}}},
@@ -260,6 +363,7 @@ topic({
     {aim:2, task:{id:'kasten-f3', title:'Energieerwartungswert', text:'Im Kasten ist $\\Psi(x,0) = \\frac{1}{\\sqrt5}\\left(\\psi_1(x) + 2\\psi_2(x)\\right)$.',
       ctx:BOX({defs:{'Ψ(x)':'1/sqrt(5) (ψ_1(x) + 2 ψ_2(x))'}, state:'Ψ', normalized:true}),
       goals:[{id:'a', prompt:'Berechne $\\langle H\\rangle$ zu einer beliebigen Zeit $t > 0$, ausgedrückt durch $m$, $L$ und $\\hbar$.', type:'value', target:'17π^2 ħ^2/(10m L^2)', points:2, model:['⟨H⟩ = 1/5 E_1 + 4/5 E_2', '= 1/5 E_1 + 16/5 E_1', '= 17/5 E_1', '= 17π^2 ħ^2/(10m L^2)']}]}},
+    {aim:0, sketch:SK.fA},
     {aim:'k', id:'kasten-fk1', type:'mc2', q:'Eine Energiemessung an $(\\psi_1 + 2\\psi_2)/\\sqrt5$ ergibt $E_2$. Direkt danach misst man den Ort. Wie groß ist $P(0 < x < L/2)$?', opts:['genau $1/2$', '$4/5$, das Gewicht von $\\psi_2$', 'je nach Messzeitpunkt verschieden'], a:0, ex:'Nach der Energiemessung ist der Zustand $\\psi_2$.',
       reason:{q:'Warum?', opts:['Der Zustand ist jetzt $\\psi_2$, und $|\\psi_2|^2$ ist symmetrisch um $L/2$.', 'Die Ortsverteilung hängt nur von den Gewichten $|c_n|^2$ ab.', 'Eine Energiemessung ändert die Ortsverteilung nicht.'], a:0, ex:'$|\\psi_2|^2$ hat zwei gleiche Buckel links und rechts der Mitte. Vor der Messung war die Verteilung eine andere – die Messung hat den Zustand verändert.'}},
     {aim:'k', id:'kasten-fk2', type:'dialog', text:'Ein Teilchen ist sicher im Grundzustand $\\psi_1$. Eine Ortsmessung findet es in einem schmalen Bereich um $x_0 = L/3$. Danach misst man die Energie.',
@@ -277,6 +381,7 @@ topic({
     {aim:2, task:{id:'kasten-fB3', title:'Energieerwartungswert', text:'Im Kasten ist $\\Psi(x,0) = \\frac{1}{\\sqrt5}\\left(2\\psi_1(x) + \\psi_3(x)\\right)$.',
       ctx:BOX({defs:{'Ψ(x)':'1/sqrt(5) (2 ψ_1(x) + ψ_3(x))'}, state:'Ψ', normalized:true}),
       goals:[{id:'a', prompt:'Berechne $\\langle H\\rangle$ zu einer beliebigen Zeit $t > 0$, ausgedrückt durch $m$, $L$ und $\\hbar$.', type:'value', target:'13π^2 ħ^2/(10m L^2)', points:2, model:['⟨H⟩ = 4/5 E_1 + 1/5 E_3', '= 4/5 E_1 + 9/5 E_1', '= 13/5 E_1', '= 13π^2 ħ^2/(10m L^2)']}]}},
+    {aim:0, sketch:SK.fB},
     {aim:'k', id:'kasten-fBk1', type:'mc2', q:'Im Zustand $(\\psi_1 + \\psi_2)/\\sqrt2$ schwingt $\\langle x\\rangle$. Eine Energiemessung ergibt $E_1$. Wie verhält sich $\\langle x\\rangle$ danach?', opts:['Es bleibt konstant bei $L/2$.', 'Es schwingt weiter wie zuvor.', 'Es schwingt mit halber Amplitude.'], a:0, ex:'Nach der Messung ist der Zustand $\\psi_1$.',
       reason:{q:'Warum?', opts:['Nach der Messung ist der Zustand $\\psi_1$, und der ist stationär.', 'Eine Energiemessung betrifft den Ort nicht, also bleibt alles wie vorher.', 'Jede Messung halbiert die Amplitude der Schwingung.'], a:0, ex:'Ohne den Anteil $\\psi_2$ fehlt der Mischterm, der $\\langle x\\rangle$ schwingen ließ.'}},
     {aim:'k', id:'kasten-fBk2', type:'dialog', text:'Ein Teilchen ist im Zustand $\\psi_3$. Eine Ortsmessung findet es in einem schmalen Bereich um $x_0 = L/2$, genau am mittleren Maximum von $|\\psi_3|^2$. Danach misst man die Energie.',

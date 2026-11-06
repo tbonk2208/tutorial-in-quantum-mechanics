@@ -1,4 +1,8 @@
 /* ===== Thema 10: Spin ½ ===== */
+/* Skizzen (SKIZZE.md): Zeitachse t ∈ [0, 4π/ω], in der Skizze x = ωt/(4π) ∈ [0, 1].
+   Start |+x⟩, Ĥ = ωŜ_z: P(+x) = cos²(ωt/2); ⟨S_x⟩ = (ħ/2)cos ωt, ⟨S_y⟩ = (ħ/2)sin ωt (Drehung gegen den Uhrzeigersinn um z).
+   Start |±y⟩: ⟨S_x⟩ = ∓(ħ/2) sin ωt. */
+const SPIN_SK = {T:[{x:0, lab:'0'}, {x:0.25, lab:'\\pi/\\omega'}, {x:0.5, lab:'2\\pi/\\omega'}, {x:0.75, lab:'3\\pi/\\omega'}, {x:1, lab:'4\\pi/\\omega'}]};
 const SPIN = extra => Object.assign({rep:'mat', mat:{preset:'spin'}, coords:['t'], params:{}}, extra || {});
 topic({
   id:'spin', math:['m-eigen', 'm-komplex'], title:'Spin ½', short:'Spin',
@@ -297,6 +301,39 @@ topic({
       opts:['danach $|{+x}\\rangle$ oder $|{-x}\\rangle$, je mit $P = \\frac12$', 'danach $|\\downarrow\\rangle$, wie die Rechnung zeigt', 'danach $|\\uparrow\\rangle$, $S_x$ ändert $S_z$ nicht'], a:0,
       ex:'Einen Operator anwenden ist keine Messung. Nach der Messung ist der Spin im Eigenzustand zum gefundenen Messwert, also $|{+x}\\rangle$ oder $|{-x}\\rangle$. $\\hat S_x|\\uparrow\\rangle$ ist nicht einmal normiert.'}
   ],
+  sketch:[
+    {id:'spin-s1', title:'$P(+x)$ während der Larmor-Präzession', kind:'curve', draw:'f',
+      text:'Ein Spin startet bei $t = 0$ im Zustand $|{+x}\\rangle$ und präzediert im Feld $B\\hat z$ mit $\\hat H = \\omega\\hat S_z$. Skizziere die Wahrscheinlichkeit $P(+x)$, bei einer Messung von $S_x$ zur Zeit $t$ den Wert $+\\hbar/2$ zu erhalten, für $0 \\le t \\le 4\\pi/\\omega$.',
+      plot:{x:[0, 1], y:[0, 1.15], abs:true, xlab:'t', ylab:'P(+x)', ticks:SPIN_SK.T, yticks:[{y:0.5, lab:'1/2'}, {y:1, lab:'1'}]},
+      f:x => Math.cos(2 * Math.PI * x) ** 2,
+      checks:[
+        {id:'null', name:'Nullstellen', type:'zero', at:[0.25, 0.75], tol:0.03, msg:'Wohin zeigt der Bloch-Pfeil bei $t = \\pi/\\omega$? Wie groß ist dann $P(+x)$?'},
+        {id:'periode', name:'Periode', type:'extrema', n:3, msg:'Nach welcher Zeit ist der Spin zum ersten Mal wieder in $|{+x}\\rangle$? Deine Kurve hat {got} Umkehrpunkte zwischen $0$ und $4\\pi/\\omega$. (Abschnitt ‚Spin im Magnetfeld‘)'},
+        {id:'mittel', name:'Mittelwert', type:'level', v:0.5, tol:0.12, msg:'Wie oft misst man im Mittel über viele Umläufe $+\\hbar/2$? Der Mittelwert deiner Kurve ist {got}.'}
+      ],
+      reveal:'Der Bloch-Pfeil läuft in der $x$-$y$-Ebene mit $\\omega$ um die $z$-Achse. Mit dem Winkel $\\alpha = \\omega t$ zwischen Pfeil und $x$-Achse ist $P(+x) = \\cos^2\\frac{\\omega t}{2} = \\tfrac12(1 + \\cos\\omega t)$. Bei $t = \\pi/\\omega$ zeigt der Pfeil nach $-x$, und $P(+x) = 0$. Nach $2\\pi/\\omega$ ist der Spin bis auf den Faktor $-1$ wieder $|{+x}\\rangle$; dieser globale Faktor ändert keine Wahrscheinlichkeit. Die Periode von $P$ ist also $2\\pi/\\omega$, nicht $4\\pi/\\omega$.',
+      hints:['Wohin zeigt der Bloch-Pfeil zur Zeit $t$? Nutze dann $P = \\cos^2\\frac\\alpha2$ für den Winkel $\\alpha$ zwischen Zustand und Messrichtung (Abschnitt ‚Messen in beliebiger Richtung‘).', 'Larmor-Präzession: Der Pfeil dreht sich mit $\\omega$ um die Feldrichtung $z$. Der Winkel zur $x$-Achse ist $\\alpha = \\omega t$.'],
+      wrong:[
+        {f:x => 1, fails:['null', 'periode', 'mittel'], why:'keine Präzession: das Feld in $z$-Richtung wirke nur auf $S_z$'},
+        {f:x => Math.cos(Math.PI * x) ** 2, fails:['null', 'periode'], why:'Periode $4\\pi/\\omega$: Vorzeichen $-1$ nach $2\\pi$ für eine messbare Änderung gehalten'},
+        {f:x => Math.cos(4 * Math.PI * x) ** 2, fails:['null', 'periode'], why:'Frequenz verdoppelt: Pfeil laufe mit $2\\omega$ um'}
+      ]},
+    {id:'spin-s2', title:'Bloch-Pfeil nach einer Viertel- und einer halben Larmor-Periode', kind:'arrows',
+      text:'Ein Spin startet in $|{+x}\\rangle$ im Feld $B\\hat z$ mit $\\hat H = \\omega\\hat S_z$, $\\omega > 0$. Gegeben ist $\\langle\\mathbf S\\rangle$ bei $t = 0$ in der $x$-$y$-Ebene; der Einheitskreis hat den Radius $\\hbar/2$. Zeichne $\\langle\\mathbf S\\rangle$ zu den Zeiten $t_1 = \\pi/(2\\omega)$ und $t_2 = \\pi/\\omega$, jeden Pfeil in einem Zug vom Ursprung zur Spitze.',
+      plot:{x:[-1.5, 1.5], y:[-1.5, 1.5], abs:true, xlab:'\\langle S_x\\rangle', ylab:'\\langle S_y\\rangle', unit:true, grid:0.5},
+      given:[{from:[0, 0], to:[1, 0], lab:'t = 0'}],
+      want:[
+        {from:[0, 0], to:[0, 1], lab:'t_1', msg:'In welche Richtung dreht sich der Pfeil für $\\omega > 0$, und um welchen Winkel bis $t_1 = \\pi/(2\\omega)$? Schau auf $\\langle S_x\\rangle(t)$ und $\\langle S_y\\rangle(t)$ in der Herleitung.'},
+        {from:[0, 0], to:[-1, 0], lab:'t_2', msg:'Um welchen Winkel hat sich der Pfeil bis $t_2 = \\pi/\\omega$ gedreht? Ändert sich seine Länge?'}
+      ],
+      reveal:'$\\langle S_x\\rangle = \\frac\\hbar2\\cos\\omega t$, $\\langle S_y\\rangle = \\frac\\hbar2\\sin\\omega t$: Der Pfeil dreht sich um den Winkel $\\omega t$ gegen den Uhrzeigersinn um die $z$-Achse, seine Länge bleibt $\\hbar/2$. Bei $t_1$ zeigt er nach $+y$ ($90°$), bei $t_2$ nach $-x$ ($180°$). Der Drehwinkel des Pfeils ist $\\omega t$, nicht $\\omega t/2$; die halben Winkel stehen nur in den Phasenfaktoren $e^{\\mp i\\omega t/2}$ der Amplituden.',
+      hints:['Bestimme $\\langle S_x\\rangle$ und $\\langle S_y\\rangle$ zu beiden Zeiten. Das sind die Koordinaten der Pfeilspitzen.', 'Aus der Herleitung im Abschnitt ‚Spin im Magnetfeld‘: $\\langle S_x\\rangle = \\frac\\hbar2\\cos\\omega t$, $\\langle S_y\\rangle = \\frac\\hbar2\\sin\\omega t$.'],
+      wrong:[
+        {arrows:[{from:[0, 0], to:[0, -1]}, {from:[0, 0], to:[-1, 0]}], fails:[0], why:'Drehsinn vertauscht (im Uhrzeigersinn)'},
+        {arrows:[{from:[0, 0], to:[0.7071, 0.7071]}, {from:[0, 0], to:[0, 1]}], fails:[1], why:'halber Winkel $\\omega t/2$ aus den Phasenfaktoren $e^{\\mp i\\omega t/2}$ übernommen'},
+        {arrows:[{from:[0, 0], to:[1, 0]}, {from:[0, 0], to:[1, 0]}], fails:[0, 1], why:'keine Präzession: das Feld in $z$ ändere die $x$-Komponente nicht'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'spin-f1', title:'Normieren und Eigenzustand prüfen', text:'$|\\chi\\rangle = A\\,(|\\uparrow\\rangle + 2i|\\downarrow\\rangle)$ und $|{-y}\\rangle = \\frac{1}{\\sqrt2}\\binom{1}{-i}$.',
       ctx:SPIN({states:{χ:'A(|↑⟩ + 2i|↓⟩)'}, unknowns:{A:{ref:'1/sqrt(5)', alt:['-1/sqrt(5)']}}, state:'χ'}),
@@ -328,7 +365,22 @@ topic({
       people:[{name:'Lena', says:'Die $x$- und die $y$-Achse stehen senkrecht. Also ist $\\langle{+x}|{+y}\\rangle = 0$.'},
         {name:'Jonas', says:'$\\langle{+x}|{+y}\\rangle = \\frac12(1 + i) \\ne 0$. Orthogonal zu $|{+x}\\rangle$ ist nur $|{-x}\\rangle$.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'Jonas. $|\\langle{+x}|{+y}\\rangle|^2 = \\frac12 = \\cos^2 45^\\circ$. Senkrecht im Raum heißt nicht orthogonal im Hilbertraum.'}
+      ex:'Jonas. $|\\langle{+x}|{+y}\\rangle|^2 = \\frac12 = \\cos^2 45^\\circ$. Senkrecht im Raum heißt nicht orthogonal im Hilbertraum.'},
+    {aim:2, sketch:{id:'spin-fs1', title:'$\\langle S_x\\rangle(t)$ für den Start in $|{+y}\\rangle$', kind:'curve', draw:'f',
+      text:'Ein Spin ist bei $t = 0$ im Zustand $|{+y}\\rangle$ und präzediert im Feld $B\\hat z$ mit $\\hat H = \\omega\\hat S_z$, $\\omega > 0$. Skizziere $\\langle S_x\\rangle(t)$ für $0 \\le t \\le 4\\pi/\\omega$. Die Höhe ist frei; es zählen Vorzeichen, Nullstellen und Periode.',
+      plot:{x:[0, 1], xlab:'t', ylab:'\\langle S_x\\rangle', ticks:SPIN_SK.T},
+      f:x => -Math.sin(4 * Math.PI * x),
+      checks:[
+        {id:'start', name:'Startwert', type:'zero', at:[0], msg:'Wie groß ist $\\langle S_x\\rangle$ im Zustand $|{+y}\\rangle$?'},
+        {id:'richtung', name:'Startrichtung', type:'sign', s:-1, range:[0.02, 0.23], msg:'In welche Richtung dreht sich der Bloch-Pfeil für $\\omega > 0$? Wird $\\langle S_x\\rangle$ dann zuerst positiv oder negativ?'},
+        {id:'periode', name:'Periode', type:'nodes', n:3, range:[0.03, 0.97], msg:'Wie lange dauert ein voller Umlauf des Bloch-Pfeils? Zwischen $0$ und $4\\pi/\\omega$ hat deine Skizze {got} Nulldurchgänge.'}
+      ],
+      reveal:'Der Bloch-Pfeil startet bei $+y$ und dreht sich mit $\\omega$ gegen den Uhrzeigersinn um die $z$-Achse. Nach einer Viertelperiode zeigt er nach $-x$, daher $\\langle S_x\\rangle = -\\frac\\hbar2\\sin\\omega t$. Dasselbe folgt aus $|\\chi(t)\\rangle = \\frac{1}{\\sqrt2}\\big(e^{-i\\omega t/2}|\\uparrow\\rangle + i\\,e^{i\\omega t/2}|\\downarrow\\rangle\\big)$ mit $\\langle S_x\\rangle = \\hbar\\,\\mathrm{Re}(a^*b)$. Die Periode ist $2\\pi/\\omega$; der Faktor $-1$ nach einem Umlauf ist eine globale Phase.',
+      wrong:[
+        {f:x => Math.sin(4 * Math.PI * x), fails:['richtung'], why:'Drehsinn der Präzession vertauscht'},
+        {f:x => Math.cos(4 * Math.PI * x), fails:['start'], why:'Startrichtung nicht beachtet: Start wie bei $|{+x}\\rangle$'},
+        {f:x => -Math.sin(2 * Math.PI * x), fails:['periode'], why:'Periode $4\\pi/\\omega$: Vorzeichen $-1$ nach $2\\pi$ für eine messbare Änderung gehalten'}
+      ], points:3}}
   ],
   finalB:[
     {aim:0, task:{id:'spin-g1', title:'Normieren und Eigenzustand prüfen', text:'$|\\chi\\rangle = A\\,(2|\\uparrow\\rangle - i|\\downarrow\\rangle)$ und $|{+y}\\rangle = \\frac{1}{\\sqrt2}\\binom{1}{i}$.',
@@ -361,7 +413,22 @@ topic({
       people:[{name:'Lena', says:'$|{+x}\\rangle$ und $|\\uparrow\\rangle$, denn die $x$- und die $z$-Achse stehen beide senkrecht auf der $y$-Achse.'},
         {name:'Jonas', says:'Nur $|{-y}\\rangle$, bis auf eine Phase. $|{+x}\\rangle$ und $|\\uparrow\\rangle$ haben mit $|{+y}\\rangle$ den Überlapp-Betrag $1/\\sqrt2$.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'Jonas. In $\\mathbb C^2$ gibt es zu jedem Zustand genau eine orthogonale Richtung; sie gehört zur Gegenrichtung im Raum.'}
+      ex:'Jonas. In $\\mathbb C^2$ gibt es zu jedem Zustand genau eine orthogonale Richtung; sie gehört zur Gegenrichtung im Raum.'},
+    {aim:2, sketch:{id:'spin-fs2', title:'$\\langle S_x\\rangle(t)$ für den Start in $|{-y}\\rangle$', kind:'curve', draw:'f',
+      text:'Ein Spin ist bei $t = 0$ im Zustand $|{-y}\\rangle$ und präzediert im Feld $B\\hat z$ mit $\\hat H = \\omega\\hat S_z$, $\\omega > 0$. Skizziere $\\langle S_x\\rangle(t)$ für $0 \\le t \\le 4\\pi/\\omega$. Die Höhe ist frei; es zählen Vorzeichen, Nullstellen und Periode.',
+      plot:{x:[0, 1], xlab:'t', ylab:'\\langle S_x\\rangle', ticks:SPIN_SK.T},
+      f:x => Math.sin(4 * Math.PI * x),
+      checks:[
+        {id:'start', name:'Startwert', type:'zero', at:[0], msg:'Wie groß ist $\\langle S_x\\rangle$ im Zustand $|{-y}\\rangle$?'},
+        {id:'richtung', name:'Startrichtung', type:'sign', s:1, range:[0.02, 0.23], msg:'In welche Richtung dreht sich der Bloch-Pfeil für $\\omega > 0$? Wird $\\langle S_x\\rangle$ dann zuerst positiv oder negativ?'},
+        {id:'periode', name:'Periode', type:'nodes', n:3, range:[0.03, 0.97], msg:'Wie lange dauert ein voller Umlauf des Bloch-Pfeils? Zwischen $0$ und $4\\pi/\\omega$ hat deine Skizze {got} Nulldurchgänge.'}
+      ],
+      reveal:'Der Bloch-Pfeil startet bei $-y$ und dreht sich mit $\\omega$ gegen den Uhrzeigersinn um die $z$-Achse. Nach einer Viertelperiode zeigt er nach $+x$, daher $\\langle S_x\\rangle = \\frac\\hbar2\\sin\\omega t$. Dasselbe folgt aus $|\\chi(t)\\rangle = \\frac{1}{\\sqrt2}\\big(e^{-i\\omega t/2}|\\uparrow\\rangle - i\\,e^{i\\omega t/2}|\\downarrow\\rangle\\big)$ mit $\\langle S_x\\rangle = \\hbar\\,\\mathrm{Re}(a^*b)$. Die Periode ist $2\\pi/\\omega$; der Faktor $-1$ nach einem Umlauf ist eine globale Phase.',
+      wrong:[
+        {f:x => -Math.sin(4 * Math.PI * x), fails:['richtung'], why:'Drehsinn der Präzession vertauscht'},
+        {f:x => Math.cos(4 * Math.PI * x), fails:['start'], why:'Startrichtung nicht beachtet: Start wie bei $|{+x}\\rangle$'},
+        {f:x => Math.sin(2 * Math.PI * x), fails:['periode'], why:'Periode $4\\pi/\\omega$: Vorzeichen $-1$ nach $2\\pi$ für eine messbare Änderung gehalten'}
+      ], points:3}}
   ],
   errors:[
     {id:'spin-e1', title:'Ein Zustand, der nie $+y$ ergibt?',

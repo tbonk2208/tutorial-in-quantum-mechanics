@@ -1,4 +1,39 @@
 /* ===== Thema 11: Stationäre Störungstheorie ===== */
+/* Skizzen (SKIZZE.md), L = 1, E_m = m²E_1.
+   (1) Punktförmige Störung α δ(x − a): E_n^(1)(a) = α|ψ_n(a)|² (Kasten: 2 sin²(nπa); Oszillator: |ψ_n(a)|² mit Hermite-Rekursion, a in x0).
+   (2) Stufe V0 auf 0 < x < 1/2: ψ_1^(1) = Σ_{m≠1} V_m1/(E_1 − E_m) ψ_m mit V_m1/V0 = 2∫_0^{1/2} sin(mπx) sin(πx) dx = sin((m−1)π/2)/((m−1)π) − sin((m+1)π/2)/((m+1)π);
+       c_2 = −0,1415 V0/E1, c_3 = 0, c_4 = +0,0113 V0/E1, abgebrochen bei m = 80 (c_m ~ 1/m³). Nur gerade m tragen bei: ψ_1^(1) ist antisymmetrisch zu L/2.
+       Probe: (Ĥ0 − E1)ψ_1^(1) = (E_1^(1) − Ĥ')ψ_1 numerisch auf etwa 2 % erfüllt. */
+const STOER_SK = (() => {
+  const P = Math.PI;
+  const Vm1 = m => { const g = k => Math.sin(k * P / 2) / (k * P); return g(m - 1) - g(m + 1); };
+  const c = []; for (let m = 2; m <= 80; m++) c[m] = Vm1(m) / (1 - m * m);
+  const psi1c = x => { let s = 0; for (let m = 2; m <= 80; m++) if (c[m]) s += c[m] * Math.SQRT2 * Math.sin(m * P * x); return s; };
+  const herm = (n, x) => { let h0 = 1, h1 = 2 * x; if (n === 0) return h0; for (let k = 1; k < n; k++){ const h2 = 2 * x * h1 - 2 * k * h0; h0 = h1; h1 = h2; } return h1; };
+  const fac = n => n <= 1 ? 1 : n * fac(n - 1);
+  const osc = n => x => herm(n, x) * Math.exp(-x * x / 2) / Math.sqrt(Math.pow(2, n) * fac(n) * Math.sqrt(P));
+  const xt = n => Math.sqrt(2 * n + 1);
+  const mkF = (id, n) => ({id, title:'Punktförmige Störung im Oszillator, Zustand $n = ' + n + '$', kind:'curve', draw:'abs2',
+    text:'Ein harmonischer Oszillator im Zustand $|' + n + '\\rangle$ bekommt die Störung $\\hat H\' = \\alpha\\,\\delta(x - a)$ mit $\\alpha > 0$. Skizziere die Energiekorrektur erster Ordnung $E_' + n + '^{(1)}$ als Funktion der Lage $a$ der Störung. Die klassischen Umkehrpunkte des Zustands liegen bei $\\pm\\sqrt{' + (2 * n + 1) + '}\\,x_0$. Die Höhe ist frei.',
+    plot:{x:[-4.5, 4.5], xlab:'a/x_0', ylab:'E_' + n + '^{(1)}(a)', ticks:[{x:-xt(n), lab:'-\\sqrt{' + (2 * n + 1) + '}'}, {x:0, lab:'0'}, {x:xt(n), lab:'\\sqrt{' + (2 * n + 1) + '}'}], V:x => x * x / 2, Vr:[0, 8], E:n + 0.5},
+    f:x => osc(n)(x) ** 2,
+    checks:[
+      {id:'pos', type:'nonneg', msg:'Kann die Korrektur für $\\alpha > 0$ negativ werden?'},
+      {id:'knoten', type:'nodes', n, msg:'An wie vielen Stellen $a$ spürt der Zustand die Störung in erster Ordnung gar nicht? Deine Skizze hat {got}.'},
+      n === 1 ? {id:'lage', name:'Lage der Nullstellen', type:'zero', at:[0], tol:0.2, msg:'Spürt der Zustand $|1\\rangle$ eine Störung im Minimum des Potentials?'}
+        : {id:'lage', name:'Lage der Nullstellen', type:'zero', at:[-Math.SQRT1_2, Math.SQRT1_2], tol:0.2, msg:'Wo hat $\\psi_2 \\propto (4\\xi^2 - 2)\\,e^{-\\xi^2/2}$ seine Nullstellen?'},
+      {id:'aussen', name:'jenseits des Umkehrpunkts', type:'decay', toward:'right', range:[xt(n) + 0.15, 4.5], msg:'Spürt der Zustand eine Störung jenseits des Umkehrpunkts? Was macht $\\psi_' + n + '$ dort?'}
+    ],
+    reveal:'$E_' + n + '^{(1)}(a) = \\langle ' + n + '|\\alpha\\,\\delta(x - a)|' + n + '\\rangle = \\alpha|\\psi_' + n + '(a)|^2$: Die Korrektur erster Ordnung ist der Erwartungswert der Störung im ungestörten Zustand. '
+      + (n === 1 ? 'Sie ist null im Knoten von $\\psi_1$ bei $a = 0$ und am größten bei $a = \\pm x_0$.' : 'Sie ist null in den Knoten von $\\psi_2$ bei $a = \\pm x_0/\\sqrt2$; dazwischen und außen liegen drei Buckel, die äußeren etwas höher als der mittlere.')
+      + ' Jenseits der Umkehrpunkte fällt sie rasch ab, ist aber nicht null: Das Teilchen hält sich mit kleiner Wahrscheinlichkeit auch im klassisch verbotenen Bereich auf.',
+    wrong:[
+      {f:osc(n), fails:['pos'], why:'$\\psi_' + n + '(a)$ statt $|\\psi_' + n + '(a)|^2$'},
+      {f:x => osc(0)(x) ** 2, fails:['knoten', 'lage'], why:'wie im Grundzustand: Eine Störung im Minimum wirke immer am stärksten'},
+      {f:x => osc(n)(x) ** 2 * Math.max(0, 1 - (x / xt(n)) ** 6), fails:['aussen'], why:'jenseits der Umkehrpunkte spüre das Teilchen nichts ($\\psi = 0$ im verbotenen Bereich)'}
+    ], points:3});
+  return {psi1c, box2:a => 2 * Math.sin(2 * P * a) ** 2, mkF};
+})();
 const STBOX = ops => CTX.box({params:{L:'pos', m:'pos', n:{int:[1, 5]}, V_0:'pos', λ:'real'}, defs:{'ψ_n(x)':'sqrt(2/L) sin(nπx/L)'}, ops});
 const STOSC = () => ({rep:'mat', mat:{preset:'osc'}, coords:['t'], params:{m:'pos', ω:'pos', λ:'real', n:{int:[0, 5]}}, sumFrom:0});
 const STMAT = (mats, params, extra) => Object.assign({rep:'mat', mat:{preset:'spin', mats}, coords:['t'], params}, extra || {});
@@ -302,6 +337,41 @@ topic({
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
       ex:'Jonas. $E^{(1)} = e\\mathcal E\\langle 100|\\hat z|100\\rangle = 0$ wegen der Parität. Die zweite Ordnung gibt $-\\frac12\\alpha\\mathcal E^2$. Lenas Bild passt zum Niveau $n = 2$, wo die Entartung von $2s$ und $2p$ ein festes Dipolmoment erlaubt.'}
   ],
+  sketch:[
+    {id:'stoer-s1', title:'Wo spürt $\\psi_2$ eine punktförmige Störung?', kind:'curve', draw:'abs2',
+      text:'Im unendlich tiefen Kasten $0 < x < L$ sitzt eine schmale Störung $\\hat H\' = \\alpha\\,\\delta(x - a)$ mit $\\alpha > 0$ an der Stelle $a$. Skizziere die Energiekorrektur erster Ordnung $E_2^{(1)}$ des Zustands $n = 2$ als Funktion der Lage $a$. Die Höhe ist frei.',
+      plot:{x:[0, 1], xlab:'a', ylab:'E_2^{(1)}(a)', ticks:[{x:0, lab:'0'}, {x:0.25, lab:'L/4'}, {x:0.5, lab:'L/2'}, {x:0.75, lab:'3L/4'}, {x:1, lab:'L'}]},
+      f:STOER_SK.box2,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Deine Kurve wird negativ (Minimum {got}). Kann die Korrektur für $\\alpha > 0$ negativ werden?'},
+        {id:'wand', name:'Wände', type:'zero', at:[0, 1], msg:'Wie groß ist die Korrektur, wenn die Störung direkt an einer Wand sitzt? Was weißt du dort über $\\psi_2$?'},
+        {id:'mitte', name:'Kastenmitte', type:'zero', at:[0.5], tol:0.04, msg:'Spürt der Zustand $n = 2$ eine Störung in der Kastenmitte? (Abschnitt ‚Erste Ordnung: Energie und Zustand‘)'},
+        {id:'sym', type:'parity', p:'even', about:0.5, msg:'Ändert sich die Korrektur, wenn du die Störung an der Kastenmitte spiegelst ($a \\to L - a$)? Deine Skizze ist {got}.'}
+      ],
+      reveal:'$E_2^{(1)}(a) = \\langle\\psi_2|\\alpha\\,\\delta(x - a)|\\psi_2\\rangle = \\alpha|\\psi_2(a)|^2 = \\frac{2\\alpha}{L}\\sin^2\\frac{2\\pi a}{L}$. Die Korrektur erster Ordnung ist der Erwartungswert der Störung im ungestörten Zustand: Sie ist groß, wo sich das Teilchen oft aufhält, und null an den Wänden und im Knoten bei $L/2$. Negativ wird sie nie, weil $|\\psi_2|^2 \\ge 0$ und $\\alpha > 0$ ist.',
+      hints:['Schreibe $E_2^{(1)} = \\langle\\psi_2|\\hat H\'|\\psi_2\\rangle$ als Integral und nutze die Eigenschaft der δ-Funktion.', '$\\int\\psi^*(x)\\,\\alpha\\,\\delta(x - a)\\,\\psi(x)\\,dx = \\alpha|\\psi(a)|^2$. Skizziere also $|\\psi_2|^2$ als Funktion von $a$.'],
+      wrong:[
+        {f:a => 1, fails:['wand', 'mitte'], why:'Korrektur unabhängig vom Ort der Störung'},
+        {f:a => Math.sin(Math.PI * a) ** 2, fails:['mitte'], why:'mit dem Grundzustand verwechselt: Eine Störung in der Mitte wirke am stärksten'},
+        {f:a => Math.sin(2 * Math.PI * a), fails:['pos', 'sym'], why:'$\\psi_2(a)$ statt $|\\psi_2(a)|^2$: negative Korrektur rechts der Mitte'}
+      ]},
+    {id:'stoer-s2', title:'Zustandskorrektur erster Ordnung für die Stufe', kind:'curve', draw:'f',
+      text:'Kasten $0 < x < L$ mit der Störung $\\hat H\' = V_0 > 0$ auf der linken Hälfte $0 < x < L/2$, wie im Labor. Der ungestörte Grundzustand ist $\\psi_1 = \\sqrt{2/L}\\,\\sin(\\pi x/L)$, also positiv. Skizziere die Korrektur erster Ordnung $\\psi_1^{(1)}(x)$ des Zustands, also $|1^{(1)}\\rangle$ in Ortsdarstellung. Das Vorzeichen zählt, die Höhe ist frei.',
+      plot:{x:[-0.08, 1.08], dom:[0, 1], walls:[0, 1], xlab:'x', ylab:'\\psi_1^{(1)}(x)', ticks:[{x:0, lab:'0'}, {x:0.5, lab:'L/2'}, {x:1, lab:'L'}], V:x => x > 0 && x < 0.5 ? 1 : 0, Vr:[0, 4], regions:[{x:[0, 0.5], lab:'V_0'}]},
+      f:STOER_SK.psi1c,
+      checks:[
+        {id:'wand', name:'Wände', type:'zero', at:[0, 1], msg:'Jeder Summand der Korrektur ist ein Vielfaches eines $\\psi_m$ des Kastens. Was gilt für alle $\\psi_m$ an den Wänden?'},
+        {id:'knoten', type:'nodes', n:1, msg:'Welcher Zustand $\\psi_m$ trägt am meisten bei, und wie viele Knoten hat er? Deine Skizze hat {got}.'},
+        {id:'vz', name:'Vorzeichen', type:'sign', s:-1, range:[0.06, 0.42], msg:'Welches Vorzeichen hat der Koeffizient $\\langle\\psi_2|\\hat H\'|\\psi_1\\rangle/(E_1 - E_2)$? Wo wird $\\psi_1$ also verkleinert? (Abschnitt ‚Erste Ordnung: Energie und Zustand‘)'}
+      ],
+      reveal:'$\\psi_1^{(1)} = \\sum_{m\\ne1}\\frac{\\langle\\psi_m|\\hat H\'|\\psi_1\\rangle}{E_1 - E_m}\\psi_m$. Den Hauptteil gibt $m = 2$: Der Zähler $\\langle\\psi_2|\\hat H\'|\\psi_1\\rangle = \\frac{4V_0}{3\\pi}$ ist positiv, der Nenner $E_1 - E_2 = -3E_1$ negativ. Also ist $\\psi_1^{(1)} \\approx -0{,}14\\,\\frac{V_0}{E_1}\\,\\psi_2$: negativ unter der Stufe, positiv rechts davon. Der gestörte Zustand $\\psi_1 + \\psi_1^{(1)}$ weicht der Stufe aus. Die Beiträge $m = 3, 5, \\dots$ verschwinden, und $\\psi_1^{(1)}$ ist exakt antisymmetrisch zu $L/2$, mit einem Knoten in der Mitte.',
+      hints:['Welcher Term der Summe für $|1^{(1)}\\rangle$ ist am größten? Achte auf den kleinsten Nenner und darauf, welche Matrixelemente null sind.', 'Bestimme die Vorzeichen von $\\langle\\psi_2|\\hat H\'|\\psi_1\\rangle = V_0\\,\\frac2L\\int_0^{L/2}\\sin\\frac{2\\pi x}{L}\\sin\\frac{\\pi x}{L}\\,dx$ und von $E_1 - E_2$.'],
+      wrong:[
+        {f:x => -STOER_SK.psi1c(x), fails:['vz'], why:'Vorzeichen des Nenners vertauscht ($E_m - E_n$ statt $E_n - E_m$)'},
+        {f:x => -Math.sin(Math.PI * x), fails:['knoten'], why:'Anteil längs $\\psi_1$ mitgenommen: Korrektur als Vielfaches von $\\psi_1$'},
+        {f:x => x < 0.5 ? -Math.sin(2 * Math.PI * x) : 0, fails:['knoten'], why:'Korrektur nur dort, wo die Störung sitzt'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'stoer-f1', title:'Stufe im rechten Viertel', text:'Kasten $0<x<L$ mit $\\hat H\' = V_0$ für $3L/4 < x < L$ (sonst $0$). Grundzustand $\\psi_1 = \\sqrt{2/L}\\sin(\\pi x/L)$.',
       ctx:CTX.box({params:{L:'pos', m:'pos', V_0:'pos'}, defs:{'ψ_n(x)':'sqrt(2/L) sin(nπx/L)'}, ops:{"H'":'V_0 Θ(x - 3L/4)'}}),
@@ -322,7 +392,8 @@ topic({
       q:'Oszillator mit $\\hat H\' = \\lambda\\hat x$: Welche Zustände mischt die Störung in erster Ordnung dem Grundzustand $|0\\rangle$ bei?',
       opts:['nur $|1\\rangle$', '$|1\\rangle$ und $|2\\rangle$', 'alle $|m\\rangle$ mit $m \\ge 1$'], a:0,
       ex:'$|0^{(1)}\\rangle = \\sum_{m\\ne0}\\frac{\\langle m|\\hat H\'|0\\rangle}{E_0 - E_m}|m\\rangle$, und nur $\\langle 1|\\hat x|0\\rangle \\ne 0$.',
-      reason:{q:'Warum?', opts:['$\\hat x \\propto \\hat a + \\hat a^\\dagger$ ändert $n$ nur um $\\pm1$.', 'Nur der nächste Nachbar hat einen kleinen Nenner.', 'Höhere Zustände haben zu viel Energie.'], a:0, ex:'Entscheidend sind die Matrixelemente, nicht die Größe der Nenner: Alle $\\langle m|\\hat x|0\\rangle$ mit $m \\ne 1$ sind exakt null.'}}
+      reason:{q:'Warum?', opts:['$\\hat x \\propto \\hat a + \\hat a^\\dagger$ ändert $n$ nur um $\\pm1$.', 'Nur der nächste Nachbar hat einen kleinen Nenner.', 'Höhere Zustände haben zu viel Energie.'], a:0, ex:'Entscheidend sind die Matrixelemente, nicht die Größe der Nenner: Alle $\\langle m|\\hat x|0\\rangle$ mit $m \\ne 1$ sind exakt null.'}},
+    {aim:0, sketch:STOER_SK.mkF('stoer-fs1', 1)}
   ],
   finalB:[
     {aim:0, task:{id:'stoer-g1', title:'Stufe im linken Drittel', text:'Kasten $0<x<L$ mit $\\hat H\' = V_0$ für $0 < x < L/3$ (sonst $0$). Grundzustand $\\psi_1 = \\sqrt{2/L}\\sin(\\pi x/L)$.',
@@ -344,7 +415,8 @@ topic({
       q:'Oszillator mit $\\hat H\' = \\lambda\\hat x^2$: Welche Zustände mischt die Störung in erster Ordnung dem Grundzustand $|0\\rangle$ bei?',
       opts:['nur $|2\\rangle$', '$|1\\rangle$ und $|2\\rangle$', 'alle $|m\\rangle$ mit geradem $m$'], a:0,
       ex:'$\\hat x^2|0\\rangle \\propto (\\hat a + \\hat a^\\dagger)^2|0\\rangle = |0\\rangle + \\sqrt2|2\\rangle$. Der Anteil $|0\\rangle$ zählt nicht ($m \\ne n$); es bleibt nur $|2\\rangle$.',
-      reason:{q:'Warum?', opts:['$(\\hat a + \\hat a^\\dagger)^2$ ändert $n$ nur um $0$ oder $\\pm2$.', 'Nur gerade Zustände haben einen kleinen Nenner.', 'Ungerade Zustände haben zu viel Energie.'], a:0, ex:'Entscheidend sind die Matrixelemente: $\\langle m|\\hat x^2|0\\rangle = 0$ für alle $m \\ne 0, 2$.'}}
+      reason:{q:'Warum?', opts:['$(\\hat a + \\hat a^\\dagger)^2$ ändert $n$ nur um $0$ oder $\\pm2$.', 'Nur gerade Zustände haben einen kleinen Nenner.', 'Ungerade Zustände haben zu viel Energie.'], a:0, ex:'Entscheidend sind die Matrixelemente: $\\langle m|\\hat x^2|0\\rangle = 0$ für alle $m \\ne 0, 2$.'}},
+    {aim:0, sketch:STOER_SK.mkF('stoer-fs2', 2)}
   ],
   errors:[
     {id:'stoer-e1', title:'Eine Stufe, die nur ein Viertel bringt?',

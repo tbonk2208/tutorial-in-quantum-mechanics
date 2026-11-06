@@ -160,6 +160,20 @@ topic({
     ]
   },
   lab:{type:'vectors', title:'Ein Vektor, zwei Orthonormalbasen',
+    sketch:{id:'mv-lab-s', kind:'arrows', title:'Vorhersage: Komponenten in einer gedrehten Basis',
+      text:'Gegeben sind $v = (1{,}6;\\ 0{,}6)$ und die um $\\varphi = 60°$ gedrehte Orthonormalbasis $e\'_1 = (\\cos 60°, \\sin 60°)$, $e\'_2 = (-\\sin 60°, \\cos 60°)$ (graue Pfeile). Zeichne die beiden Anteile $c_1e\'_1$ und $c_2e\'_2$ mit $c_i = \\langle e\'_i|v\\rangle$, je als Pfeil vom Ursprung aus. Stell danach im Labor $v_1 = 1{,}6$, $v_2 = 0{,}6$ und $\\varphi = 60°$ ein und vergleiche mit den breiten farbigen Pfeilen.',
+      plot:{x:[-2.5, 2.5], y:[-2, 2], abs:true, xlab:'1', ylab:'2', unit:true, grid:0.5},
+      // c_1 = 0,8 + 0,520 = 1,320, c_2 = −1,386 + 0,300 = −1,086; c_1e'_1 = (0,660; 1,143), c_2e'_2 = (0,940; −0,543)
+      given:[{from:[0, 0], to:[1.6, 0.6], lab:'v'}, {from:[0, 0], to:[Math.cos(Math.PI / 3), Math.sin(Math.PI / 3)], lab:"e'_1"}, {from:[0, 0], to:[-Math.sin(Math.PI / 3), Math.cos(Math.PI / 3)], lab:"e'_2"}],
+      want:[
+        {from:[0, 0], to:[(1.6 * Math.cos(Math.PI / 3) + 0.6 * Math.sin(Math.PI / 3)) * Math.cos(Math.PI / 3), (1.6 * Math.cos(Math.PI / 3) + 0.6 * Math.sin(Math.PI / 3)) * Math.sin(Math.PI / 3)], lab:"c_1e'_1", msg:'Berechne $c_1 = \\langle e\'_1|v\\rangle$. In welche Richtung zeigt $c_1e\'_1$, und wie lang ist der Pfeil? (Abschnitt „Orthonormalbasen“)'},
+        {from:[0, 0], to:[(-1.6 * Math.sin(Math.PI / 3) + 0.6 * Math.cos(Math.PI / 3)) * -Math.sin(Math.PI / 3), (-1.6 * Math.sin(Math.PI / 3) + 0.6 * Math.cos(Math.PI / 3)) * Math.cos(Math.PI / 3)], lab:"c_2e'_2", msg:'Berechne $c_2 = \\langle e\'_2|v\\rangle$. Welches Vorzeichen hat es, und was bedeutet das für die Richtung von $c_2e\'_2$?'}],
+      reveal:'$c_1 = 1{,}6\\cdot 0{,}5 + 0{,}6\\cdot 0{,}866 \\approx 1{,}32$ und $c_2 = -1{,}6\\cdot 0{,}866 + 0{,}6\\cdot 0{,}5 \\approx -1{,}09$. Weil $c_2$ negativ ist, zeigt $c_2e\'_2$ **gegen** $e\'_2$. Die beiden Anteile stehen senkrecht und ergeben zusammen wieder $v$. Kontrolle mit Parseval: $c_1^2 + c_2^2 \\approx 2{,}92 = 1{,}6^2 + 0{,}6^2$. Im Labor siehst du dieselben Anteile als breite Pfeile und die gestrichelten Lote von der Spitze von $v$.',
+      hints:['Rechne beide Skalarprodukte mit den Zahlen aus und trage dann $c_i$-mal den Basisvektor ab.', 'In einer Orthonormalbasis ist $c_i = \\langle e\'_i|v\\rangle$, und $v = c_1e\'_1 + c_2e\'_2$. Ein negatives $c_i$ dreht die Richtung um.'],
+      wrong:[
+        {arrows:[{from:[0, 0], to:[0.660, 1.143]}, {from:[0, 0], to:[-0.940, 0.543]}], fails:[1], why:'Vorzeichen von c₂ übersehen: Anteil in Richtung +e′₂'},
+        {arrows:[{from:[0, 0], to:[1.6, 0]}, {from:[0, 0], to:[0, 0.6]}], fails:[0, 1], why:'Komponenten in der alten Standardbasis gezeichnet'}
+      ]},
     text:'Den Vektor $v$ stellst du mit den Reglern $v_1$ und $v_2$ ein. Mit dem Winkel $\\varphi$ drehst du die Orthonormalbasis $e\'_1 = (\\cos\\varphi, \\sin\\varphi)$, $e\'_2 = (-\\sin\\varphi, \\cos\\varphi)$. Gezeichnet sind $v$, die gedrehte Basis und die Projektionen von $v$ auf die Basisvektoren. Die Anzeige zeigt die Komponenten $c_i = \\langle e\'_i|v\\rangle$ und $c_1^2 + c_2^2$.',
     predict:{q:'Bevor du die Regler bewegst: Du drehst nur die Basis, $v$ bleibt fest. Was ändert sich?', opts:['nur $c_1$ und $c_2$; $c_1^2 + c_2^2$ bleibt gleich', 'auch der Pfeil $v$, er dreht sich mit', 'nichts, weil $v$ fest eingestellt ist'], a:0, ex:'Der Vektor ist derselbe, nur seine Darstellung ändert sich. Parseval: In jeder ONB ist $c_1^2 + c_2^2 = |v|^2$.'},
     questions:[
@@ -268,6 +282,24 @@ topic({
       ex:'$(i; -1) = i\\,(1; i)$, und $i = e^{i\\pi/2}$ ist ein globaler Phasenfaktor. Ihr Skalarprodukt ist $2i \\neq 0$; es gilt sogar Gleichheit in Cauchy-Schwarz.',
       seg:'mv-t5', lex:'phase-global-relativ'}
   ],
+  sketch:[
+    {id:'mv-s1', kind:'arrows', title:'Projektion und Rest',
+      text:'Gegeben sind $a = (2;\\ 1)$ und $v = (1;\\ 2)$ (graue Pfeile). Zeichne zwei Pfeile: die Projektion $P_av$ vom Ursprung aus und den Rest $v - P_av$ von der Spitze von $P_av$ zur Spitze von $v$.',
+      plot:{x:[-0.5, 2.5], y:[-0.5, 2.5], abs:true, xlab:'1', ylab:'2', grid:0.5},
+      given:[{from:[0, 0], to:[2, 1], lab:'a'}, {from:[0, 0], to:[1, 2], lab:'v'}],
+      // P_a v = ⟨a|v⟩/⟨a|a⟩·a = 4/5·(2; 1) = (1,6; 0,8); Rest (−0,6; 1,2) steht senkrecht auf a
+      want:[
+        {from:[0, 0], to:[1.6, 0.8], lab:'P_av', msg:'Die Projektion liegt auf der Geraden durch $a$. Welcher Faktor gehört vor $a$? (Abschnitt „Projektionen und das Gram-Schmidt-Verfahren“)', msgLen:'Die Richtung passt. Hast du durch $\\langle a|a\\rangle = \\|a\\|^2$ geteilt und nicht nur durch $\\|a\\|$?'},
+        // Der Rest beginnt an der gezeichneten Spitze von P_av: Deren erlaubte Abweichung (Länge ±15 %, Richtung ±12°) verschiebt Anfang, Richtung und Länge des Rests mit, deshalb hier weitere Toleranzen
+        {from:[1.6, 0.8], to:[1, 2], lab:'v - P_av', posTol:0.35, dirTol:16, lenTol:0.22, msg:'Der Rest führt von der Spitze von $P_av$ zur Spitze von $v$. Welchen Winkel muss er mit $a$ einschließen?', msgPos:'Wo beginnt der Rest? Er setzt an der Spitze von $P_av$ an.'}],
+      reveal:'$P_av = \\frac{\\langle a|v\\rangle}{\\langle a|a\\rangle}a = \\frac45(2;\\ 1) = (1{,}6;\\ 0{,}8)$. Der Rest $v - P_av = (-0{,}6;\\ 1{,}2)$ steht senkrecht auf $a$, denn $2\\cdot(-0{,}6) + 1\\cdot 1{,}2 = 0$. Geometrisch fällst du von der Spitze von $v$ das Lot auf die Gerade durch $a$: Der Fußpunkt ist die Spitze der Projektion.',
+      hints:['Berechne zuerst $\\langle a|v\\rangle$ und $\\langle a|a\\rangle$. Der Rest ergibt sich dann von selbst.', 'Der Rest $v - P_av$ steht senkrecht auf $a$: Die Projektion ist der Fußpunkt des Lots von $v$ auf die Gerade durch $a$.'],
+      wrong:[
+        {arrows:[{from:[0, 0], to:[0.8, 1.6]}, {from:[0.8, 1.6], to:[2, 1]}], fails:[0, 1], why:'a auf v projiziert statt v auf a'},
+        {arrows:[{from:[0, 0], to:[4 / Math.sqrt(5) * 2, 4 / Math.sqrt(5)]}, {from:[4 / Math.sqrt(5) * 2, 4 / Math.sqrt(5)], to:[1, 2]}], fails:[0], why:'nur durch ‖a‖ statt durch ⟨a|a⟩ geteilt (der Rest von dieser Spitze aus ist folgerichtig)'},
+        {arrows:[{from:[0, 0], to:[2, 1]}, {from:[2, 1], to:[1, 2]}], fails:[0, 1], why:'Faktor vergessen: a selbst als Projektion'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'mv-f1', title:'Norm', text:'$v = \\begin{pmatrix}1 + i\\\\ 1 - i\\\\ 1\\end{pmatrix}$.', ctx:MVEK({states:{v:'(1 + i; 1 - i; 1)'}}),
       goals:[{id:'a', prompt:'Berechne $\\|v\\|$.', type:'value', target:'sqrt(5)', points:2, model:['⟨v|v⟩ = |1 + i|^2 + |1 - i|^2 + 1', '= 5', 'sqrt(⟨v|v⟩) = sqrt(5)'],
@@ -284,7 +316,20 @@ topic({
     {aim:'k', id:'mv-fk2', type:'dialog', text:'In der Orthonormalbasis $e_1 = (1; i)/\\sqrt2$, $e_2 = (1; -i)/\\sqrt2$ soll die Komponente $c_1$ von $v = (0; 1)$ bestimmt werden.',
       people:[{name:'Lena', says:'$c_1 = \\langle v|e_1\\rangle = (0, 1)(1; i)/\\sqrt2 = i/\\sqrt2$.'}, {name:'Jonas', says:'$c_1 = \\langle e_1|v\\rangle = (1, -i)(0; 1)/\\sqrt2 = -i/\\sqrt2$.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'Probe mit $c_2 = \\langle e_2|v\\rangle = i/\\sqrt2$: $c_1e_1 + c_2e_2 = \\tfrac{-i}{2}(1; i) + \\tfrac{i}{2}(1; -i) = (0; 1)$. Lena berechnet $c_1^*$.'}
+      ex:'Probe mit $c_2 = \\langle e_2|v\\rangle = i/\\sqrt2$: $c_1e_1 + c_2e_2 = \\tfrac{-i}{2}(1; i) + \\tfrac{i}{2}(1; -i) = (0; 1)$. Lena berechnet $c_1^*$.'},
+    {aim:2, sketch:{id:'mv-fs-a', kind:'arrows', title:'Gram-Schmidt in der Ebene', points:3,
+      text:'Gegeben sind $a_1 = (1;\\ 1)$ und $a_2 = (0;\\ 2)$ (graue Pfeile). Führe das Gram-Schmidt-Verfahren in dieser Reihenfolge aus und zeichne die Ergebnisse $e_1$ und $e_2$, je als Pfeil vom Ursprung aus.',
+      plot:{x:[-2, 2.5], y:[-1.5, 2.5], abs:true, xlab:'1', ylab:'2', unit:true, grid:0.5},
+      // e_1 = (1; 1)/√2; w = a_2 − ⟨e_1|a_2⟩e_1 = (0; 2) − (1; 1) = (−1; 1); e_2 = (−1; 1)/√2
+      given:[{from:[0, 0], to:[1, 1], lab:'a_1'}, {from:[0, 0], to:[0, 2], lab:'a_2'}],
+      want:[
+        {from:[0, 0], to:[Math.SQRT1_2, Math.SQRT1_2], lab:'e_1', msg:'Was macht der erste Schritt mit $a_1$? Welche Länge hat $e_1$?'},
+        {from:[0, 0], to:[-Math.SQRT1_2, Math.SQRT1_2], lab:'e_2', msg:'Was ziehst du von $a_2$ ab, bevor du normierst? Welchen Winkel schließt das Ergebnis mit $e_1$ ein, und auf welcher Seite von $e_1$ liegt es?'}],
+      reveal:'$e_1 = a_1/\\|a_1\\| = (1;\\ 1)/\\sqrt2$. Dann $\\langle e_1|a_2\\rangle = \\sqrt2$ und $w = a_2 - \\sqrt2\\,e_1 = (-1;\\ 1)$. Normiert: $e_2 = (-1;\\ 1)/\\sqrt2$. Beide Pfeile haben die Länge 1 und enden auf dem Einheitskreis; $e_2$ steht senkrecht auf $e_1$, auf der Seite von $a_2$.',
+      wrong:[
+        {arrows:[{from:[0, 0], to:[Math.SQRT1_2, Math.SQRT1_2]}, {from:[0, 0], to:[0, 1]}], fails:[1], why:'a₂ nur normiert, nicht orthogonalisiert'},
+        {arrows:[{from:[0, 0], to:[1, 1]}, {from:[0, 0], to:[-1, 1]}], fails:[0, 1], why:'nicht normiert'}
+      ]}}
   ],
   finalB:[
     {aim:0, task:{id:'mv-g1', title:'Norm', text:'$v = \\begin{pmatrix}2 - i\\\\ i\\\\ 1 + i\\end{pmatrix}$.', ctx:MVEK({states:{v:'(2 - i; i; 1 + i)'}}),
@@ -302,7 +347,20 @@ topic({
     {aim:'k', id:'mv-gk2', type:'dialog', text:'Der Projektor auf einen normierten Vektor $e$ ist $P = |e\\rangle\\langle e|$. Jetzt nimmt man statt $e$ den Vektor $e\' = i\\,e$.',
       people:[{name:'Lena', says:'$|e\'\\rangle\\langle e\'| = i\\cdot(-i)\\,|e\\rangle\\langle e| = P$. Der Projektor ändert sich nicht.'}, {name:'Jonas', says:'Beide Faktoren $i$ kommen heraus: $|e\'\\rangle\\langle e\'| = i\\cdot i\\,|e\\rangle\\langle e| = -P$.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:0,
-      ex:'Das Bra $\\langle e\'|$ ist die Zeile mit den **konjugierten** Einträgen; der Faktor kommt dort als $i^* = -i$ heraus. Ein Phasenfaktor ändert den Projektor also nicht, und damit auch keine Wahrscheinlichkeit $|\\langle e|\\psi\\rangle|^2$. Jonas’ $-P$ wäre gar kein Projektor: $(-P)^2 = P \\neq -P$.'}
+      ex:'Das Bra $\\langle e\'|$ ist die Zeile mit den **konjugierten** Einträgen; der Faktor kommt dort als $i^* = -i$ heraus. Ein Phasenfaktor ändert den Projektor also nicht, und damit auch keine Wahrscheinlichkeit $|\\langle e|\\psi\\rangle|^2$. Jonas’ $-P$ wäre gar kein Projektor: $(-P)^2 = P \\neq -P$.'},
+    {aim:2, sketch:{id:'mv-fs-b', kind:'arrows', title:'Gram-Schmidt in der Ebene', points:3,
+      text:'Gegeben sind $a_1 = (1;\\ -1)$ und $a_2 = (2;\\ 0)$ (graue Pfeile). Führe das Gram-Schmidt-Verfahren in dieser Reihenfolge aus und zeichne die Ergebnisse $e_1$ und $e_2$, je als Pfeil vom Ursprung aus.',
+      plot:{x:[-1.5, 2.5], y:[-2, 2], abs:true, xlab:'1', ylab:'2', unit:true, grid:0.5},
+      // e_1 = (1; −1)/√2; w = a_2 − ⟨e_1|a_2⟩e_1 = (2; 0) − (1; −1) = (1; 1); e_2 = (1; 1)/√2
+      given:[{from:[0, 0], to:[1, -1], lab:'a_1'}, {from:[0, 0], to:[2, 0], lab:'a_2'}],
+      want:[
+        {from:[0, 0], to:[Math.SQRT1_2, -Math.SQRT1_2], lab:'e_1', msg:'Was macht der erste Schritt mit $a_1$? Welche Länge hat $e_1$?'},
+        {from:[0, 0], to:[Math.SQRT1_2, Math.SQRT1_2], lab:'e_2', msg:'Was ziehst du von $a_2$ ab, bevor du normierst? Welchen Winkel schließt das Ergebnis mit $e_1$ ein, und auf welcher Seite von $e_1$ liegt es?'}],
+      reveal:'$e_1 = a_1/\\|a_1\\| = (1;\\ -1)/\\sqrt2$. Dann $\\langle e_1|a_2\\rangle = \\sqrt2$ und $w = a_2 - \\sqrt2\\,e_1 = (1;\\ 1)$. Normiert: $e_2 = (1;\\ 1)/\\sqrt2$. Beide Pfeile haben die Länge 1 und enden auf dem Einheitskreis; $e_2$ steht senkrecht auf $e_1$, auf der Seite von $a_2$.',
+      wrong:[
+        {arrows:[{from:[0, 0], to:[Math.SQRT1_2, -Math.SQRT1_2]}, {from:[0, 0], to:[1, 0]}], fails:[1], why:'a₂ nur normiert, nicht orthogonalisiert'},
+        {arrows:[{from:[0, 0], to:[1, -1]}, {from:[0, 0], to:[1, 1]}], fails:[0, 1], why:'nicht normiert'}
+      ]}}
   ],
   errors:[
     {id:'mv-e1', title:'Norm ohne Konjugation',

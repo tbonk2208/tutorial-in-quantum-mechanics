@@ -1,6 +1,50 @@
 /* ===== Thema 1: Wellenfunktion und Wahrscheinlichkeit ===== */
 (function(){
 const DYN = (extra) => Object.assign({coords:['x', 't'], params:{m:'pos'}, abstract:{ψ:{args:['x', 't']}, V:{args:['x'], real:true}}, dyn:{fn:'ψ'}}, extra || {});
+/* ---- Skizzenaufgaben (didaktik/SKIZZE.md): Musterfunktionen aus den exakten Lösungen, dimensionslos ---- */
+const SK = (() => {
+  const PI = Math.PI;
+  /* wf-s1: |ψ|² für ψ = A (x + ia) e^{-x²/(2a²)}, a = 1: |ψ|² ∝ (x² + a²) e^{-x²/a²} (keine Nullstelle, gerade, oben flach: 1 − u⁴/2 + …) */
+  const s1 = {
+    id:'wf-sk1', title:'Dichte einer komplexen Wellenfunktion', kind:'curve', draw:'abs2',
+    text:'Gegeben ist $\\psi(x) = A\\,(x + ia)\\,e^{-x^2/(2a^2)}$ mit $a > 0$ – die Funktion, die die Herleitung im Abschnitt „Wahrscheinlichkeitsdichte und Normierung“ normiert. Skizziere die Wahrscheinlichkeitsdichte $|\\psi(x)|^2$ von $-3a$ bis $3a$. Die Höhe ist frei, es kommt auf die Form an.',
+    plot:{x:[-3, 3], xlab:'x', ylab:'|\\psi(x)|^2', ticks:[{x:-2, lab:'-2a'}, {x:-1, lab:'-a'}, {x:0, lab:'0'}, {x:1, lab:'a'}, {x:2, lab:'2a'}]},
+    f:x => (x * x + 1) * Math.exp(-x * x),
+    checks:[
+      {id:'pos', type:'nonneg', msg:'Deine Kurve wird negativ (Minimum {got}). Was ergibt $\\psi^*\\psi$ für eine komplexe Zahl $\\psi = u + iv$?'},
+      {id:'knoten', type:'nodes', n:0, msg:'Deine Dichte hat {got} Nullstelle(n). An welcher Stelle wären Real- **und** Imaginärteil von $x + ia$ gleichzeitig null?'},
+      {id:'sym', type:'parity', p:'even', about:0, msg:'Was passiert mit $|x + ia|^2$, wenn du $x$ durch $-x$ ersetzt? Deine Skizze ist {got}.'}
+    ],
+    reveal:'$|\\psi|^2 = \\psi^*\\psi = |A|^2(x - ia)(x + ia)\\,e^{-x^2/a^2} = |A|^2(x^2 + a^2)\\,e^{-x^2/a^2}$. Der Faktor $x^2 + a^2$ ist nie null, denn Real- und Imaginärteil von $x + ia$ verschwinden nicht gleichzeitig. Deshalb hat die Dichte keine Nullstelle, obwohl $\\mathrm{Re}\\,\\psi$ bei $x = 0$ eine hat. Sie ist gerade und oben sehr flach, weil der Anstieg von $x^2 + a^2$ den Abfall der Gauß-Funktion bei kleinen $|x|$ fast ausgleicht.',
+    hints:['Schreibe $|\\psi|^2 = \\psi^*\\psi$ aus und vereinfache $(x - ia)(x + ia)$.', 'Für eine komplexe Zahl ist $|z|^2 = (\\mathrm{Re}\\,z)^2 + (\\mathrm{Im}\\,z)^2$. Null ist das nur, wenn beide Teile null sind.'],
+    wrong:[
+      {f:x => x * x * Math.exp(-x * x), fails:['knoten'], why:'nur den Realteil quadriert: (Re ψ)² hat bei x = 0 einen Knoten, |ψ|² nicht'},
+      {f:x => (x * x - 1) * Math.exp(-x * x), fails:['pos'], why:'ψ² statt ψ*ψ: Realteil von (x + ia)² = x² − a² + 2iax, in der Mitte negativ'},
+      {f:x => x * Math.exp(-x * x / 2), fails:['pos', 'sym'], why:'ψ (Realteil) statt |ψ|² gezeichnet'}
+    ]
+  };
+  /* wf-lab: |ψ|² für ψ = (ψ1 + ψ2)/√2 im Kasten, L = 1, ψn = √2 sin(nπx): |ψ|² = (sin πx + sin 2πx)²
+     Maximum bei x ≈ 0,298 (|ψ|² ≈ 3,10), Nullstelle bei x = 2/3, rechter Buckel ≈ 0,135 (4 % des Maximums), ⟨x⟩ = 1/2 − 16/(9π²) ≈ 0,320 */
+  const lab = {
+    id:'wf-sk-lab', title:'Dichte einer Überlagerung im Kasten', kind:'curve', draw:'abs2',
+    text:'Im Kasten $0 < x < L$ ist $\\psi = (\\psi_1 + \\psi_2)/\\sqrt2$ mit $\\psi_n = \\sqrt{2/L}\\,\\sin(n\\pi x/L)$. Skizziere $|\\psi(x)|^2$. Stell danach im Labor „(ψ₁ + ψ₂)/√2“ ein und vergleiche mit der dicken Kurve.',
+    plot:{x:[-0.1, 1.1], dom:[0, 1], walls:[0, 1], xlab:'x', ylab:'|\\psi(x)|^2', ticks:[{x:0, lab:'0'}, {x:0.5, lab:'L/2'}, {x:1, lab:'L'}]},
+    f:x => (Math.sin(PI * x) + Math.sin(2 * PI * x)) ** 2,
+    checks:[
+      {id:'pos', type:'nonneg', msg:'Deine Kurve wird negativ (Minimum {got}). Kann eine Wahrscheinlichkeitsdichte negativ sein?'},
+      {id:'rand', name:'Null an den Wänden', type:'zero', at:[0, 1], msg:'Welchen Wert haben $\\psi_1$ und $\\psi_2$ an den Wänden – und damit $|\\psi|^2$?'},
+      {id:'links', name:'links und rechts der Mitte', type:'amp', a:[0, 0.5], b:[0.5, 1], cmp:'>', msg:'Vergleiche $\\psi_1 + \\psi_2$ links und rechts der Mitte. Wo verstärken sich die beiden Anteile, wo schwächen sie sich ab? (Abschnitt ‚Einzelne Elektronen am Doppelspalt‘)'}
+    ],
+    reveal:'$|\\psi|^2 = \\tfrac12(\\psi_1^2 + \\psi_2^2) + \\psi_1\\psi_2$. Der Mischterm $\\psi_1\\psi_2$ ist links positiv, weil dort beide Funktionen positiv sind, und rechts negativ, weil $\\psi_2 < 0$ ist. Deshalb liegt fast die ganze Wahrscheinlichkeit links, $\\langle x\\rangle \\approx 0{,}32L$. Bei $x = 2L/3$ ist $\\psi_1 + \\psi_2 = 0$; dahinter bleibt nur ein winziger Buckel. Addierte man die Dichten statt der Amplituden, wäre die Kurve symmetrisch zur Mitte.',
+    hints:['Werte $\\psi_1 + \\psi_2$ an einigen Stellen aus, etwa bei $L/4$, $L/2$ und $3L/4$, und quadriere.', 'Im Betragsquadrat einer Summe steckt der Mischterm $2\\psi_1\\psi_2$. Wo ist er positiv, wo negativ?'],
+    wrong:[
+      {f:x => Math.sin(PI * x) ** 2 + Math.sin(2 * PI * x) ** 2, fails:['links'], why:'Dichten addiert statt Amplituden: ohne Mischterm, wie klassische Kugeln am Doppelspalt'},
+      {f:x => Math.sin(PI * x) + Math.sin(2 * PI * x), fails:['pos'], why:'ψ statt |ψ|²: rechts von 2L/3 negativ'},
+      {f:x => (Math.sin(PI * x) - Math.sin(2 * PI * x)) ** 2, fails:['links'], why:'Vorzeichen des Mischterms vertauscht: Dichte rechts statt links'}
+    ]
+  };
+  return {s1, lab};
+})();
 topic({
   id:'wf', math:['m-komplex', 'm-analysis', 'm-stat'], title:'Wellenfunktion und Wahrscheinlichkeit', short:'Wellenfunktion',
   src:'Griffiths & Schroeter Kap. 1 · Nolting 5/1 Kap. 2 · Schwabl Kap. 2 · Tonomura et al. 1989 (Einzelelektronen-Interferenz)',
@@ -144,7 +188,7 @@ topic({
       {q:'Ein Zustand hat $\\langle x\\rangle = 0$ und $\\langle x^2\\rangle = 4\\,\\mathrm{nm}^2$. Wie groß ist $\\Delta x$?', opts:['$2\\,\\mathrm{nm}$', '$4\\,\\mathrm{nm}$', '$16\\,\\mathrm{nm}$'], a:0, ex:'$\\Delta x = \\sqrt{4 - 0}\\,\\mathrm{nm} = 2\\,\\mathrm{nm}$.'}
     ]
   },
-  lab:{type:'prob', title:'Dichte, Intervall und Erwartungswert',
+  lab:{type:'prob', sketch:SK.lab, title:'Dichte, Intervall und Erwartungswert',
     text:'Wähle eine Wellenfunktion im Kasten ($L = 1$). Die Fläche unter $|\\psi|^2$ zwischen den Grenzen ist die Wahrscheinlichkeit. Die rote Linie ist $\\langle x\\rangle$, der helle Streifen $\\langle x\\rangle \\pm \\Delta x$.',
     predict:{q:'Vorhersage: Im Grundzustand $\\psi_1$ ist die Wahrscheinlichkeit, das Teilchen im linken Viertel $0 < x < L/4$ zu finden, …', opts:['kleiner als $1/4$', 'genau $1/4$', 'größer als $1/4$'], a:0, ex:'Die Dichte $|\\psi_1|^2 \\propto \\sin^2(\\pi x/L)$ ist an der Wand null und in der Mitte am größten. Das linke Viertel bekommt deshalb weniger als ein Viertel.'},
     questions:[
@@ -244,6 +288,7 @@ topic({
           model:['⟨x^2⟩ = sqrt(2λ/π) ∫_-∞^∞ x^2 e^(-2λ x^2) dx', '= sqrt(2λ/π) · 1/(4λ) sqrt(π/(2λ))', '= 1/(4λ)', 'Δx = 1/(2 sqrt(λ))']}
       ]}
   ],
+  sketch:[SK.s1],
   final:[
     {aim:0, task:{id:'wf-f1', title:'Normieren', text:'Im Kasten $0<x<L$ ist $\\psi(x) = A\\,\\sin^2(\\pi x/L)$, außerhalb ist $\\psi = 0$.',
       ctx:CTX.box({defs:{'ψ(x)':'A sin(π x/L)^2'}, unknowns:{A:{ref:'sqrt(8/(3L))', alt:['-sqrt(8/(3L))']}}}),

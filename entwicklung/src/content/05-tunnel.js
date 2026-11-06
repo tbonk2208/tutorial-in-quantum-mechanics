@@ -12,6 +12,143 @@ const TUN_DELTA = () => ({coords:['x'], params:{m:'pos', α:'pos'}, defs:{'ψ(x)
 const TUN_STEP = (E) => ({coords:[], params:{m:'pos', V_0:'pos'}, defs:{E, k:'sqrt(2m E)/ħ', q:'sqrt(2m (E - V_0))/ħ'},
   unknowns:{B:{ref:'(k - q)/(k + q)', kind:'real'}, C:{ref:'2k/(k + q)', kind:'real'}}});
 const TUN_SYN = () => ({coords:['x', 'k'], space:['x'], params:{m:'pos', α:'pos'}, defs:{κ:'m α/ħ^2', 'ψ(x)':'sqrt(κ) e^(-κ |x|)', 'φ(k)':'sqrt(2κ^3/π)/(κ^2 + k^2)'}, state:'ψ', normalized:true});
+/* ---- Skizzenaufgaben (didaktik/SKIZZE.md): Musterfunktionen aus den exakten Lösungen, dimensionslos ---- */
+const SK = (() => {
+  const PI = Math.PI;
+  /* ---- kleine komplexe Rechnung ---- */
+  const C = (re, im) => [re, im || 0];
+  const cm = (a, b) => [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]];
+  const cdv = (a, b) => { const d = b[0] * b[0] + b[1] * b[1]; return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d]; };
+  const cex = ph => [Math.cos(ph), Math.sin(ph)];
+  /* tunnel-lab: Rechteckbarriere wie im Labor (Energie in V0, Länge in ħ/√(2mV0), also k = √E, κ = √(1 − E)), E = 0,5, Breite a = 2.
+     Rechts ψ = t e^{ikx}; innen ψ = t e^{ika}[cosh κ(x − a) + (ik/κ) sinh κ(x − a)] (ψ, ψ' stetig bei a);
+     bei 0 mit e^{ikx} + r e^{−ikx}: t e^{ika} = 1/[cosh κa + (i/2)(κ/k − k/κ) sinh κa], r = ψ(0) − 1.
+     Ergebnis: T = |t|² ≈ 0,211 (wie im Labor), Re ψ in der Barriere fällt ohne Nullstelle von 1 auf |t| ≈ 0,46. Gezeigt wird Re ψ wie im Labor zur Phase 0.
+     Bei E = V0/2 ist κ = k, also t·e^{ika} = 1/cosh κa reell und positiv: Phase 0 ist genau der Zeitpunkt mit ψ(a) > 0 reell; dann ist Re ψ innen
+     |t| cosh κ(x − a) (monoton, Steigung 0 bei a). Zu anderen Zeiten ist Re ψ innen cos φ·cosh + sin φ·sinh: für φ ≈ 15°–70° (mod 180°) fast flach oder
+     mit Nulldurchgang, links zeitweise fast null (stehende Welle). Deshalb nennt der Text den Zeitpunkt. */
+  const BARL = (() => {
+    const E = 0.5, a = 2, k = Math.sqrt(E), ka = Math.sqrt(1 - E);
+    const ta = cdv(C(1), C(Math.cosh(ka * a), 0.5 * (ka / k - k / ka) * Math.sinh(ka * a)));     // t·e^{ika}
+    const t = cm(ta, cex(-k * a));
+    const inside = x => cm(ta, C(Math.cosh(ka * (x - a)), k / ka * Math.sinh(ka * (x - a))));
+    const r = [inside(0)[0] - 1, inside(0)[1]];
+    const psi = x => x < 0 ? [Math.cos(k * x) + r[0] * Math.cos(k * x) + r[1] * Math.sin(k * x), Math.sin(k * x) - r[0] * Math.sin(k * x) + r[1] * Math.cos(k * x)]
+      : x <= a ? inside(x) : cm(t, cex(k * x));
+    return {E, a, k, ka, t, r, T:t[0] ** 2 + t[1] ** 2, R:r[0] ** 2 + r[1] ** 2, psi, f:x => psi(x)[0]};
+  })();
+  const lab = {
+    id:'tunnel-sk-lab', title:'Streuzustand an der Barriere mit $E < V_0$', kind:'curve', draw:'psi',
+    text:'Ein Teilchen läuft von links mit $E = V_0/2$ auf eine Rechteckbarriere der Breite $a$ ($a = 2$ in den Einheiten des Labors). Skizziere $\\mathrm{Re}\\,\\psi$ über den ganzen Bereich zu dem Zeitpunkt, an dem $\\psi(a)$ reell und positiv ist: Die durchgelassene Welle hat bei $x = a$ gerade einen Wellenberg. Stell danach im Labor $E/V_0 = 0{,}5$, Breite $2$ und „nur Re ψ“ ein, ohne die Zeit laufen zu lassen, und vergleiche.',
+    plot:{x:[-15, 15], xlab:'x', ylab:'\\mathrm{Re}\\,\\psi', ticks:[{x:-10, lab:'-10'}, {x:0, lab:'0'}, {x:2, lab:'a'}, {x:10, lab:'10'}], V:x => x > 0 && x < 2 ? 1 : 0, Vr:[0, 1.3], E:0.5,
+      regions:[{x:[0, 2], lab:'Barriere'}]},
+    f:BARL.f,
+    checks:[
+      {id:'innen', name:'in der Barriere', type:'decay', toward:'right', range:[0, 2], ratio:0.7, msg:'Ist $E - V$ in der Barriere positiv oder negativ? Schwingt $\\psi$ dort, und wird $|\\psi|$ größer oder kleiner? (Abschnitt ‚Rechteckbarriere und Tunneleffekt‘)'},
+      {id:'rechts', name:'Welle hinter der Barriere', type:'osc', range:[2, 15], min:2, msg:'Kommt hinter der Barriere eine Welle an?'},
+      {id:'lam', name:'Wellenlänge links und rechts', type:'wavelength', a:[-15, 0], b:[2, 15], cmp:'=', msg:'Wovon hängt die Wellenlänge ab? Wie groß ist $E - V$ hinter der Barriere im Vergleich zu vorher? Dein Verhältnis ist {got}.'},
+      {id:'amp', name:'Amplitude links und rechts', type:'amp', a:[-15, 0], b:[2, 15], cmp:'>', msg:'Kommen alle Teilchen durch? Was sagt das über die Amplitude hinter der Barriere?'}
+    ],
+    reveal:'Links überlagern sich einlaufende und reflektierte Welle. In der Barriere ist $E < V_0$: $\\psi$ krümmt sich von der Achse weg und nimmt im Wesentlichen exponentiell ab, ohne zu schwingen. Rechts läuft eine Welle mit **derselben** Wellenlänge wie links, denn $E$ und $V$ sind dieselben; nur ihre Amplitude ist kleiner, $|t| = \\sqrt T \\approx 0{,}46$. Das Teilchen verliert beim Tunneln keine Energie, es kommt nur mit kleinerer Wahrscheinlichkeit durch. Zu anderen Zeitpunkten („Zeit laufen lassen“) sieht $\\mathrm{Re}\\,\\psi$ anders aus: In der Barriere überlagern sich zwei Exponentialanteile mit verschiedener Phase, so dass $\\mathrm{Re}\\,\\psi$ dort zeitweise fast flach verläuft oder die Achse einmal kreuzt, und links ist die Überlagerung aus einlaufender und reflektierter Welle zeitweise fast null. Gleich bleiben die Wellenlänge, die Amplitude $|t|$ rechts und der Abfall von $|\\psi|$ in der Barriere.',
+    hints:['Teile die Achse in drei Bereiche und bestimme jeweils das Vorzeichen von $E - V$.', 'Die Wellenlänge hängt nur von $E - V$ ab, die Amplitude davon, wie viel durchkommt.', 'Rechts ist $\\psi\' = ik\\psi$. Ist $\\psi(a)$ reell, hat $\\mathrm{Re}\\,\\psi$ bei $x = a$ die Steigung null. In der Barriere krümmt sich $\\mathrm{Re}\\,\\psi$ von der Achse weg.'],
+    wrong:[
+      {f:x => x < 0 ? BARL.f(x) : x < 2 ? BARL.f(0) * Math.cos(3 * x) : 0.46 * Math.cos(BARL.k * x + 1), fails:['innen'], why:'Schwingung in der Barriere'},
+      {f:x => x <= 2 ? BARL.f(x) : BARL.f(2) * Math.cos(BARL.k / 1.7 * (x - 2)) - 0.2 * Math.sin(BARL.k / 1.7 * (x - 2)), fails:['lam'], why:'Energieverlust beim Tunneln: längere Wellenlänge hinter der Barriere (McKagan, Perkins & Wieman 2008)'},
+      {f:x => x < 0 ? BARL.f(x) : x < 2 ? BARL.f(0) : 1.34 * Math.cos(BARL.k * (x - 2) + 0.73), fails:['innen', 'amp'], why:'kein Abklingen, gleiche Amplitude hinter der Barriere'},
+      {f:x => x <= 0 ? BARL.f(x) : x < 2 ? BARL.f(0) * (1 - x / 2) ** 2 : 0, fails:['rechts', 'lam'], why:'kein Tunneln: hinter der Barriere ψ = 0'}
+    ]
+  };
+  /* tunnel-s1: Stufe mit E = 3V0/2: k = 2π (λ links = 1), q = k/√3 (λ rechts = √3 ≈ 1,73).
+     r = (k − q)/(k + q) ≈ 0,268 (R ≈ 0,072), t = 2k/(k + q) = 1 + r. Re(e^{iα}ψ) mit α = π/5:
+     links cos(kx + α) + r cos(kx − α), rechts t cos(qx + α); ψ und ψ' stetig bei 0. */
+  const STU = (() => {
+    const k = 2 * PI, q = k / Math.sqrt(3), r = (k - q) / (k + q), t = 2 * k / (k + q), al = PI / 5;
+    return {k, q, r, t, f:x => x < 0 ? Math.cos(k * x + al) + r * Math.cos(k * x - al) : t * Math.cos(q * x + al)};
+  })();
+  const s1 = {
+    id:'tunnel-sk1', title:'Streuzustand an der Stufe mit $E > V_0$', kind:'curve', draw:'psi',
+    text:'An der Stufe $V = 0$ für $x < 0$, $V = V_0$ für $x > 0$ läuft ein Teilchen mit $E = \\tfrac32V_0$ von links ein. Skizziere $\\mathrm{Re}\\,\\psi$ zu einem festen Zeitpunkt. Die Wellenlänge links ist durch die Teilstriche vorgegeben ($\\lambda = 1$).',
+    plot:{x:[-2.5, 2.5], xlab:'x', ylab:'\\mathrm{Re}\\,\\psi', ticks:[{x:-2, lab:'-2'}, {x:-1, lab:'-1'}, {x:0, lab:'0'}, {x:1, lab:'1'}, {x:2, lab:'2'}], V:x => x > 0 ? 2 / 3 : 0, Vr:[0, 1.25], E:1},
+    f:STU.f,
+    checks:[
+      {id:'links', name:'Welle vor der Stufe', type:'osc', range:[-2.5, 0], min:3, msg:'Wie sieht $\\psi$ vor der Stufe aus, wo $E > V$ ist?'},
+      {id:'rechts', name:'Welle hinter der Stufe', type:'osc', range:[0, 2.5], min:2, msg:'Ist der Bereich hinter der Stufe für $E > V_0$ erlaubt oder verboten?'},
+      {id:'lam', type:'wavelength', a:[-2.5, 0], b:[0, 2.5], cmp:'<', msg:'Wie hängt die Wellenlänge von $E - V$ ab? Auf welcher Seite ist $E - V$ kleiner? Dein Verhältnis links/rechts ist {got}.'},
+      {id:'stetig', type:'cont', msg:'Darf $\\psi$ an der Stufe springen? (Abschnitt ‚Anschlussbedingungen‘)'}
+    ],
+    reveal:'Links ist $E - V = E$, rechts nur $E - V_0 = E/3$. Also ist $q = k/\\sqrt3$, und die Wellenlänge rechts ist $\\sqrt3 \\approx 1{,}7$-mal so lang. Links überlagern sich einlaufende und reflektierte Welle ($R = \\left(\\frac{k - q}{k + q}\\right)^2 \\approx 0{,}07$), rechts läuft nur die durchgelassene. An der Stufe gehen $\\psi$ und $\\psi\'$ stetig ineinander über.',
+    hints:['Bestimme $E - V$ links und rechts. Was folgt daraus für $k$ und $q$?', 'Die Wellenlänge ist $2\\pi/k$ mit $k = \\sqrt{2m(E - V)}/\\hbar$.'],
+    wrong:[
+      {f:x => Math.cos(STU.k * x + 0.6), fails:['lam'], why:'gleiche Wellenlänge auf beiden Seiten'},
+      {f:x => x <= 0 ? STU.f(x) : STU.f(0) * Math.cos(1.6 * STU.k * x) - 0.3 * Math.sin(1.6 * STU.k * x), fails:['lam'], why:'kürzere Wellenlänge hinter der Stufe („höheres V, schnellere Welle“)'},
+      {f:x => x <= 0 ? STU.f(x) : STU.f(0) * Math.exp(-4 * x), fails:['rechts', 'lam'], why:'wie bei E < V0: Abklingen hinter der Stufe'},
+      {f:x => x <= 0 ? STU.f(x) : 0.7 * Math.sin(STU.q * x), fails:['stetig'], why:'Sprung: die Welle beginnt hinter der Stufe neu bei null'}
+    ]
+  };
+  /* tunnel-s2: gebundener Zustand im δ-Potential, ψ = √κ e^{−κ|x|} mit κ = mα/ħ² (Längen in 1/κ) */
+  const s2 = {
+    id:'tunnel-sk2', title:'Gebundener Zustand im $\\delta$-Potential', kind:'curve', draw:'psi',
+    text:'Skizziere den gebundenen Zustand $\\psi(x)$ im Potential $V(x) = -\\alpha\\,\\delta(x)$ mit $\\alpha > 0$. Die Teilstriche liegen bei $\\pm1/\\kappa$.',
+    plot:{x:[-3, 3], xlab:'x', ylab:'\\psi(x)', ticks:[{x:-2, lab:'-2/\\kappa'}, {x:-1, lab:'-1/\\kappa'}, {x:0, lab:'0'}, {x:1, lab:'1/\\kappa'}, {x:2, lab:'2/\\kappa'}]},
+    f:x => Math.exp(-Math.abs(x)),
+    checks:[
+      {id:'knick', type:'kink', at:0, msg:'Was macht das $\\delta$-Potential mit der Steigung $\\psi\'$ bei $x = 0$? (Abschnitt ‚Das δ-Potential‘)'},
+      {id:'max', type:'maxat', x:0, tol:0.3, msg:'Wo ist $|\\psi|$ am größten? Darf $\\psi(0)$ null sein, wenn die Sprungbedingung $\\psi\'(0^+) - \\psi\'(0^-) = -\\frac{2m\\alpha}{\\hbar^2}\\psi(0)$ einen Knick erzeugen soll?'},
+      {id:'links', name:'Abklingen links', type:'decay', toward:'left', range:[-3, -0.2], msg:'Was macht $\\psi$ für $x < 0$, wo $E < V = 0$ ist?'},
+      {id:'rechts', name:'Abklingen rechts', type:'decay', toward:'right', range:[0.2, 3], msg:'Was macht $\\psi$ für $x > 0$, wo $E < V = 0$ ist?'}
+    ],
+    reveal:'$\\psi = \\sqrt\\kappa\\,e^{-\\kappa|x|}$: Außer bei $x = 0$ ist überall $E < V$, also fällt $\\psi$ nach beiden Seiten exponentiell ab und schwingt nicht. Bei $x = 0$ ist $\\psi$ stetig, aber $\\psi\'$ springt um $-2m\\alpha\\psi(0)/\\hbar^2$ von $+\\kappa\\psi(0)$ auf $-\\kappa\\psi(0)$: Es entsteht eine Spitze. Bei $x = \\pm1/\\kappa$ ist $\\psi$ auf $1/e$ des Maximums gefallen.',
+    hints:['Überlege getrennt: Was gilt für $x \\ne 0$, und was passiert genau bei $x = 0$?', 'Für $x \\ne 0$ ist $V = 0 > E$: exponentielles Abklingen. Bei $x = 0$ springt $\\psi\'$, $\\psi$ selbst bleibt stetig.'],
+    wrong:[
+      {f:x => Math.exp(-x * x / 2), fails:['knick'], why:'glatte Kuppe: ψ′ auch am δ-Potential als stetig angesetzt'},
+      {f:x => Math.abs(x) * Math.exp(-Math.abs(x)), fails:['max'], why:'ψ(0) = 0, als wäre das δ-Potential eine Wand'},
+      {f:x => Math.exp(-Math.abs(x) / 2) * Math.cos(2.5 * x), fails:['links', 'rechts'], why:'Schwingung im klassisch verbotenen Bereich'}
+    ]
+  };
+  /* Abschluss (Lernziel 1): |ψ|² an der Barriere (Laboreinheiten: k = √E, κ = √(1 − E), einlaufende Amplitude 1), unabhängig von der Phase.
+     Rechts |ψ|² = |t|² = T (konstant, laufende Welle); innen |ψ|² = T[cosh²κ(x − a) + (k/κ)² sinh²κ(x − a)], fällt monoton auf T;
+     links 1 + R + 2√R cos(2kx + φ), Periode λ/2.  A: E = 0,7, a = 1,5 → T ≈ 0,50.  B: E = 0,6, a = 1,61 → T ≈ 0,40.
+     Höhe rechts: level T ± 0,14. T und √T (Fehlskizze) liegen nur gut 0,2 auseinander; 0,14 lässt das Muster bei noise 0,09 zu ≥ 95 % bestehen
+     und weist √T bei noise 0,03 sicher ab (bei 0,06 zu etwa 90 %). */
+  const barrier = (E, a) => {
+    const k = Math.sqrt(E), ka = Math.sqrt(1 - E);
+    const ta = cdv(C(1), C(Math.cosh(ka * a), 0.5 * (ka / k - k / ka) * Math.sinh(ka * a)));
+    const t = cm(ta, cex(-k * a)), T = t[0] ** 2 + t[1] ** 2;
+    const inside = x => cm(ta, C(Math.cosh(ka * (x - a)), k / ka * Math.sinh(ka * (x - a))));
+    const r = [inside(0)[0] - 1, inside(0)[1]];
+    const psi = x => x < 0 ? [Math.cos(k * x) + r[0] * Math.cos(k * x) + r[1] * Math.sin(k * x), Math.sin(k * x) - r[0] * Math.sin(k * x) + r[1] * Math.cos(k * x)]
+      : x <= a ? inside(x) : cm(t, cex(k * x));
+    return {k, ka, a, T, R:r[0] ** 2 + r[1] ** 2, psi, rho:x => { const p = psi(x); return p[0] * p[0] + p[1] * p[1]; }};
+  };
+  const fin = (o) => {
+    const B = barrier(o.E, o.a), lam = 2 * PI / B.k, x0 = -2 * lam, x1 = o.a + 1.5 * lam, top = (1 + Math.sqrt(B.R)) ** 2;
+    const y1 = Math.ceil(top * 1.1 * 2) / 2;
+    return {
+      id:o.id, title:'Aufenthaltsdichte an der Barriere', kind:'curve', draw:'abs2', points:3,
+      text:'Ein Teilchen läuft von links mit $E = ' + o.Etex + 'V_0$ auf eine Rechteckbarriere ($0 < x < a$); die einlaufende Welle $e^{ikx}$ hat die Amplitude 1. Die Transmission ist $T = ' + o.Ttex + '$. Skizziere die Aufenthaltsdichte $|\\psi(x)|^2$ in der richtigen Höhe. Vor der Barriere genügt die ungefähre Form.',
+      plot:{x:[x0, x1], y:[-0.25 * y1, y1], abs:true, xlab:'x', ylab:'|\\psi(x)|^2', ticks:[{x:0, lab:'0'}, {x:o.a, lab:'a'}],
+        yticks:o.yticks, regions:[{x:[0, o.a], lab:'Barriere'}]},
+      f:B.rho,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann $|\\psi|^2$ negativ sein?'},
+        {id:'innen', name:'in der Barriere', type:'decay', toward:'right', range:[0, o.a], ratio:0.6, msg:'Ist $E - V$ in der Barriere positiv oder negativ? Wie ändert sich $|\\psi|^2$ dort?'},
+        {id:'rechts', name:'Verlauf hinter der Barriere', type:'noosc', range:[o.a, x1], msg:'Hinter der Barriere läuft nur die Welle $F e^{ikx}$. Wie hängt $|F e^{ikx}|^2$ von $x$ ab?'},
+        {id:'hoehe', name:'Höhe hinter der Barriere', type:'level', v:B.T, tol:o.tol, range:[o.a + 0.1 * lam, x1], msg:'Wie hängen $|F|^2$ und die Transmission $T$ zusammen? Deine Höhe hinter der Barriere ist {got}.'}
+      ],
+      reveal:'Hinter der Barriere läuft nur $Fe^{ikx}$, also ist $|\\psi|^2 = |F|^2 = T = ' + o.Ttex + '$ überall gleich, denn $|e^{ikx}| = 1$: Eine einzelne laufende Welle bildet keine Streifen. In der Barriere fällt $|\\psi|^2$ monoton auf diesen Wert ab, ohne zu schwingen. Vor der Barriere interferieren einlaufende und reflektierte Welle: $|\\psi|^2$ schwankt mit der halben Wellenlänge zwischen $(1 - \\sqrt R)^2$ und $(1 + \\sqrt R)^2$ um den Mittelwert $1 + R$, mit $R = 1 - T$. Dass rechts etwas ankommt, ist der Tunneleffekt.',
+      hints:['Fang hinten an: Welche Welle gibt es hinter der Barriere, und wie groß ist ihr Betragsquadrat?', 'Für $x > a$ ist $\\psi = Fe^{ikx}$ mit $|F|^2 = T$. In der Barriere fällt $|\\psi|^2$ ab, vor ihr überlagern sich zwei Wellen.'],
+      wrong:[
+        {f:x => x <= 0 ? B.rho(x) : x < o.a ? B.rho(0) * (1 - x / o.a) ** 2 : 0, fails:['hoehe'], why:'kein Tunneln: hinter der Barriere ist die Dichte null'},
+        {f:x => x <= o.a ? B.rho(x) : B.T * (1 + Math.cos(2 * B.k * (x - o.a))), fails:['rechts'], why:'Dichte hinter der Barriere schwingt wie Re ψ: laufende Welle mit stehender verwechselt'},
+        {f:x => x <= 0 ? B.rho(x) : x < o.a ? B.rho(0) + (Math.sqrt(B.T) - B.rho(0)) * x / o.a : Math.sqrt(B.T), fails:['hoehe'], why:'Amplitude mit Dichte verwechselt: Höhe √T statt |F|² = T'},
+        {f:x => x <= 0 ? B.rho(x) : x < o.a ? B.rho(0) * (0.6 + 0.4 * Math.cos(9 * x / o.a)) : B.T, fails:['innen'], why:'Schwingung in der Barriere'}
+      ]
+    };
+  };
+  const fA = fin({id:'tunnel-sk-A', E:0.7, Etex:'0{,}7\\,', a:1.5, Ttex:'0{,}50', tol:0.14, yticks:[{y:0.5, lab:'0{,}5'}, {y:1, lab:'1'}, {y:2, lab:'2'}, {y:3, lab:'3'}]});
+  const fB = fin({id:'tunnel-sk-B', E:0.6, Etex:'0{,}6\\,', a:1.606, Ttex:'0{,}40', tol:0.14, yticks:[{y:0.4, lab:'0{,}4'}, {y:1, lab:'1'}, {y:2, lab:'2'}, {y:3, lab:'3'}]});
+  return {lab, s1, s2, fA, fB};
+})();
 topic({
   id:'tunnel', math:['m-dgl', 'm-analysis'], title:'Stufe, Barriere, Tunneleffekt', short:'Tunneleffekt',
   src:'Griffiths & Schroeter Kap. 2 · Nolting 5/1 Kap. 4',
@@ -325,7 +462,7 @@ ein Integral über den klassisch verbotenen Bereich. Diese WKB-Näherung gilt, w
       {q:'Eine Barriere wird bei gleicher Energie doppelt so breit ($\\kappa a \\gg 1$). Wie ändert sich $T$ ungefähr?', opts:['um den Faktor $e^{-2\\kappa a}$ kleiner', 'etwa um den Faktor $1/2$ kleiner', 'etwa um den Faktor $1/4$ kleiner'], a:0, ex:'$T \\propto e^{-2\\kappa a}$. Aus $a$ wird $2a$, also kommt noch einmal $e^{-2\\kappa a}$ dazu – exponentiell, nicht linear.'}
     ]
   },
-  lab:{type:'barrier', title:'Transmission durch eine Rechteckbarriere',
+  lab:{type:'barrier', sketch:SK.lab, title:'Transmission durch eine Rechteckbarriere',
     text:'Oben siehst du $V(x)$, die Energie $E$ (gestrichelt) und die Wellenfunktion, auf der Energielinie aufgetragen (dünn: $\\mathrm{Re}\\,\\psi$, dick: $|\\psi|^2$). Unten zeigt die Kurve die Transmission $T$ als Funktion von $E/V_0$; der Punkt ist die gewählte Energie. Unterhalb von $E = V_0$ tunnelt das Teilchen, oberhalb läuft es „über“ die Barriere. Mit „Zeit laufen lassen“ siehst du, wie sich die Phase von $\\psi$ dreht.',
     predict:{q:'Bevor du die Regler bewegst: Wie verläuft $T(E)$ in der Nähe von $E = V_0$?', opts:['stetig: schon unter $V_0$ ist $T > 0$, über $V_0$ noch $T < 1$', 'mit einem Sprung von $T = 0$ auf $T = 1$ genau bei $E = V_0$', 'mit einem scharfen Maximum $T = 1$ genau bei $E = V_0$'], a:0,
       ex:'Klassisch gäbe es den Sprung. Quantenmechanisch tunnelt das Teilchen unterhalb von $V_0$ und wird oberhalb teilweise reflektiert; $T$ steigt stetig an.'},
@@ -454,6 +591,7 @@ ein Integral über den klassisch verbotenen Bereich. Diese WKB-Näherung gilt, w
       q:'Drei Töpfe haben dieselbe Breite: A ist unendlich tief, B tief, C flach. Ordne die Grundzustandsenergien, jeweils vom Topfboden aus gemessen.', opts:['$E_C < E_B < E_A$', '$E_A < E_B < E_C$', '$E_A = E_B = E_C$'], a:0,
       ex:'Je flacher der Topf, desto weiter dringt $\\psi$ in die Wände ein, desto größer die Wellenlänge und desto kleiner die kinetische Energie.'}
   ],
+  sketch:[SK.s1, SK.s2],
   final:[
     {aim:0, task:{id:'tunnel-fa1', title:'Reflexion und Transmission an einer Stufe',
       text:'Für $x < 0$ ist $V = 0$, für $x > 0$ ist $V = V_0$. Ein Teilchen läuft mit $E = \\tfrac43V_0$ von links ein. Benutze $k = \\sqrt{2mE}/\\hbar$, $q = \\sqrt{2m(E - V_0)}/\\hbar$ und die Amplituden $B$ (reflektiert) und $C$ (durchgelassen).',
@@ -469,6 +607,7 @@ ein Integral über den klassisch verbotenen Bereich. Diese WKB-Näherung gilt, w
       ctx:{coords:['x'], params:{m:'pos', E_b:'pos', A:'pos'}, defs:{'ψ(x)':'A e^(-κ |x|)'}, unknowns:{κ:{ref:'sqrt(2m E_b)/ħ'}, α:{ref:'ħ sqrt(2E_b/m)'}}},
       goals:[{id:'a', prompt:'Bestimme $\\alpha$.', type:'solve', unknown:'α', points:4,
         model:['-ħ^2 κ^2/(2m) = -E_b', 'κ = sqrt(2m E_b)/ħ', '-κ A - κ A = -2m α/ħ^2 A', 'α = ħ^2 κ/m', 'α = ħ sqrt(2E_b/m)']}]}},
+    {aim:1, sketch:SK.fA},
     {aim:'k', type:'mc2', id:'tunnel-fk1',
       q:'Ein Elektron tunnelt durch eine Barriere. Links ist $V = 0$, rechts der Barriere ist $V = -V_1$ (tiefer als links). Wie ist die Wellenlänge rechts im Vergleich zu links?', opts:['kürzer', 'länger', 'gleich'], a:0,
       ex:'Rechts ist die kinetische Energie $E + V_1$ größer als links.',
@@ -495,6 +634,7 @@ ein Integral über den klassisch verbotenen Bereich. Diese WKB-Näherung gilt, w
       ctx:{coords:['x'], params:{m:'pos', d:'pos', A:'pos'}, defs:{'ψ(x)':'A e^(-κ |x|)'}, unknowns:{κ:{ref:'1/(2d)'}, α:{ref:'ħ^2/(2m d)'}}},
       goals:[{id:'a', prompt:'Bestimme $\\alpha$.', type:'solve', unknown:'α', points:4,
         model:['e^(-2κ d) = e^(-1)', 'κ = 1/(2d)', '-κ A - κ A = -2m α/ħ^2 A', 'α = ħ^2 κ/m', 'α = ħ^2/(2m d)']}]}},
+    {aim:1, sketch:SK.fB},
     {aim:'k', type:'mc2', id:'tunnel-gk1',
       q:'Ein Elektron tunnelt durch eine Barriere. Links ist $V = 0$, rechts der Barriere ist $V = V_1$ mit $0 < V_1 < E$. Wie ist die Wellenlänge rechts im Vergleich zu links?', opts:['länger', 'kürzer', 'gleich'], a:0,
       ex:'Rechts ist die kinetische Energie $E - V_1$ kleiner als links.',

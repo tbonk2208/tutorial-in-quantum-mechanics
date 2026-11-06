@@ -135,7 +135,7 @@ LABS.eigen = (el, L, o) => {
     arrowTo(P, 0, 0, lp * ep[0], lp * ep[1], cssv('--c1'), 2.8, 'λ₊e₊');
     arrowTo(P, 0, 0, lm * em[0], lm * em[1], cssv('--c3'), 2.8, 'λ₋e₋');
     const degen = r < 1e-9;
-    ro.innerHTML = texHTML('A = \\begin{pmatrix}' + tf(a, 2) + ' & ' + tf(b, 2) + '\\\\ ' + tf(b, 2) + ' & ' + tf(d, 2) + '\\end{pmatrix}') + ' · ' + texHTML('\\lambda_\\pm = \\frac{a+d}{2} \\pm \\sqrt{\\left(\\frac{a-d}{2}\\right)^2 + b^2}:\\ \\lambda_+ = ' + tf(lp, 3) + ',\\ \\lambda_- = ' + tf(lm, 3)) + ' · ' + texHTML('\\operatorname{Sp}A = ' + tf(a + d, 3) + ' = \\lambda_+ + \\lambda_-,\\quad \\det A = ' + tf(a * d - b * b, 3) + ' = \\lambda_+\\lambda_-') + ' · ' + (degen ? '<b>entartet:</b> jeder Vektor ist Eigenvektor' : 'Eigenvektoren senkrecht: ' + texHTML('\\langle e_+|e_-\\rangle = 0') + ', Winkel von e₊ zur 1-Achse ' + Math.round(th * 180 / Math.PI) + '°');
+    ro.innerHTML = texHTML('A = \\begin{pmatrix}' + tf(a, 2) + ' & ' + tf(b, 2) + '\\\\ ' + tf(b, 2) + ' & ' + tf(d, 2) + '\\end{pmatrix}') + ' · ' + texHTML('\\lambda_\\pm = \\frac{a+d}{2} \\pm \\sqrt{\\left(\\frac{a-d}{2}\\right)^2 + b^2}:\\ \\lambda_+ = ' + tf(lp, 3) + ',\\ \\lambda_- = ' + tf(lm, 3)) + ' · ' + texHTML('\\operatorname{tr}A = ' + tf(a + d, 3) + ' = \\lambda_+ + \\lambda_-,\\quad \\det A = ' + tf(a * d - b * b, 3) + ' = \\lambda_+\\lambda_-') + ' · ' + (degen ? '<b>entartet:</b> jeder Vektor ist Eigenvektor' : 'Eigenvektoren senkrecht: ' + texHTML('\\langle e_+|e_-\\rangle = 0') + ', Winkel von e₊ zur 1-Achse ' + Math.round(th * 180 / Math.PI) + '°');
   };
   P.redraw = draw;
   slider(ctrl, 'a (oben links)', -2, 2, 0.01, a, v => { a = v; draw(); });

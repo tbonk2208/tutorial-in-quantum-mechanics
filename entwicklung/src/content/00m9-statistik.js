@@ -190,8 +190,26 @@ topic({
     ]
   },
   lab:{type:'prob', title:'Dichte, Intervall, Erwartungswert und Streuung',
-    text:'Das Labor zeigt vier Ortsdichten $\\rho(x) = |\\psi(x)|^2$ auf $[0, L]$ mit $L = 1$, alle normiert; gestrichelt ist $\\psi$ selbst. „Dreieck“ heißt: $\\psi$ steigt bis zur Mitte linear an und fällt dann linear ab. Die Fläche zwischen den Grenzen $a$ und $b$ ist $P(a \\le x \\le b)$. Die rote Linie markiert $\\langle x\\rangle$, der helle Streifen reicht von $\\langle x\\rangle - \\Delta x$ bis $\\langle x\\rangle + \\Delta x$.',
-    predict:{q:'Bevor du das Labor bedienst: Welche der vier Dichten hat das kleinste $\\Delta x$?', opts:['die Überlagerung $(\\psi_1 + \\psi_2)/\\sqrt2$', 'das Dreieck mit spitzem Gipfel', 'die Parabel $\\psi \\propto x(L - x)$', 'der Grundzustand $\\psi_1$'], a:0, ex:'Die Überlagerung: $\\Delta x \\approx 0{,}14\\,L$. Die Interferenz drängt die Dichte in die linke Hälfte, dort wird sie hoch und schmal. Es folgen das Dreieck ($0{,}16\\,L$), $\\psi_1$ ($0{,}18\\,L$) und die Parabel ($0{,}19\\,L$). Eine Überlagerung ist also nicht automatisch breiter als ihre Bestandteile.'},
+    sketch:{id:'st-lab-s', kind:'curve', draw:'abs2', title:'Vorhersage: die Dichte einer Überlagerung',
+      text:'Gleich zeigt das Labor die Dichte $\\rho = |\\psi|^2$ für $\\psi = (\\psi_1 + \\psi_2)/\\sqrt2$ mit $\\psi_n = \\sqrt{2/L}\\sin(n\\pi x/L)$ auf $[0, L]$, $L = 1$. Skizziere vorher $\\rho(x)$. Die Achse ist absolut. Stell danach im Labor die Wellenfunktion $(\\psi_1 + \\psi_2)/\\sqrt2$ ein und vergleiche; die rote Linie zeigt $\\langle x\\rangle$.',
+      plot:{x:[0, 1], y:[-0.85, 3.4], abs:true, xlab:'x', ylab:'\\rho(x)', ticks:[{x:0, lab:'0'}, {x:0.25, lab:'L/4'}, {x:0.5, lab:'L/2'}, {x:0.75, lab:'3L/4'}, {x:1, lab:'L'}], yticks:[{y:1, lab:'1'}, {y:2, lab:'2'}, {y:3, lab:'3'}]},
+      // ρ = (sin πx + sin 2πx)²: Maximum 3,10 bei x ≈ 0,30; Nullstelle bei x = 2/3 (sin πx(1 + 2cos πx) = 0); Fläche 1; ⟨x⟩ = 1/2 − 16/(9π²) ≈ 0,320
+      f:x => (Math.sin(Math.PI * x) + Math.sin(2 * Math.PI * x)) ** 2,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Wahrscheinlichkeitsdichte negativ sein?'},
+        {id:'rand', type:'zero', at:[0, 1], msg:'Welchen Wert haben $\\psi_1$ und $\\psi_2$ an den Wänden?'},
+        {id:'lage', type:'center', x:0.31, tol:0.07, msg:'Wo addieren sich $\\psi_1$ und $\\psi_2$, wo heben sie sich teilweise auf? Wo liegt dann der Schwerpunkt $\\langle x\\rangle$? (Abschnitt „Erwartungswert und Momente“)'},
+        {id:'flaeche', type:'area', v:1, tol:0.25, msg:'Welche Fläche hat eine normierte Dichte? Deine ist etwa {got}. Wie hoch muss $\\rho$ dann werden, wenn fast alles in der linken Hälfte liegt?'}
+      ],
+      reveal:'Links haben $\\sin(\\pi x)$ und $\\sin(2\\pi x)$ dasselbe Vorzeichen und addieren sich, rechts von $x = L/2$ heben sie sich teilweise auf; bei $x = 2L/3$ ist $\\rho = 0$. Fast die ganze Wahrscheinlichkeit liegt deshalb links, mit einem Maximum von etwa $3{,}1/L$ bei $x \\approx 0{,}3\\,L$ – eine Dichte darf größer als $1/L$ sein, nur die Fläche ist 1. Der Schwerpunkt liegt bei $\\langle x\\rangle = L/2 - 16L/(9\\pi^2) \\approx 0{,}32\\,L$, also nicht in der Mitte. Ohne den Mischterm $2\\psi_1\\psi_2$ wäre die Dichte symmetrisch.',
+      hints:['Zeichne zuerst $\\psi_1 + \\psi_2$: Wo haben die beiden Sinusfunktionen dasselbe Vorzeichen, wo verschiedene? Quadriere dann.', '$\\rho = \\frac12(\\psi_1 + \\psi_2)^2 = \\frac12\\psi_1^2 + \\frac12\\psi_2^2 + \\psi_1\\psi_2$. Der Mischterm ist links positiv und rechts negativ.'],
+      wrong:[
+        {f:x => Math.sin(Math.PI * x) ** 2 + Math.sin(2 * Math.PI * x) ** 2, fails:['lage'], why:'Mischterm vergessen: Wahrscheinlichkeiten statt Amplituden addiert'},
+        {f:x => (Math.sin(Math.PI * x) - Math.sin(2 * Math.PI * x)) ** 2, fails:['lage'], why:'Vorzeichen des Mischterms falsch: Gewicht rechts'},
+        {f:x => (Math.sin(Math.PI * x) + Math.sin(2 * Math.PI * x)) ** 2 / 3.1, fails:['flaeche'], why:'Dichte ≤ 1 gedacht: Maximum 1 statt Fläche 1'}
+      ]},
+    text:'Das Labor zeigt sechs Ortsdichten $\\rho(x) = |\\psi(x)|^2$ auf $[0, L]$ mit $L = 1$, alle normiert; gestrichelt ist $\\psi$ selbst. „Dreieck“ heißt: $\\psi$ steigt bis zur Mitte linear an und fällt dann linear ab. „Gauß“ ist eine Glocke um $L/2$ mit der Standardabweichung $0{,}13\\,L$, bei der „Exponentialdichte“ ist $\\psi \\propto e^{-x/(0{,}7L)}$, also $\\rho \\propto e^{-2x/(0{,}7L)}$ (die Anzeige nennt die Abklinglänge $0{,}7\\,L$ „$\\ell$“; das ist nicht die untere Grenze $a$). Die Fläche zwischen den Grenzen $a$ und $b$ ist $P(a \\le x \\le b)$. Die rote Linie markiert $\\langle x\\rangle$, der helle Streifen reicht von $\\langle x\\rangle - \\Delta x$ bis $\\langle x\\rangle + \\Delta x$.',
+    predict:{q:'Bevor du das Labor bedienst: Welche dieser vier Dichten hat das kleinste $\\Delta x$?', opts:['die Überlagerung $(\\psi_1 + \\psi_2)/\\sqrt2$', 'das Dreieck mit spitzem Gipfel', 'die Parabel $\\psi \\propto x(L - x)$', 'der Grundzustand $\\psi_1$'], a:0, ex:'Die Überlagerung: $\\Delta x \\approx 0{,}14\\,L$. Die Interferenz drängt die Dichte in die linke Hälfte, dort wird sie hoch und schmal. Es folgen das Dreieck ($0{,}16\\,L$), $\\psi_1$ ($0{,}18\\,L$) und die Parabel ($0{,}19\\,L$). Eine Überlagerung ist also nicht automatisch breiter als ihre Bestandteile. Von den beiden übrigen Dichten im Labor ist die Gauß-Dichte mit $\\Delta x = 0{,}13\\,L$ noch etwas schmaler, die Exponentialdichte mit $\\Delta x \\approx 0{,}24\\,L$ die breiteste.'},
     questions:[
       {q:'Wähle $\\psi_1$ und stelle die Grenzen auf $\\langle x\\rangle \\pm \\Delta x$, also etwa $a = 0{,}32$ und $b = 0{,}68$. Welcher Anteil liegt im Streifen?', opts:['etwa $0{,}65$', 'genau $0{,}68$', 'etwa $0{,}95$'], a:0, ex:'$P \\approx 0{,}65$. Die 68-%-Regel gilt nur für die Gauß-Verteilung. Bei der Parabel sind es etwa 0,64, beim Dreieck 0,68, bei der Überlagerung 0,73.'},
       {q:'Wähle die Überlagerung und stelle $a = 0$, $b = 0{,}32$ ein, also bis $\\langle x\\rangle$. Welcher Anteil liegt links von $\\langle x\\rangle$?', opts:['etwa $0{,}53$', 'genau $0{,}50$', 'etwa $0{,}32$'], a:0, ex:'Etwa 53 %. Bei einer unsymmetrischen Dichte teilt der Erwartungswert die Wahrscheinlichkeit nicht in zwei Hälften; das tut der Median (hier etwa $0{,}31\\,L$). Erwartungswert, Median und Maximum (etwa $0{,}30\\,L$) liegen nahe beieinander, aber nicht aufeinander.'}
@@ -304,6 +322,44 @@ topic({
       ex:'$P(E_1\\text{ beim zweiten}\\mid E_1\\text{ beim ersten}) = 1$, aber $P(E_1) = 1/2$. Unabhängig sind Messungen an verschiedenen, jeweils frisch präparierten Teilchen.',
       reason:{q:'Warum?', opts:['Die erste Messung bringt das Teilchen in den Eigenzustand zum Messwert.', 'Das Messgerät merkt sich das letzte Ergebnis.', 'Die Wahrscheinlichkeiten $|c_n|^2$ gelten nur beim zweiten Mal.'], a:0, ex:'Nach dem Messpostulat ist das Teilchen nach dem Ergebnis $E_1$ im Zustand $\\psi_1$. Dieser ist stationär, also liefert die zweite Messung sicher wieder $E_1$ (Thema 6).'}}
   ],
+  sketch:[
+    {id:'st-s1', kind:'curve', draw:'f', title:'Eine normierte Exponentialdichte',
+      text:'Die Zerfallszeit $t$ eines Kerns hat die Dichte $\\rho(t) = A\\,e^{-t/\\tau}$ für $t \\ge 0$ mit $\\tau = 0{,}5\\,\\mathrm{s}$. Skizziere die **normierte** Dichte für $0 \\le t \\le 3\\,\\mathrm{s}$. Die Achse ist absolut, in $1/\\mathrm{s}$.',
+      plot:{x:[0, 3], y:[-0.6, 2.4], abs:true, xlab:'t/\\mathrm{s}', ylab:'\\rho(t)\\cdot\\mathrm{s}', ticks:[{x:0, lab:'0'}, {x:0.5, lab:'0{,}5'}, {x:1, lab:'1'}, {x:2, lab:'2'}, {x:3, lab:'3'}], yticks:[{y:0.5, lab:'0{,}5'}, {y:1, lab:'1'}, {y:1.5, lab:'1{,}5'}, {y:2, lab:'2'}]},
+      // Normierung: A = 1/τ = 2/s; ρ = 2e^{−2t}, Mittel über [0,02; 0,12] ≈ 1,74, Fläche über [0, 3] = 1 − e^{−6}
+      f:t => 2 * Math.exp(-2 * t),
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Dichte negativ sein?'},
+        {id:'start', type:'level', range:[0.02, 0.12], v:1.74, tol:0.5, msg:'Welchen Wert muss $A$ haben, damit $\\int_0^\\infty\\rho\\,dt = 1$ gilt? Deine Kurve beginnt bei etwa {got}. (Abschnitt „Kontinuierliche Größen“)'},
+        {id:'flaeche', type:'area', v:1, tol:0.3, msg:'Wie groß ist die Fläche unter deiner Kurve? Etwa {got}. Wie groß muss sie sein?'},
+        {id:'abkl', type:'decay', toward:'right', msg:'Wie schnell fällt $e^{-t/\\tau}$ ab? Was ist nach $t = 6\\tau$ davon übrig?'}
+      ],
+      reveal:'Aus $\\int_0^\\infty A\\,e^{-t/\\tau}dt = A\\tau = 1$ folgt $A = 1/\\tau = 2/\\mathrm{s}$. Die Dichte beginnt also bei $2/\\mathrm{s}$ – größer als 1, denn sie ist eine Wahrscheinlichkeit **pro Zeit**. Nach jeweils $\\tau = 0{,}5\\,\\mathrm{s}$ fällt sie auf $1/e$; bei $t = 3\\,\\mathrm{s} = 6\\tau$ ist sie praktisch null. Die Fläche unter der Kurve ist 1.',
+      hints:['Bestimme $A$ aus der Normierung und trage dann $\\rho(0)$ und ein, zwei weitere Werte ein.', '$\\int_0^\\infty e^{-t/\\tau}dt = \\tau$. Eine Dichte hat die Einheit $1/\\mathrm{s}$ und kann größer als 1 sein.'],
+      wrong:[
+        {f:t => Math.exp(-2 * t), fails:['start', 'flaeche'], why:'Dichte ≤ 1 gedacht: Maximum 1 statt Fläche 1'},
+        {f:t => 0.5 * Math.exp(-2 * t), fails:['start', 'flaeche'], why:'A = τ statt A = 1/τ'},
+        {f:t => 0.5 * Math.exp(-0.5 * t), fails:['start'], why:'τ und 1/τ verwechselt: Abklingzeit 2 s'}
+      ]},
+    {id:'st-s2', kind:'curve', draw:'f', title:'Verschieben und Strecken einer Dichte',
+      text:'Die Größe $x$ ist gaußverteilt mit $\\langle x\\rangle = 0$ und $\\Delta x = 0{,}25$. Skizziere die Dichte der Größe $y = 2x + 1$. Die Achse ist absolut.',
+      plot:{x:[-1.5, 3.5], y:[0, 2], abs:true, xlab:'y', ylab:'\\rho_y(y)', ticks:[{x:-1, lab:'-1'}, {x:0, lab:'0'}, {x:1, lab:'1'}, {x:2, lab:'2'}, {x:3, lab:'3'}], yticks:[{y:0.4, lab:'0{,}4'}, {y:0.8, lab:'0{,}8'}, {y:1.2, lab:'1{,}2'}, {y:1.6, lab:'1{,}6'}]},
+      // ⟨y⟩ = 2⟨x⟩ + 1 = 1, Δy = 2Δx = 0,5; ρ_y(y) = ρ_x((y − 1)/2)/2: Gauß mit σ = 0,5, Höhe 0,798, Halbwertsbreite 1,177, Fläche 1
+      f:y => Math.exp(-((y - 1) ** 2) / (2 * 0.25)) / (Math.sqrt(2 * Math.PI) * 0.5),
+      checks:[
+        {id:'lage', type:'center', x:1, tol:0.2, msg:'Wie hängt $\\langle 2x + 1\\rangle$ mit $\\langle x\\rangle$ zusammen? (Abschnitt „Erwartungswert und Momente“)'},
+        {id:'breite', type:'fwhm', v:1.177, tol:0.3, msg:'Was macht das Strecken mit dem Faktor 2 mit der Standardabweichung, was das Verschieben um 1? Auf halber Höhe ist deine Kurve {got} breit. (Abschnitt „Varianz und Standardabweichung“)'},
+        {id:'flaeche', type:'area', range:[-0.8, 2.8], v:1, tol:0.25, msg:'Wie groß muss die Fläche unter $\\rho_y$ sein? Deine ist etwa {got}. Was folgt daraus für die Höhe, wenn die Kurve breiter wird?'}
+      ],
+      reveal:'$\\langle y\\rangle = 2\\langle x\\rangle + 1 = 1$ und $\\Delta y = 2\\,\\Delta x = 0{,}5$; das Verschieben um 1 ändert die Breite nicht. Die Dichte bleibt eine Gauß-Kurve, doppelt so breit wie die von $x$. Weil ihre Fläche 1 bleibt, ist sie nur halb so hoch: $1/(\\sqrt{2\\pi}\\cdot 0{,}5) \\approx 0{,}80$ statt $1{,}60$. Formal: $\\rho_y(y) = \\frac12\\rho_x\\big((y - 1)/2\\big)$.',
+      hints:['Bestimme nacheinander $\\langle y\\rangle$, $\\Delta y$ und die Höhe. Die Form bleibt eine Glocke.', '$\\langle ax + b\\rangle = a\\langle x\\rangle + b$, $\\Delta(ax + b) = |a|\\,\\Delta x$, und eine Gauß-Dichte mit Standardabweichung $s$ hat die Höhe $1/(\\sqrt{2\\pi}\\,s)$.'],
+      wrong:[
+        {f:y => Math.exp(-((y - 1) ** 2) / (2 * 0.0625)) / (Math.sqrt(2 * Math.PI) * 0.25), fails:['breite'], why:'nur verschoben, nicht gestreckt'},
+        {f:y => Math.exp(-((y - 1) ** 2) / (2 * 0.25)) / (Math.sqrt(2 * Math.PI) * 0.25), fails:['flaeche'], why:'gestreckt, aber die Höhe nicht angepasst (Fläche 2)'},
+        {f:y => Math.exp(-(y ** 2) / (2 * 0.25)) / (Math.sqrt(2 * Math.PI) * 0.5), fails:['lage'], why:'Verschiebung vergessen: ⟨y⟩ = 2⟨x⟩'},
+        {f:y => Math.exp(-((y - 1) ** 2) / (2 * 2.25)) / (Math.sqrt(2 * Math.PI) * 1.5), fails:['breite'], why:'Verschiebung auch auf die Breite angewandt: Δy = 2Δx + 1'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'st-f1', title:'Normieren und Intervall', text:'Für $x \\ge 0$ ist $\\rho(x) = A\\,x\\,e^{-x/a}$ mit $a > 0$, für $x < 0$ ist $\\rho = 0$.',
       ctx:{coords:['x'], domain:{x:['0', '∞']}, params:{a:'pos'}, defs:{'ρ(x)':'A x e^(-x/a)'}, unknowns:{A:{ref:'1/a^2'}}},
@@ -324,7 +380,22 @@ topic({
     {aim:'k', id:'st-fk2', type:'dialog', text:'Ein Labor misst den Ort von Teilchen im selben Zustand mit $\\Delta x = 0{,}2\\,\\mathrm{nm}$. Nach $10\\,000$ Messungen ergibt sich die empirische Standardabweichung $s \\approx 0{,}2\\,\\mathrm{nm}$.',
       people:[{name:'Lena', says:'Der Mittelwert $\\bar x$ ist damit auf etwa $0{,}002\\,\\mathrm{nm}$ genau bestimmt.'}, {name:'Jonas', says:'Bei so vielen Messungen müsste $s$ längst viel kleiner als $0{,}2\\,\\mathrm{nm}$ sein.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:0,
-      ex:'Standardfehler: $\\Delta x/\\sqrt N = 0{,}2\\,\\mathrm{nm}/100 = 0{,}002\\,\\mathrm{nm}$. $s$ schätzt dagegen $\\Delta x$ und bleibt deshalb bei $0{,}2\\,\\mathrm{nm}$.'}
+      ex:'Standardfehler: $\\Delta x/\\sqrt N = 0{,}2\\,\\mathrm{nm}/100 = 0{,}002\\,\\mathrm{nm}$. $s$ schätzt dagegen $\\Delta x$ und bleibt deshalb bei $0{,}2\\,\\mathrm{nm}$.'},
+    {aim:0, sketch:{id:'st-fs-a', kind:'curve', draw:'f', title:'Eine Gleichverteilung', points:2,
+      text:'Ein Teilchen ist auf dem Intervall $0 \\le x \\le 0{,}5\\,\\mathrm{nm}$ gleichverteilt. Skizziere die normierte Dichte $\\rho(x)$ auf diesem Intervall. Die Achse ist absolut, in $1/\\mathrm{nm}$.',
+      plot:{x:[-0.1, 0.6], y:[-0.75, 3], abs:true, dom:[0, 0.5], xlab:'x/\\mathrm{nm}', ylab:'\\rho\\cdot\\mathrm{nm}', ticks:[{x:0, lab:'0'}, {x:0.25, lab:'0{,}25'}, {x:0.5, lab:'0{,}5'}], yticks:[{y:0.5, lab:'0{,}5'}, {y:1, lab:'1'}, {y:2, lab:'2'}]},
+      // ρ = 1/(0,5 nm) = 2/nm auf [0; 0,5], Fläche 1
+      f:x => 2,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Dichte negativ sein?'},
+        {id:'hoehe', type:'level', range:[0.05, 0.45], v:2, tol:0.45, msg:'Wie hoch muss die Dichte sein, damit Breite mal Höhe 1 ergibt? Deine Höhe ist {got}.'},
+        {id:'flaeche', type:'area', v:1, tol:0.15, msg:'Wie groß ist die Fläche unter deiner Kurve? Etwa {got}. Wie groß muss sie sein?'}
+      ],
+      reveal:'Gleichverteilt heißt: $\\rho$ ist auf dem Intervall konstant. Aus $\\int_0^{0{,}5\\,\\mathrm{nm}}\\rho\\,dx = 1$ folgt $\\rho = 2/\\mathrm{nm}$. Eine Dichte ist eine Wahrscheinlichkeit pro Länge und darf größer als 1 sein; erst $\\rho\\,\\Delta x$ ist eine Wahrscheinlichkeit.',
+      wrong:[
+        {f:x => 1, fails:['hoehe', 'flaeche'], why:'Dichte ≤ 1 gedacht: Höhe 1 statt Fläche 1'},
+        {f:x => 0.5, fails:['hoehe', 'flaeche'], why:'mit der Intervallbreite multipliziert statt durch sie geteilt'}
+      ]}}
   ],
   finalB:[
     {aim:0, task:{id:'st-fb4', title:'Normieren und Intervall', text:'Für $x \\ge 0$ ist $\\rho(x) = A\\,x\\,e^{-2x/a}$ mit $a > 0$, für $x < 0$ ist $\\rho = 0$.',
@@ -346,7 +417,22 @@ topic({
     {aim:'k', id:'st-fbk3', type:'dialog', text:'Myonen zerfallen mit der Dichte $\\rho(t) = e^{-t/\\tau}/\\tau$ für $t \\ge 0$. Die einzelnen Zerfallszeiten streuen stark: Ihre Standardabweichung ist $\\Delta t = \\tau$, so groß wie der Mittelwert selbst. Ein Experiment misst $N = 10\\,000$ unabhängige Zerfallszeiten und nimmt ihren Mittelwert $\\bar t$ als Schätzwert für $\\tau$.',
       people:[{name:'Lena', says:'$\\bar t$ schwankt nur um etwa $\\tau/\\sqrt N = \\tau/100$. Die Lebensdauer ist damit auf etwa 1 % genau bestimmt.'}, {name:'Jonas', says:'Weil die Einzelzeiten um $\\pm\\tau$ streuen, ist auch $\\bar t$ nur auf etwa $\\pm\\tau$ genau, egal wie viele Zerfälle man misst.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:0,
-      ex:'Der Standardfehler des Mittelwerts ist $\\Delta t/\\sqrt N = \\tau/100$. Die Einzelzeiten streuen trotzdem weiter mit $\\tau$; das ist eine Eigenschaft der Verteilung, kein Messfehler. Jonas verwechselt die Streuung der Einzelwerte mit der Unsicherheit des Mittelwerts.'}
+      ex:'Der Standardfehler des Mittelwerts ist $\\Delta t/\\sqrt N = \\tau/100$. Die Einzelzeiten streuen trotzdem weiter mit $\\tau$; das ist eine Eigenschaft der Verteilung, kein Messfehler. Jonas verwechselt die Streuung der Einzelwerte mit der Unsicherheit des Mittelwerts.'},
+    {aim:0, sketch:{id:'st-fs-b', kind:'curve', draw:'f', title:'Eine Gleichverteilung', points:2,
+      text:'Ein Teilchen ist auf dem Intervall $2 \\le x \\le 2{,}25\\,\\mathrm{nm}$ gleichverteilt. Skizziere die normierte Dichte $\\rho(x)$ auf diesem Intervall. Die Achse ist absolut, in $1/\\mathrm{nm}$.',
+      plot:{x:[1.9, 2.35], y:[-1.25, 5], abs:true, dom:[2, 2.25], xlab:'x/\\mathrm{nm}', ylab:'\\rho\\cdot\\mathrm{nm}', ticks:[{x:2, lab:'2'}, {x:2.125, lab:'2{,}125'}, {x:2.25, lab:'2{,}25'}], yticks:[{y:1, lab:'1'}, {y:2, lab:'2'}, {y:3, lab:'3'}, {y:4, lab:'4'}]},
+      // ρ = 1/(0,25 nm) = 4/nm auf [2; 2,25], Fläche 1
+      f:x => 4,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Dichte negativ sein?'},
+        {id:'hoehe', type:'level', range:[2.025, 2.225], v:4, tol:0.9, msg:'Wie hoch muss die Dichte sein, damit Breite mal Höhe 1 ergibt? Deine Höhe ist {got}.'},
+        {id:'flaeche', type:'area', v:1, tol:0.15, msg:'Wie groß ist die Fläche unter deiner Kurve? Etwa {got}. Wie groß muss sie sein?'}
+      ],
+      reveal:'Gleichverteilt heißt: $\\rho$ ist auf dem Intervall konstant. Aus $\\int_2^{2{,}25}\\rho\\,dx = 1$ (in nm) folgt $\\rho = 4/\\mathrm{nm}$. Die Lage des Intervalls spielt keine Rolle, nur seine Breite $0{,}25\\,\\mathrm{nm}$. Eine Dichte ist eine Wahrscheinlichkeit pro Länge und darf größer als 1 sein.',
+      wrong:[
+        {f:x => 1, fails:['hoehe', 'flaeche'], why:'Dichte ≤ 1 gedacht: Höhe 1 statt Fläche 1'},
+        {f:x => 0.25, fails:['hoehe', 'flaeche'], why:'mit der Intervallbreite multipliziert statt durch sie geteilt'}
+      ]}}
   ],
   errors:[
     {id:'st-e1', title:'Das zweite Moment',

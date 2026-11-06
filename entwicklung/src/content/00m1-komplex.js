@@ -153,6 +153,18 @@ topic({
     ]
   },
   lab:{type:'complex', title:'Komplexe Zahl in der Ebene',
+    sketch:{id:'mk-lab-s', kind:'arrows', title:'Vorhersage: der Pfeil von $z^*$',
+      text:'Gleich zeigt das Labor eine Zahl $z = re^{i\\varphi}$ und ihr Konjugiertes $z^*$. Gegeben ist $z$ mit $r = 1{,}2$ und $\\varphi = 2{,}2$ (grauer Pfeil). Zeichne vorher $z^*$ als Pfeil vom Ursprung aus. Stell danach im Labor $r = 1{,}2$ und $\\varphi = 2{,}2$ ein und vergleiche.',
+      plot:{x:[-2, 2], y:[-1.6, 1.6], abs:true, xlab:'\\mathrm{Re}', ylab:'\\mathrm{Im}', unit:true, grid:0.5},
+      // z = 1,2·e^{2,2i} = −0,706 + 0,970i, also z* = −0,706 − 0,970i
+      given:[{from:[0, 0], to:[1.2 * Math.cos(2.2), 1.2 * Math.sin(2.2)], lab:'z'}],
+      want:[{from:[0, 0], to:[1.2 * Math.cos(2.2), -1.2 * Math.sin(2.2)], lab:'z^*', msg:'Konjugieren heißt $i \\to -i$. Was passiert dabei mit dem Realteil von $z$, was mit dem Imaginärteil? (Abschnitt „Rechnen mit komplexen Zahlen“)', msgLen:'Die Richtung passt. Ändert das Konjugieren den Betrag $|z|$?'}],
+      reveal:'$z^* = re^{-i\\varphi}$: gleicher Betrag, entgegengesetzte Phase. Der Realteil $-0{,}71$ bleibt, der Imaginärteil wechselt das Vorzeichen, $0{,}97 \\to -0{,}97$. Das ist die Spiegelung an der **reellen** Achse. Die Spiegelung am Ursprung wäre $-z$, die an der imaginären Achse $-z^*$. Im Labor siehst du außerdem: Dreht sich $z$ beim Vergrößern von $\\varphi$ nach links, dreht sich $z^*$ nach rechts.',
+      hints:['Lies Real- und Imaginärteil von $z$ am Gitter ab und überlege, welcher davon beim Konjugieren sein Vorzeichen ändert.', '$z^* = a - ib$ für $z = a + ib$: Der Punkt wird an der waagerechten Achse gespiegelt.'],
+      wrong:[
+        {arrows:[{from:[0, 0], to:[-1.2 * Math.cos(2.2), -1.2 * Math.sin(2.2)]}], fails:[0], why:'Konjugieren als Punktspiegelung am Ursprung (−z)'},
+        {arrows:[{from:[0, 0], to:[-1.2 * Math.cos(2.2), 1.2 * Math.sin(2.2)]}], fails:[0], why:'an der imaginären statt an der reellen Achse gespiegelt (−z*)'}
+      ]},
     text:'Der eine Pfeil ist $z = re^{i\\varphi}$, der andere sein Spiegelbild $z^*$ an der reellen Achse. Verändere Betrag $r$ und Phase $\\varphi$ und beobachte die Anzeige.',
     predict:{q:'Bevor du die Regler bewegst: Du drehst $z$ bei festem $r$ einmal ganz herum ($\\varphi$ von $-\\pi$ bis $\\pi$). Was macht die Anzeige $|z|^2 = z^*z$?', opts:['Sie bleibt die ganze Zeit $r^2$.', 'Sie schwankt wie $r^2\\cos^2\\varphi$.', 'Sie wird bei $\\varphi = \\pm\\pi/2$ negativ.'], a:0, ex:'$z^*z = re^{-i\\varphi}\\,re^{i\\varphi} = r^2$ hängt nicht von $\\varphi$ ab. $r^2\\cos^2\\varphi$ wäre $(\\operatorname{Re}z)^2$, und negativ wird bei $\\pm\\pi/2$ nur $\\operatorname{Re}(z^2) = r^2\\cos 2\\varphi$.'},
     questions:[
@@ -253,6 +265,35 @@ topic({
       reason:{q:'Warum?', opts:['Amplituden addieren sich; der Mischterm hängt von der Phase ab.', 'Man addiert einfach die Wahrscheinlichkeiten beider Wege.', 'Gleich große Amplituden ändern zusammen nichts am Ergebnis.'], a:0, ex:'Ohne Wegbestimmung gilt $P = |z_1 + z_2|^2$, nicht $|z_1|^2 + |z_2|^2$. Erst wenn man den Weg feststellt, verschwindet der Interferenzterm, und es bleibt $2N$.'},
       seg:'mk-t5', lex:'interferenzterm'}
   ],
+  sketch:[
+    {id:'mk-s1', kind:'arrows', title:'Multiplikation mit $i$ in der Zahlenebene',
+      text:'Gegeben ist $z = 1{,}4 + 0{,}6i$ (grauer Pfeil). Zeichne $iz$ als Pfeil vom Ursprung aus.',
+      plot:{x:[-2, 2], y:[-2, 2], abs:true, xlab:'\\mathrm{Re}', ylab:'\\mathrm{Im}', unit:true, grid:0.5},
+      given:[{from:[0, 0], to:[1.4, 0.6], lab:'z'}],
+      // iz = i(1,4 + 0,6i) = −0,6 + 1,4i
+      want:[{from:[0, 0], to:[-0.6, 1.4], lab:'iz', msg:'Schreibe $i$ in Polarform. Was macht die Multiplikation mit einer Zahl vom Betrag 1 mit dem Betrag von $z$, und um welchen Winkel dreht sie? (Abschnitt „Polarform und Euler-Formel“)', msgLen:'Die Richtung passt. Ändert die Multiplikation mit $i$ den Betrag?'}],
+      reveal:'$i = e^{i\\pi/2}$ hat den Betrag 1 und die Phase $90°$. Beim Multiplizieren addieren sich die Phasen, die Beträge multiplizieren sich. $iz$ ist also $z$, um $90°$ **gegen** den Uhrzeigersinn gedreht, bei gleicher Länge. Kartesisch: $i(1{,}4 + 0{,}6i) = 1{,}4i + 0{,}6i^2 = -0{,}6 + 1{,}4i$.',
+      hints:['Rechne $i(1{,}4 + 0{,}6i)$ kartesisch aus, oder denke in Polarform: Betrag und Phase von $i$.', 'Beträge multiplizieren sich, Phasen addieren sich. $i = e^{i\\pi/2}$.'],
+      wrong:[
+        {arrows:[{from:[0, 0], to:[1.4, -0.6]}], fails:[0], why:'mit z* verwechselt: an der reellen Achse gespiegelt'},
+        {arrows:[{from:[0, 0], to:[0.6, -1.4]}], fails:[0], why:'im Uhrzeigersinn gedreht (−iz)'},
+        {arrows:[{from:[0, 0], to:[0.6, 1.4]}], fails:[0], why:'Real- und Imaginärteil nur vertauscht'},
+        {arrows:[{from:[0, 0], to:[1.4, 1.6]}], fails:[0], why:'i addiert statt multipliziert (z + i)'}
+      ]},
+    {id:'mk-s2', kind:'arrows', title:'Ein Produkt in der Zahlenebene',
+      text:'Gegeben sind $z$ mit $|z| = 1{,}5$ und $\\arg z = 30°$ sowie $w$ mit $|w| = 0{,}8$ und $\\arg w = 100°$ (graue Pfeile). Zeichne das Produkt $zw$ als Pfeil vom Ursprung aus.',
+      plot:{x:[-2, 2], y:[-2, 2], abs:true, xlab:'\\mathrm{Re}', ylab:'\\mathrm{Im}', unit:true, grid:0.5},
+      given:[{from:[0, 0], to:[1.5 * Math.cos(Math.PI / 6), 1.5 * Math.sin(Math.PI / 6)], lab:'z'}, {from:[0, 0], to:[0.8 * Math.cos(100 * Math.PI / 180), 0.8 * Math.sin(100 * Math.PI / 180)], lab:'w'}],
+      // zw = 1,5·0,8·e^{i(30° + 100°)} = 1,2·e^{i·130°} = −0,771 + 0,919i
+      want:[{from:[0, 0], to:[1.2 * Math.cos(130 * Math.PI / 180), 1.2 * Math.sin(130 * Math.PI / 180)], lab:'zw', msg:'Schreibe $z$ und $w$ in Polarform und multipliziere. Was geschieht dabei mit den Beträgen, was mit den Phasen? (Abschnitt „Polarform und Euler-Formel“)', msgDir:'Welche Phase hat $zw$? Werden Phasen beim Multiplizieren addiert, multipliziert oder voneinander abgezogen?', msgLen:'Die Richtung passt. Wie groß ist $|zw|$ bei $|z| = 1{,}5$ und $|w| = 0{,}8$?'}],
+      reveal:'$zw = 1{,}5\\cdot 0{,}8\\,e^{i(30° + 100°)} = 1{,}2\\,e^{i\\cdot 130°}$. Beträge multiplizieren sich, Phasen addieren sich. Der Pfeil ist deshalb kürzer als $z$, weil $|w| < 1$ ist, und um $100°$ weitergedreht. Mit der Vektorsumme $z + w$ hat das Produkt nichts zu tun.',
+      hints:['Bestimme zuerst $|zw|$ und $\\arg(zw)$ aus den gegebenen Beträgen und Phasen; zeichne dann.', '$r_1e^{i\\varphi_1}\\cdot r_2e^{i\\varphi_2} = r_1r_2\\,e^{i(\\varphi_1 + \\varphi_2)}$.'],
+      wrong:[
+        {arrows:[{from:[0, 0], to:[1.5 * Math.cos(Math.PI / 6) + 0.8 * Math.cos(100 * Math.PI / 180), 1.5 * Math.sin(Math.PI / 6) + 0.8 * Math.sin(100 * Math.PI / 180)]}], fails:[0], why:'Produkt wie eine Vektorsumme z + w gezeichnet'},
+        {arrows:[{from:[0, 0], to:[2.3 * Math.cos(130 * Math.PI / 180), 2.3 * Math.sin(130 * Math.PI / 180)]}], fails:[0], why:'Phasen addiert, Beträge aber addiert statt multipliziert'},
+        {arrows:[{from:[0, 0], to:[1.2 * Math.cos(-70 * Math.PI / 180), 1.2 * Math.sin(-70 * Math.PI / 180)]}], fails:[0], why:'Phasen abgezogen statt addiert'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'mk-f2', title:'Division', text:'Schreibe $\\dfrac{3 + i}{1 + 2i}$ in der Form $a + ib$.', ctx:CTX.line({}),
       goals:[{id:'a', prompt:'Ergebnis:', type:'value', target:'1 - i', points:2, model:['(3 + i)/(1 + 2i) = (3 + i)(1 - 2i)/((1 + 2i)(1 - 2i))', '= (5 - 5i)/5', '= 1 - i'],
@@ -269,7 +310,22 @@ topic({
     {aim:'k', id:'mk-fk2', type:'dialog', text:'Zwei Phasenfaktoren mit verschiedenen Frequenzen werden **multipliziert**: $z(t) = e^{-i\\omega_1t}\\,e^{-i\\omega_2t}$ mit reellen $t$ und $\\omega_1 \\neq \\omega_2$.',
       people:[{name:'Lena', says:'$|z|^2 = |e^{-i\\omega_1t}|^2\\,|e^{-i\\omega_2t}|^2 = 1$ für jede Zeit $t$.'}, {name:'Jonas', says:'Zwei verschiedene Frequenzen interferieren. $|z|^2$ enthält deshalb einen Term mit $\\cos((\\omega_1 - \\omega_2)t)$.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:0,
-      ex:'Bei einem **Produkt** multiplizieren sich die Beträge: $z = e^{-i(\\omega_1 + \\omega_2)t}$ hat den Betrag 1. Einen Interferenzterm gibt es nur im Betragsquadrat einer **Summe**, etwa $|e^{-i\\omega_1t} + e^{-i\\omega_2t}|^2 = 2 + 2\\cos((\\omega_1 - \\omega_2)t)$.'}
+      ex:'Bei einem **Produkt** multiplizieren sich die Beträge: $z = e^{-i(\\omega_1 + \\omega_2)t}$ hat den Betrag 1. Einen Interferenzterm gibt es nur im Betragsquadrat einer **Summe**, etwa $|e^{-i\\omega_1t} + e^{-i\\omega_2t}|^2 = 2 + 2\\cos((\\omega_1 - \\omega_2)t)$.'},
+    {aim:1, sketch:{id:'mk-fs-a', kind:'arrows', title:'Alle dritten Wurzeln', points:3,
+      text:'Zeichne **alle** Lösungen von $z^3 = -8$ als Pfeile vom Ursprung aus.',
+      plot:{x:[-2.5, 2.5], y:[-2.5, 2.5], abs:true, xlab:'\\mathrm{Re}', ylab:'\\mathrm{Im}', unit:true, grid:0.5},
+      // −8 = 8e^{iπ}: z_k = 2e^{i(π + 2πk)/3}, k = 0, 1, 2 → 2e^{iπ/3}, −2, 2e^{−iπ/3}
+      want:[
+        {from:[0, 0], to:[2 * Math.cos(Math.PI / 3), 2 * Math.sin(Math.PI / 3)], msg:'Schreibe $-8$ in Polarform. Welche Phase hat die Lösung mit $k = 0$?'},
+        {from:[0, 0], to:[-2, 0], msg:'Ist eine der Lösungen reell? Probiere es durch Einsetzen.'},
+        {from:[0, 0], to:[2 * Math.cos(Math.PI / 3), -2 * Math.sin(Math.PI / 3)], msg:'Wie viele Lösungen hat $z^3 = w$, und welchen Winkelabstand haben sie voneinander?'}],
+      extra:'Es sind mehr Pfeile gezeichnet, als es Lösungen gibt. Radiere die überzähligen.',
+      reveal:'$-8 = 8e^{i\\pi}$, also $z_k = 2\\,e^{i(\\pi + 2\\pi k)/3}$ für $k = 0, 1, 2$: die Phasen $60°$, $180°$ und $-60°$. Alle drei Lösungen haben den Betrag $8^{1/3} = 2$ und liegen im Winkelabstand $120°$ – die Ecken eines gleichseitigen Dreiecks. Die reelle Lösung $-2$ ist nur eine davon.',
+      wrong:[
+        {arrows:[{from:[0, 0], to:[-2, 0]}], fails:[0, 2], why:'nur die reelle Lösung −2'},
+        {arrows:[{from:[0, 0], to:[2, 0]}, {from:[0, 0], to:[-1, Math.sqrt(3)]}, {from:[0, 0], to:[-1, -Math.sqrt(3)]}], fails:[0, 1, 2], why:'Phase von −8 vergessen: Wurzeln von +8 gezeichnet'},
+        {arrows:[{from:[0, 0], to:[1, Math.sqrt(3)]}, {from:[0, 0], to:[-1, Math.sqrt(3)]}, {from:[0, 0], to:[-2, 0]}], fails:[2], why:'Winkelabstand π/n statt 2π/n'}
+      ]}}
   ],
   finalB:[
     {aim:0, task:{id:'mk-g1', title:'Division', text:'Schreibe $\\dfrac{2 - i}{1 + i}$ in der Form $a + ib$.', ctx:CTX.line({}),
@@ -287,7 +343,22 @@ topic({
     {aim:'k', id:'mk-gk2', type:'dialog', text:'Zwei Phasenfaktoren mit verschiedenen Wellenzahlen werden **addiert**: $z(x) = e^{ik_1x} + e^{ik_2x}$ mit reellen $x$ und $k_1 \\neq k_2$.',
       people:[{name:'Lena', says:'Jeder Summand hat den Betrag 1. Also ist $|z|^2 = 1 + 1 = 2$ für jedes $x$.'}, {name:'Jonas', says:'$|z|^2 = 2 + 2\\cos((k_2 - k_1)x)$ hängt von $x$ ab und wird an manchen Stellen null.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'Bei einer **Summe** kommen zu den Betragsquadraten die Mischterme $e^{i(k_2 - k_1)x} + e^{-i(k_2 - k_1)x} = 2\\cos((k_2 - k_1)x)$ hinzu. Lena addiert Betragsquadrate statt Amplituden. Nur bei einem **Produkt** wie $e^{ik_1x}e^{ik_2x}$ wäre $|z|^2 = 1$ konstant.'}
+      ex:'Bei einer **Summe** kommen zu den Betragsquadraten die Mischterme $e^{i(k_2 - k_1)x} + e^{-i(k_2 - k_1)x} = 2\\cos((k_2 - k_1)x)$ hinzu. Lena addiert Betragsquadrate statt Amplituden. Nur bei einem **Produkt** wie $e^{ik_1x}e^{ik_2x}$ wäre $|z|^2 = 1$ konstant.'},
+    {aim:1, sketch:{id:'mk-fs-b', kind:'arrows', title:'Alle dritten Wurzeln', points:3,
+      text:'Zeichne **alle** Lösungen von $z^3 = 8i$ als Pfeile vom Ursprung aus.',
+      plot:{x:[-2.5, 2.5], y:[-2.5, 2.5], abs:true, xlab:'\\mathrm{Re}', ylab:'\\mathrm{Im}', unit:true, grid:0.5},
+      // 8i = 8e^{iπ/2}: z_k = 2e^{i(π/2 + 2πk)/3} → 2e^{iπ/6}, 2e^{5iπ/6}, 2e^{3iπ/2} = −2i
+      want:[
+        {from:[0, 0], to:[2 * Math.cos(Math.PI / 6), 2 * Math.sin(Math.PI / 6)], msg:'Schreibe $8i$ in Polarform. Welche Phase hat die Lösung mit $k = 0$?'},
+        {from:[0, 0], to:[-2 * Math.cos(Math.PI / 6), 2 * Math.sin(Math.PI / 6)], msg:'Wie viele Lösungen hat $z^3 = w$, und welchen Winkelabstand haben sie voneinander?'},
+        {from:[0, 0], to:[0, -2], msg:'Liegt eine der Lösungen auf einer Achse? Probiere es durch Einsetzen.'}],
+      extra:'Es sind mehr Pfeile gezeichnet, als es Lösungen gibt. Radiere die überzähligen.',
+      reveal:'$8i = 8e^{i\\pi/2}$, also $z_k = 2\\,e^{i(\\pi/2 + 2\\pi k)/3}$ für $k = 0, 1, 2$: die Phasen $30°$, $150°$ und $270°$. Alle drei Lösungen haben den Betrag $8^{1/3} = 2$ und liegen im Winkelabstand $120°$. Probe für die dritte: $(-2i)^3 = -8i^3 = 8i$.',
+      wrong:[
+        {arrows:[{from:[0, 0], to:[0, -2]}], fails:[0, 1], why:'nur die eine Lösung −2i, die man durch Probieren findet'},
+        {arrows:[{from:[0, 0], to:[2, 0]}, {from:[0, 0], to:[-1, Math.sqrt(3)]}, {from:[0, 0], to:[-1, -Math.sqrt(3)]}], fails:[0, 1, 2], why:'Phase von 8i vergessen: Wurzeln von +8 gezeichnet'},
+        {arrows:[{from:[0, 0], to:[Math.sqrt(3), 1]}, {from:[0, 0], to:[0, 2]}, {from:[0, 0], to:[-Math.sqrt(3), 1]}], fails:[2], why:'Winkelabstand π/n statt 2π/n'}
+      ]}}
   ],
   errors:[
     {id:'mk-e1', title:'Betragsquadrat ohne Konjugation',

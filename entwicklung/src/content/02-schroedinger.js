@@ -3,6 +3,112 @@
 const BOX2 = (extra) => Object.assign({coords:['x', 't'], domain:{x:['0', 'L']}, params:{L:'pos', m:'pos'},
   defs:{'ψ_n(x)':'sqrt(2/L) sin(nπx/L)', 'E_n':'n^2 π^2 ħ^2/(2m L^2)'}}, extra || {});
 const DYN = (extra) => Object.assign({coords:['x', 't'], params:{m:'pos'}, abstract:{Ψ:{args:['x', 't']}, V:{args:['x'], real:true}}, dyn:{fn:'Ψ'}}, extra || {});
+/* ---- Skizzenaufgaben (didaktik/SKIZZE.md): Musterfunktionen aus den exakten Lösungen, dimensionslos ---- */
+const SK = (() => {
+  const PI = Math.PI;
+  /* sg-s1: Topf mit Stufe im Boden (ħ = m = 1, a = 1): V = 0 für −1 < x < 0, V = V1 = 60 für 0 < x < 1, V = V0 = 120 für |x| > 1.
+     Gebundener Zustand: links e^{κ(x+1)}, innen cos/sin, rechts e^{−κ(x−1)}; ψ und ψ' stetig bei −1, 0, 1.
+     Eigenwert aus der Bedingung ψ'(1) + κψ(1) = 0 per Bisektion: E ≈ 85,83 (kL ≈ 4,17π, kR ≈ 2,29π, kL/kR ≈ 1,82, κ ≈ 8,3). */
+  const STW = (() => {
+    const V1 = 60, V0 = 120;
+    const sh = E => { const kL = Math.sqrt(2 * E), kR = Math.sqrt(2 * (E - V1)), ka = Math.sqrt(2 * (V0 - E));
+      const p0 = Math.cos(kL) + ka / kL * Math.sin(kL), d0 = -kL * Math.sin(kL) + ka * Math.cos(kL);
+      const p1 = p0 * Math.cos(kR) + d0 / kR * Math.sin(kR), d1 = -p0 * kR * Math.sin(kR) + d0 * Math.cos(kR);
+      return {g:d1 + ka * p1, kL, kR, ka, p0, d0, p1}; };
+    let lo = 85, hi = 86.5; const s0 = Math.sign(sh(lo).g);
+    for (let i = 0; i < 100; i++){ const m = (lo + hi) / 2; if (Math.sign(sh(m).g) === s0) lo = m; else hi = m; }
+    const E = (lo + hi) / 2, S = sh(E);
+    const f = x => x < -1 ? Math.exp(S.ka * (x + 1)) : x < 0 ? Math.cos(S.kL * (x + 1)) + S.ka / S.kL * Math.sin(S.kL * (x + 1))
+      : x < 1 ? S.p0 * Math.cos(S.kR * x) + S.d0 / S.kR * Math.sin(S.kR * x) : S.p1 * Math.exp(-S.ka * (x - 1));
+    return {V1, V0, E, f, S, V:x => Math.abs(x) > 1 ? V0 : x < 0 ? 0 : V1};
+  })();
+  const s1 = {
+    id:'sg-sk1', title:'Krümmungsregel: Topf mit Stufe im Boden', kind:'curve', draw:'psi',
+    text:'Im Potential der Abbildung ist $V = 0$ für $-a < x < 0$, $V = V_1$ für $0 < x < a$ und $V = V_0$ außerhalb. Ein gebundener Zustand hat die eingezeichnete Energie $E$ mit $V_1 < E < V_0$. Skizziere $\\psi(x)$. Auf die genaue Zahl der Nullstellen kommt es nicht an, wohl aber darauf, wie $\\psi$ sich in den drei Arten von Bereichen verhält.',
+    plot:{x:[-1.6, 1.6], xlab:'x', ylab:'\\psi(x)', ticks:[{x:-1, lab:'-a'}, {x:0, lab:'0'}, {x:1, lab:'a'}], V:STW.V, Vr:[0, 140], E:STW.E,
+      regions:[{x:[-1.6, -1], lab:'E < V'}, {x:[1, 1.6], lab:'E < V'}]},
+    f:STW.f,
+    checks:[
+      {id:'rechts', name:'Schwingung über der Stufe', type:'osc', range:[0, 1], min:1, msg:'Ist $E - V$ für $0 < x < a$ positiv oder negativ? Wohin krümmt sich $\\psi$ dann?'},
+      {id:'lam', type:'wavelength', a:[-1, 0], b:[0, 1], cmp:'<', msg:'In welcher Hälfte des Topfs ist $E - V$ größer? Wo krümmt sich $\\psi$ also stärker zur Achse hin, und was heißt das für den Abstand der Nullstellen? (Abschnitt ‚Welche Lösungen sind zulässig?‘)'},
+      {id:'aussenL', name:'links außen', type:'decay', toward:'left', range:[-1.6, -1], msg:'Links von $-a$ ist $E < V$. Wohin krümmt sich $\\psi$ dort, und was verlangt die Normierbarkeit für $x \\to -\\infty$?'},
+      {id:'aussenR', name:'rechts außen', type:'decay', toward:'right', range:[1, 1.6], msg:'Rechts von $a$ ist $E < V$. Wohin krümmt sich $\\psi$ dort, und was verlangt die Normierbarkeit für $x \\to \\infty$?'}
+    ],
+    reveal:'Aus $\\psi\'\' = \\frac{2m}{\\hbar^2}(V - E)\\,\\psi$: Links im Topf ist $E - V$ am größten, $\\psi$ krümmt sich am stärksten zur Achse hin und schwingt mit der kürzesten Wellenlänge. Über der Stufe ist $E - V_1$ kleiner, die Wellenlänge also länger (hier etwa 1,8-mal). Außen ist $E < V_0$: $\\psi$ krümmt sich von der Achse weg und fällt exponentiell ab. Auf die Amplituden kommt es hier nicht an: Bei einer scharfen Stufe hängt ihr Verhältnis davon ab, an welcher Stelle der Schwingung $\\psi$ die Stufe erreicht. Hier trifft $\\psi$ die Stufe fast in einem Bauch, und beide Hälften schwingen fast gleich weit aus.',
+    hints:['Lies für jeden Bereich das Vorzeichen von $V - E$ ab. Es legt fest, wohin sich $\\psi$ krümmt.', 'Im erlaubten Bereich gilt $\\psi\'\' = -k^2\\psi$ mit $k^2 = 2m(E - V)/\\hbar^2$: größeres $E - V$, stärkere Krümmung, kürzere Wellenlänge.'],
+    wrong:[
+      {f:x => Math.abs(x) > 1 ? Math.cos(4.17 * PI * (Math.sign(x) - 0.03)) * Math.exp(-8.3 * (Math.abs(x) - 1)) : Math.cos(4.17 * PI * (x - 0.03)), fails:['lam'], why:'Stufe im Boden übersehen: überall dieselbe Wellenlänge'},
+      {f:x => Math.abs(x) > 1 ? Math.exp(-8 * (Math.abs(x) - 1)) * (x < 0 ? Math.cos(2.3 * PI * -1) : Math.cos(4.2 * PI * 1)) : x < 0 ? Math.cos(2.3 * PI * x) : Math.cos(4.2 * PI * x), fails:['lam'], why:'Wellenlänge über der Stufe kürzer („höheres V, mehr Energie“)'},
+      {f:x => Math.abs(x) > 1 ? STW.f(Math.sign(x)) * Math.cos(9 * (Math.abs(x) - 1)) : STW.f(x), fails:['aussenL', 'aussenR'], why:'Schwingung im klassisch verbotenen Bereich'}
+    ]
+  };
+
+  /* sg-lab: |Ψ(x, T/4)|² für Ψ = (ψ1 e^{−iE1t/ħ} + ψ2 e^{−iE2t/ħ})/√2, L = 1, ψn = √2 sin(nπx), T = 2πħ/(E2 − E1).
+     |Ψ|² = ½(ψ1² + ψ2²) + ψ1ψ2 cos((E2 − E1)t/ħ); bei t = T/4 ist cos(π/2) = 0 → sin²πx + sin²2πx
+     (gerade zu L/2, Maxima bei x ≈ 0,29 und 0,71 mit 1,56, in der Mitte 1,0). */
+  const box2 = (s, t) => x => { const a = Math.sin(PI * x), b = Math.sin(2 * PI * x); return a * a + b * b + 2 * a * b * Math.cos(2 * PI * t) * s; };
+  const lab = {
+    id:'sg-sk-lab', title:'Überlagerung nach einer Viertelperiode', kind:'curve', draw:'abs2',
+    text:'Im Labor ist $\\Psi(x,t) = \\frac{1}{\\sqrt2}\\left(\\psi_1e^{-iE_1t/\\hbar} + \\psi_2e^{-iE_2t/\\hbar}\\right)$ mit der Periode $T = 2\\pi\\hbar/(E_2 - E_1)$. Bei $t = 0$ liegt die Dichte links. Skizziere $|\\Psi(x,t)|^2$ zur Zeit $t = T/4$. Stell danach $|c_1|^2 = 0{,}5$ und $t = 0{,}25\\,T$ ein und vergleiche.',
+    plot:{x:[-0.1, 1.1], dom:[0, 1], walls:[0, 1], xlab:'x', ylab:'|\\Psi(x, T/4)|^2', ticks:[{x:0, lab:'0'}, {x:0.25, lab:'L/4'}, {x:0.5, lab:'L/2'}, {x:0.75, lab:'3L/4'}, {x:1, lab:'L'}]},
+    f:box2(1, 0.25),
+    checks:[
+      {id:'pos', type:'nonneg', msg:'Deine Kurve wird negativ (Minimum {got}). Kann $|\\Psi|^2$ negativ sein?'},
+      {id:'rand', name:'Null an den Wänden', type:'zero', at:[0, 1], msg:'Welchen Wert hat $\\Psi$ an den Wänden, zu jeder Zeit?'},
+      {id:'sym', name:'Symmetrie zur Mitte', type:'parity', p:'even', about:0.5, msg:'Wie groß ist der Mischterm $\\psi_1\\psi_2\\cos\\frac{(E_2 - E_1)t}{\\hbar}$ bei $t = T/4$? Was bedeutet das für die Symmetrie zur Mitte? Deine Skizze ist {got}.'},
+      {id:'buckel', name:'Zahl der Maxima', type:'extrema', n:2, kind:'max', msg:'Welche Terme von $|\\Psi|^2$ bleiben bei $t = T/4$ übrig? Wo tragen sie jeweils am meisten bei, und wo nur einer von beiden? Deine Skizze hat {got} Maxima.'}
+    ],
+    reveal:'Bei $t = T/4$ ist $(E_2 - E_1)t/\\hbar = \\pi/2$, und der Mischterm $\\psi_1\\psi_2\\cos(\\pi/2)$ verschwindet. Übrig bleibt $\\tfrac12(\\psi_1^2 + \\psi_2^2)$: symmetrisch zur Mitte, also $\\langle x\\rangle = L/2$. Die Dichte ist auf dem Weg von links nach rechts, aber nicht als ein einzelner Buckel in der Mitte: Dort trägt nur $\\psi_1^2$ bei, bei $L/4$ und $3L/4$ beide. Bei $t = T/2$ liegt sie rechts, bei $t = T$ wieder links.',
+    hints:['Setze $t = T/4$ in den Mischterm $\\psi_1\\psi_2\\cos\\frac{(E_2 - E_1)t}{\\hbar}$ ein.', 'Ist der Mischterm null, bleibt $\\tfrac12(\\psi_1^2 + \\psi_2^2)$. Skizziere $\\psi_1^2$ und $\\psi_2^2$ und addiere.'],
+    wrong:[
+      {f:box2(1, 0), fails:['sym'], why:'Dichte wie bei t = 0: Überlagerung für stationär gehalten'},
+      {f:box2(1, 0.5), fails:['sym'], why:'schon ganz nach rechts geschwappt: T/4 mit T/2 verwechselt'}
+    ]
+  };
+  /* sg-fA: Ψ(x,0) = (ψ1 + ψ3)/√2, bei t = T/2 mit T = 2πħ/(E3 − E1): |Ψ|² = ½(ψ1 − ψ3)² ∝ (sin πx − sin 3πx)² = 4 cos²(2πx) sin²(πx)
+     Maximum 4 bei L/2, Nullstellen bei L/4 und 3L/4, Seitenbuckel 0,30 (7 % des Maximums) bei x ≈ 0,13 und 0,87.
+     sg-fB: Ψ(x,0) = (ψ1 − ψ3)/√2, bei t = T/2: |Ψ|² ∝ (sin πx + sin 3πx)² = 4 sin²(2πx) cos²(πx): Null bei L/2, Maxima 2,37 bei x ≈ 0,195 und 0,805. */
+  const box13 = s => x => (Math.sin(PI * x) + s * Math.sin(3 * PI * x)) ** 2;
+  const fA = {
+    id:'sg-sk-A', title:'Überlagerung von $\\psi_1$ und $\\psi_3$ nach einer halben Periode', kind:'curve', draw:'abs2', points:3,
+    text:'Im Kasten $0 < x < L$ ist $\\Psi(x,0) = \\frac{1}{\\sqrt2}(\\psi_1 + \\psi_3)$ mit $\\psi_n = \\sqrt{2/L}\\,\\sin(n\\pi x/L)$ und $E_n = n^2E_1$. Skizziere $|\\Psi(x,t)|^2$ zur Zeit $t = T/2$ mit $T = 2\\pi\\hbar/(E_3 - E_1)$.',
+    plot:{x:[-0.1, 1.1], dom:[0, 1], walls:[0, 1], xlab:'x', ylab:'|\\Psi(x, T/2)|^2', ticks:[{x:0, lab:'0'}, {x:0.25, lab:'L/4'}, {x:0.5, lab:'L/2'}, {x:0.75, lab:'3L/4'}, {x:1, lab:'L'}]},
+    f:box13(-1),
+    checks:[
+      {id:'pos', type:'nonneg', msg:'Kann $|\\Psi|^2$ negativ sein?'},
+      {id:'rand', name:'Null an den Wänden', type:'zero', at:[0, 1], msg:'Welchen Wert hat $\\Psi$ an den Wänden?'},
+      {id:'sym', name:'Symmetrie zur Mitte', type:'parity', p:'even', about:0.5, msg:'Sind $\\psi_1$ und $\\psi_3$ zur Mitte symmetrisch? Was folgt für $|\\Psi|^2$ zu jeder Zeit?'},
+      {id:'mitte', name:'Lage des Maximums', type:'maxat', x:0.5, tol:0.06, msg:'Welches Vorzeichen hat der Mischterm bei $t = T/2$? Werte $\\psi_1$ und $\\psi_3$ bei $x = L/2$ aus.'},
+      {id:'hoch', name:'Mitte und Ränder', type:'amp', a:[0.4, 0.6], b:[0.05, 0.3], cmp:'>', f:2.5, msg:'Vergleiche $|\\psi_1 - \\psi_3|$ in der Mitte und nahe den Wänden. Wo addieren sich die Beträge, wo heben sie sich teilweise auf?'}
+    ],
+    reveal:'Bei $t = T/2$ ist $(E_3 - E_1)t/\\hbar = \\pi$; der Mischterm wechselt das Vorzeichen, und es ist $|\\Psi|^2 = \\tfrac12(\\psi_1 - \\psi_3)^2$. In der Mitte ist $\\psi_1 = \\sqrt{2/L}$ und $\\psi_3 = -\\sqrt{2/L}$: Die Differenz ist dort am größten. Bei $L/4$ und $3L/4$ ist $\\psi_1 = \\psi_3$, also $|\\Psi|^2 = 0$. Bei $t = 0$ war es umgekehrt (Knoten in der Mitte). Die Dichte bleibt immer symmetrisch, sie „atmet“ zwischen den Wänden und der Mitte.',
+    hints:['Bestimme das Vorzeichen von $\\cos\\frac{(E_3 - E_1)t}{\\hbar}$ bei $t = T/2$.', 'Dann ist $|\\Psi|^2 = \\tfrac12(\\psi_1 \\pm \\psi_3)^2$ mit einem bestimmten Vorzeichen. Werte die Klammer bei $L/4$ und $L/2$ aus.'],
+    wrong:[
+      {f:box13(1), fails:['mitte', 'hoch'], why:'Dichte wie bei t = 0: Überlagerung für stationär gehalten'},
+      {f:x => Math.sin(PI * x) ** 2 + Math.sin(3 * PI * x) ** 2, fails:['hoch'], why:'Mischterm vergessen: Dichten addiert'}
+    ]
+  };
+  const fB = {
+    id:'sg-sk-B', title:'Überlagerung von $\\psi_1$ und $\\psi_3$ nach einer halben Periode', kind:'curve', draw:'abs2', points:3,
+    text:'Im Kasten $0 < x < L$ ist $\\Psi(x,0) = \\frac{1}{\\sqrt2}(\\psi_1 - \\psi_3)$ mit $\\psi_n = \\sqrt{2/L}\\,\\sin(n\\pi x/L)$ und $E_n = n^2E_1$. Skizziere $|\\Psi(x,t)|^2$ zur Zeit $t = T/2$ mit $T = 2\\pi\\hbar/(E_3 - E_1)$.',
+    plot:{x:[-0.1, 1.1], dom:[0, 1], walls:[0, 1], xlab:'x', ylab:'|\\Psi(x, T/2)|^2', ticks:[{x:0, lab:'0'}, {x:0.25, lab:'L/4'}, {x:0.5, lab:'L/2'}, {x:0.75, lab:'3L/4'}, {x:1, lab:'L'}]},
+    f:box13(1),
+    checks:[
+      {id:'pos', type:'nonneg', msg:'Kann $|\\Psi|^2$ negativ sein?'},
+      {id:'rand', name:'Null an den Wänden', type:'zero', at:[0, 1], msg:'Welchen Wert hat $\\Psi$ an den Wänden?'},
+      {id:'sym', name:'Symmetrie zur Mitte', type:'parity', p:'even', about:0.5, msg:'Sind $\\psi_1$ und $\\psi_3$ zur Mitte symmetrisch? Was folgt für $|\\Psi|^2$ zu jeder Zeit?'},
+      {id:'mitte', name:'Wert in der Mitte', type:'zero', at:[0.5], tol:0.04, msg:'Welches Vorzeichen hat der Mischterm bei $t = T/2$? Werte $\\psi_1$ und $\\psi_3$ bei $x = L/2$ aus.'},
+      {id:'buckel', name:'Zahl der Maxima', type:'extrema', n:2, kind:'max', msg:'Wie viele Maxima hat $|\\Psi|^2$ bei $t = T/2$? Deine Skizze hat {got}.'}
+    ],
+    reveal:'Bei $t = T/2$ ist $(E_3 - E_1)t/\\hbar = \\pi$; der Mischterm wechselt das Vorzeichen, und es ist $|\\Psi|^2 = \\tfrac12(\\psi_1 + \\psi_3)^2$. In der Mitte ist $\\psi_1 = \\sqrt{2/L}$ und $\\psi_3 = -\\sqrt{2/L}$: Die Summe ist dort null. Links und rechts davon addieren sich die beiden Anteile zu zwei Buckeln. Bei $t = 0$ war es umgekehrt (Maximum in der Mitte). Die Dichte bleibt immer symmetrisch, sie „atmet“ zwischen der Mitte und den Seiten.',
+    hints:['Bestimme das Vorzeichen von $\\cos\\frac{(E_3 - E_1)t}{\\hbar}$ bei $t = T/2$.', 'Dann ist $|\\Psi|^2 = \\tfrac12(\\psi_1 \\pm \\psi_3)^2$ mit einem bestimmten Vorzeichen. Werte die Klammer bei $L/4$ und $L/2$ aus.'],
+    wrong:[
+      {f:box13(-1), fails:['mitte', 'buckel'], why:'Dichte wie bei t = 0: Überlagerung für stationär gehalten'},
+      {f:x => Math.sin(PI * x) ** 2 + Math.sin(3 * PI * x) ** 2, fails:['mitte', 'buckel'], why:'Mischterm vergessen: Dichten addiert'}
+    ]
+  };
+  return {s1, lab, fA, fB};
+})();
 topic({
   id:'sg', math:['m-komplex', 'm-dgl'], title:'Schrödingergleichung und stationäre Zustände', short:'Schrödingergleichung',
   src:'Griffiths & Schroeter Kap. 1 und 2.1 · Nolting 5/1 Kap. 2–3 · Schwabl Kap. 2',
@@ -135,7 +241,7 @@ topic({
       {q:'Welches Vorzeichen hat die Stromdichte für $\\psi = e^{-ikx}$ mit $k > 0$?', opts:['negativ: der Strom fließt nach links', 'positiv: der Strom fließt nach rechts', 'null: eine reine Phase trägt keinen Strom'], a:0, ex:'$j = \\frac{\\hbar}{2mi}(\\psi^*\\psi\' - \\psi\\psi^{*\\prime}) = -\\hbar k/m$.'}
     ]
   },
-  lab:{type:'twostate', title:'Überlagerung zweier Zustände im Kasten',
+  lab:{type:'twostate', sketch:SK.lab, title:'Überlagerung zweier Zustände im Kasten',
     text:'Die Kurve ist $|\\Psi(x,t)|^2$ für $\\Psi = c_1\\psi_1e^{-iE_1t/\\hbar} + c_2\\psi_2e^{-iE_2t/\\hbar}$. Stelle den Anteil $|c_1|^2$ ein und lass die Zeit laufen.',
     predict:{q:'Vorhersage: Du stellst $|c_1|^2 = 0{,}9$ statt $0{,}5$ ein. Wie schwappt die Dichte dann?', opts:['schwächer, aber mit derselben Periode', 'genauso stark und mit derselben Periode', 'genauso stark, aber deutlich schneller', 'gar nicht mehr, weil $\\psi_1$ überwiegt'], a:0, ex:'Die Amplitude des Mischterms ist $2|c_1c_2|$: bei $0{,}5/0{,}5$ gleich $1$, bei $0{,}9/0{,}1$ nur $0{,}6$. Die Periode hängt nur von $E_2 - E_1$ ab.'},
     questions:[
@@ -217,6 +323,7 @@ topic({
           model:['d/dt ∫_-∞^∞ |Ψ|^2 dx = ∫_-∞^∞ ∂/∂t |Ψ|^2 dx', '= -∫_-∞^∞ ∂/∂x (ħ/(2m i) (Ψ^* ∂Ψ/∂x - Ψ ∂Ψ^*/∂x)) dx', {l:'= 0', w:'j → 0 für |x| → ∞'}]}
       ]}
   ],
+  sketch:[SK.s1],
   final:[
     {aim:0, task:{id:'sg-f1', title:'Energie aus der Schrödingergleichung', text:'Im Kasten ($V = 0$ für $0 < x < L$) ist $\\Psi(x,t) = \\sqrt{2/L}\\,\\sin(3\\pi x/L)\\,e^{-iEt/\\hbar}$.',
       ctx:{coords:['x', 't'], domain:{x:['0', 'L']}, params:{L:'pos', m:'pos'}, defs:{'Ψ(x,t)':'sqrt(2/L) sin(3π x/L) e^(-i E t/ħ)'}, unknowns:{E:{ref:'9π^2 ħ^2/(2m L^2)'}}},
@@ -227,6 +334,7 @@ topic({
     {aim:2, task:{id:'sg-f3', title:'Stromdichte', text:'$\\psi(x) = A\\,e^{ikx}e^{-x^2/(2\\sigma^2)}$ mit reellem $A$, $k > 0$ und $\\sigma > 0$.',
       ctx:{coords:['x'], params:{A:'pos', k:'pos', σ:'pos', m:'pos'}, defs:{'ψ(x)':'A e^(i k x) e^(-x^2/(2σ^2))'}},
       goals:[{id:'a', prompt:'Berechne $j(x)$.', type:'value', target:'ħ k A^2 e^(-x^2/σ^2)/m', points:3, model:['j = ħ/(2m i) (ψ^* ψ\' - ψ (ψ^*)\')', '= ħ/(2m i) · 2i k A^2 e^(-x^2/σ^2)', '= ħ k A^2 e^(-x^2/σ^2)/m']}]}},
+    {aim:1, sketch:SK.fA},
     {aim:'k', id:'sg-fk1', type:'mc2', q:'$\\Psi(x,0) = (\\psi_1 + \\psi_2)/\\sqrt2$ im Kasten. Ist $\\Psi(x,t) = \\Psi(x,0)\\,e^{-i(E_1 + E_2)t/(2\\hbar)}$ richtig?', opts:['Nein, jeder Anteil braucht seinen eigenen Faktor.', 'Ja, mit der mittleren Energie im Exponenten.', 'Ja, aber nur für kurze Zeiten $t \\ll \\hbar/E_1$.'], a:0, ex:'Richtig ist $\\frac{1}{\\sqrt2}(\\psi_1e^{-iE_1t/\\hbar} + \\psi_2e^{-iE_2t/\\hbar})$.',
       reason:{q:'Warum?', opts:['Mit nur einem Faktor löst $\\Psi$ die Schrödingergleichung nicht.', 'Weil man die mittlere Energie $(E_1 + E_2)/2$ nie messen kann.', 'Weil Phasenfaktoren nur vor reellen Funktionen stehen dürfen.'], a:0, ex:'Ein gemeinsamer Zeitfaktor setzt voraus, dass $\\Psi(x,0)$ eine Eigenfunktion von $\\hat H$ ist; hier ist $\\hat H\\Psi(x,0) = (E_1\\psi_1 + E_2\\psi_2)/\\sqrt2$ kein Vielfaches von $\\Psi(x,0)$. Mit ihm bliebe $|\\Psi|^2$ konstant – tatsächlich schwappt die Dichte.'}},
     {aim:'k', id:'sg-fk2', type:'dialog', text:'Ein Teilchen ist im Zustand $\\Psi = \\psi_1(x)\\,e^{-iE_1t/\\hbar}$ im Kasten.',
@@ -244,6 +352,7 @@ topic({
     {aim:2, task:{id:'sg-fB3', title:'Stromdichte', text:'$\\psi(x) = A\\,e^{-ikx}e^{-x^2/(2\\sigma^2)}$ mit reellem $A$, $k > 0$ und $\\sigma > 0$.',
       ctx:{coords:['x'], params:{A:'pos', k:'pos', σ:'pos', m:'pos'}, defs:{'ψ(x)':'A e^(-i k x) e^(-x^2/(2σ^2))'}},
       goals:[{id:'a', prompt:'Berechne $j(x)$.', type:'value', target:'-ħ k A^2 e^(-x^2/σ^2)/m', points:3, model:['j = ħ/(2m i) (ψ^* ψ\' - ψ (ψ^*)\')', '= ħ/(2m i) · (-2i k) A^2 e^(-x^2/σ^2)', '= -ħ k A^2 e^(-x^2/σ^2)/m']}]}},
+    {aim:1, sketch:SK.fB},
     {aim:'k', id:'sg-fBk1', type:'mc2', q:'Im Kasten ist $\\Psi(x,0) = (\\psi_2 - \\psi_3)/\\sqrt2$. Jemand schreibt $\\Psi(x,t) = \\Psi(x,0)\\,e^{-iE_2t/\\hbar}$ und folgert: „$\\langle x\\rangle$ bleibt für alle Zeiten gleich.“ Stimmt die Folgerung?', opts:['Nein: $\\langle x\\rangle$ schwingt mit der Kreisfrequenz $(E_3 - E_2)/\\hbar$.', 'Ja: Mit einem gemeinsamen Faktor bleibt $|\\Psi|^2$ konstant.', 'Ja, weil $\\psi_2$ und $\\psi_3$ beide stationär sind.'], a:0, ex:'Richtig ist $\\Psi(x,t) = \\frac{1}{\\sqrt2}\\left(\\psi_2e^{-iE_2t/\\hbar} - \\psi_3e^{-iE_3t/\\hbar}\\right)$; im Mischterm bleibt $\\cos((E_3 - E_2)t/\\hbar)$ stehen.',
       reason:{q:'Warum?', opts:['$\\Psi(x,0)$ ist keine Eigenfunktion von $\\hat H$; jeder Anteil braucht seinen eigenen Phasenfaktor.', 'Ein gemeinsamer Faktor ist richtig, er muss nur die mittlere Energie enthalten.', 'Das Minuszeichen zwischen $\\psi_2$ und $\\psi_3$ macht den Zustand stationär.'], a:0, ex:'$\\hat H\\Psi(x,0) = (E_2\\psi_2 - E_3\\psi_3)/\\sqrt2$ ist kein Vielfaches von $\\Psi(x,0)$. Mit einem gemeinsamen Faktor, gleich welcher Energie, löst $\\Psi$ die Schrödingergleichung nicht.'}},
     {aim:'k', id:'sg-fBk2', type:'mc2', q:'Viele Elektronen sind im stationären Zustand $\\psi_2(x)\\,e^{-iE_2t/\\hbar}$ eines Kastens. An jedem misst man einmal den Impuls. Was gilt für die Messwerte?', opts:['Sie streuen um null; ihr Mittel ist $0$, das Mittel ihrer Quadrate $(2\\pi\\hbar/L)^2$.', 'Sie sind alle $0$, weil sich in einem stationären Zustand nichts bewegt.', 'Sie ändern sich periodisch mit der Zeit, zu der man misst.'], a:0, ex:'$\\langle p\\rangle = 0$, aber $\\langle p^2\\rangle = 2mE_2 = (2\\pi\\hbar/L)^2 > 0$.',

@@ -2,6 +2,79 @@
 (function(){
 const R = String.raw;
 const GAUSS = '(2πσ^2)^(-1/4) e^(-x^2/(4σ^2)) e^(i k_0 x)';
+/* ---- Skizzenaufgaben (didaktik/SKIZZE.md): Musterfunktionen aus den exakten Lösungen, dimensionslos ---- */
+const SK = (() => {
+  const PI = Math.PI;
+  const gauss = (x0, s) => x => Math.exp(-((x - x0) ** 2) / (2 * s * s));
+  const gaussN = (x0, s) => x => Math.exp(-((x - x0) ** 2) / (2 * s * s)) / (Math.sqrt(2 * PI) * s);   // Fläche 1
+  /* frei-s1: Impulsverteilung des Gauß-Pakets ψ = (2πσ²)^{-1/4} e^{-x²/4σ²} e^{ik0x} mit σ = 0,25 nm, k0 = 4 nm⁻¹:
+     |φ(k)|² ∝ exp(−(k − k0)²/(2σk²)) mit σk² = 1/(4σ²), also σk = 1/(2σ) = 2 nm⁻¹, Halbwertsbreite 2√(2 ln 2)·σk ≈ 4,71 nm⁻¹ */
+  const s1 = {
+    id:'frei-sk1', title:'Impulsverteilung eines Gauß-Pakets', kind:'curve', draw:'abs2',
+    text:'Ein Elektron ist im Zustand $\\psi(x) = (2\\pi\\sigma^2)^{-1/4}e^{-x^2/(4\\sigma^2)}e^{ik_0x}$ mit $\\sigma = 0{,}25\\,\\mathrm{nm}$ und $k_0 = 4\\,\\mathrm{nm}^{-1}$. Skizziere die Verteilung $|\\varphi(k)|^2$ der Wellenzahlen. Die Höhe ist frei; Lage und Breite sollen stimmen.',
+    plot:{x:[-4, 12], xlab:'k\\;(\\mathrm{nm}^{-1})', ylab:'|\\varphi(k)|^2', ticks:[{x:-2, lab:'-2'}, {x:0, lab:'0'}, {x:2, lab:'2'}, {x:4, lab:'4'}, {x:6, lab:'6'}, {x:8, lab:'8'}, {x:10, lab:'10'}]},
+    f:gauss(4, 2),
+    checks:[
+      {id:'pos', type:'nonneg', msg:'Kann $|\\varphi(k)|^2$ negativ sein?'},
+      {id:'lage', type:'center', x:4, tol:0.6, msg:'Was bewirkt der Faktor $e^{ik_0x}$ im Impulsraum? Wo liegt also die Mitte der Verteilung? (Abschnitt ‚Der Impulsraum: dieselbe Information, anders geschrieben‘)'},
+      {id:'breite', type:'fwhm', v:4.71, tol:0.3, msg:'Wie hängt die Breite von $|\\varphi|^2$ mit $\\sigma$ zusammen? Ein schmales Paket im Ort heißt … im Impuls. Deine Halbwertsbreite ist {got}.'},
+      {id:'buckel', type:'extrema', n:1, kind:'max', msg:'Wie viele Maxima hat eine Gauß-Kurve? Deine Skizze hat {got}.'}
+    ],
+    reveal:'$|\\varphi(k)|^2$ ist eine Gauß-Kurve um $k_0 = 4\\,\\mathrm{nm}^{-1}$, denn $e^{ik_0x}$ verschiebt die Verteilung um $k_0$. Ihre Varianz ist $1/(4\\sigma^2)$, die Standardabweichung also $1/(2\\sigma) = 2\\,\\mathrm{nm}^{-1}$ und die Halbwertsbreite etwa $4{,}7\\,\\mathrm{nm}^{-1}$. Je schmaler das Paket im Ort, desto breiter die Verteilung der Wellenzahlen: $\\Delta x\\,\\Delta p = \\sigma\\cdot\\hbar/(2\\sigma) = \\hbar/2$.',
+    hints:['Lies Mitte und Breite getrennt ab: Was verschiebt die Verteilung, was legt ihre Breite fest?', '$|\\varphi|^2$ ist eine Gauß-Kurve um $k_0$ mit Varianz $1/(4\\sigma^2)$. Die Halbwertsbreite ist etwa $2{,}35$ Standardabweichungen.'],
+    wrong:[
+      {f:gauss(0, 2), fails:['lage'], why:'e^{ik0x} wie eine bedeutungslose Phase behandelt: Verteilung um k = 0'},
+      {f:gauss(4, 0.25), fails:['breite'], why:'Breite wie im Ortsraum (σ statt 1/(2σ)): schmal im Ort und schmal im Impuls'}
+    ]
+  };
+  /* frei-lab: Paket des Labors (ħ = m = 1), σ0 = 0,5, k0 = 4, t = 1: ⟨x⟩ = k0 t = 4, Δx(t) = σ0 √(1 + (t/(2σ0²))²) = 0,5·√5 ≈ 1,118, Halbwertsbreite ≈ 2,63 */
+  const st = 0.5 * Math.sqrt(1 + (1 / (2 * 0.25)) ** 2);
+  const lab = {
+    id:'frei-sk-lab', title:'Das Paket nach der Zeit $t$', kind:'curve', draw:'abs2',
+    text:'Bei $t = 0$ ist $|\\psi|^2$ ein Gauß-Paket um $x = 0$ mit $\\sigma_0 = 0{,}5$ und mittlerer Wellenzahl $k_0 = 4$ (Einheiten mit $\\hbar = m = 1$). Skizziere $|\\psi(x,t)|^2$ zur Zeit $t = 1$; die Höhe ist frei. Stell danach im Labor $\\sigma_0 = 0{,}5$, $k_0 = 4$ und $t = 1$ ein und vergleiche mit der dicken Kurve.',
+    plot:{x:[-4, 12], xlab:'x', ylab:'|\\psi(x,1)|^2', ticks:[{x:-2, lab:'-2'}, {x:0, lab:'0'}, {x:2, lab:'2'}, {x:4, lab:'4'}, {x:6, lab:'6'}, {x:8, lab:'8'}, {x:10, lab:'10'}]},
+    f:gauss(4, st),
+    checks:[
+      {id:'pos', type:'nonneg', msg:'Kann $|\\psi|^2$ negativ sein?'},
+      {id:'lage', type:'center', x:4, tol:0.6, msg:'Mit welcher Geschwindigkeit bewegt sich das Maximum von $|\\psi|^2$, mit $\\hbar k_0/2m$ oder mit $\\hbar k_0/m$? Wo ist es also bei $t = 1$? (Abschnitt ‚Phasen- und Gruppengeschwindigkeit‘)'},
+      {id:'breite', type:'fwhm', v:2.355 * st, tol:0.3, msg:'Bleibt die Breite gleich? Wie groß ist $\\Delta x$ bei $t = 1$ im Vergleich zu $\\sigma_0$? (Abschnitt ‚Unschärfe und Zerfließen‘) Deine Halbwertsbreite ist {got}.'},
+      {id:'buckel', type:'extrema', n:1, kind:'max', msg:'Wie viele Maxima hat das Paket? Deine Skizze hat {got}.'}
+    ],
+    reveal:'Die Einhüllende läuft mit der Gruppengeschwindigkeit $\\hbar k_0/m = 4$, ihr Maximum ist bei $t = 1$ also bei $x = 4$. Gleichzeitig zerfließt das Paket: $\\Delta x = 0{,}5\\sqrt{1 + 2^2} \\approx 1{,}1$, gut doppelt so breit wie am Anfang und entsprechend niedriger. Die Wellenberge von $\\mathrm{Re}\\,\\psi$ laufen nur halb so schnell; das siehst du an der dünnen Kurve, wenn du $t$ langsam veränderst.',
+    hints:['Trenne zwei Fragen: Wo ist das Maximum zur Zeit $t$, und wie breit ist das Paket dann?', 'Das Maximum läuft mit $v_\\mathrm{g} = \\hbar k_0/m$. Für die Breite gilt $\\Delta x(t) = \\sigma_0\\sqrt{1 + (\\hbar t/2m\\sigma_0^2)^2}$.'],
+    wrong:[
+      {f:gauss(4, 0.5), fails:['breite'], why:'Paket zerfließt nicht'},
+      {f:gauss(2, st), fails:['lage'], why:'Paket läuft mit der Phasengeschwindigkeit ħk0/2m'}
+    ]
+  };
+  /* Abschluss (Lernziel 2), absolute Höhe: Fläche 1 bleibt beim Zerfließen erhalten.
+     A: σ = 1, k0 = 1, t = 2√3 = √3·t0 (t0 = 2mσ²/ħ = 2): Δx = 2σ = 2, ⟨x⟩ = 2√3 ≈ 3,46, Maximum 1/(2√(2π)) ≈ 0,20 (vorher 0,40)
+     B: σ = 1, k0 = 0,5, t = 4√2 = √8·t0: Δx = 3σ = 3, ⟨x⟩ = 2√2 ≈ 2,83, Maximum 1/(3√(2π)) ≈ 0,13 */
+  const fin = (o) => ({
+    id:o.id, title:'Zerfließendes Paket in der richtigen Höhe', kind:'curve', draw:'f', points:3,
+    text:'Ein freies Gauß-Paket ($\\hbar = m = 1$) hat bei $t = 0$ die Breite $\\Delta x = \\sigma = 1$, den Schwerpunkt $\\langle x\\rangle = 0$ und die mittlere Wellenzahl $k_0 = ' + o.k0tex + '$. Bei $t = 0$ ist $|\\psi|^2$ eine Gauß-Kurve mit dem Maximum $1/\\sqrt{2\\pi} \\approx 0{,}40$. Skizziere $|\\psi(x,t)|^2$ zur Zeit $t = ' + o.ttex + '$ in der richtigen Lage, Breite **und Höhe**.',
+    plot:{x:o.x, y:[-0.125, 0.5], abs:true, xlab:'x', ylab:'|\\psi(x,t)|^2', ticks:o.ticks, yticks:[{y:0.1, lab:'0{,}1'}, {y:0.2, lab:'0{,}2'}, {y:0.3, lab:'0{,}3'}, {y:0.4, lab:'0{,}4'}]},
+    f:gaussN(o.xc, o.s),
+    checks:[
+      {id:'pos', type:'nonneg', msg:'Kann $|\\psi|^2$ negativ sein?'},
+      {id:'lage', type:'center', x:o.xc, tol:0.6, msg:'Wo ist der Schwerpunkt zur Zeit $t$? Mit welcher Geschwindigkeit bewegt er sich?'},
+      {id:'breite', type:'fwhm', v:2.355 * o.s, tol:0.3, msg:'Wie breit ist das Paket zur Zeit $t$? Deine Halbwertsbreite ist {got}.'},
+      {id:'flaeche', type:'area', v:1, tol:0.25, msg:'Welche Fläche muss unter $|\\psi|^2$ liegen, zu jeder Zeit? Deine Fläche ist etwa {got}.'}
+    ],
+    reveal:'Der Schwerpunkt läuft mit $\\hbar k_0/m$ und ist bei $\\langle x\\rangle = k_0t = ' + o.xctex + '$. Mit $t_0 = 2m\\sigma^2/\\hbar = 2$ ist $\\Delta x(t) = \\sigma\\sqrt{1 + (t/t_0)^2} = ' + o.s + '$. Weil die Fläche unter $|\\psi|^2$ immer 1 bleibt, sinkt das Maximum auf $1/(' + o.s + '\\sqrt{2\\pi}) \\approx ' + o.htex + '$: Das Paket wird breiter **und** niedriger.',
+    hints:['Bestimme nacheinander Schwerpunkt, Breite und Höhe.', 'Breite: $\\Delta x(t) = \\sigma\\sqrt{1 + (\\hbar t/2m\\sigma^2)^2}$. Höhe: Eine Gauß-Kurve mit Fläche 1 und Standardabweichung $s$ hat das Maximum $1/(s\\sqrt{2\\pi})$.'],
+    wrong:[
+      {f:gaussN(o.xc, 1), fails:['breite'], why:'Paket zerfließt nicht'},
+      {f:x => gaussN(o.xc, o.s)(x) * o.s, fails:['flaeche'], why:'breiter, aber gleich hoch: Normierung verletzt (Fehlvorstellung aus dem Abschnitt „Unschärfe und Zerfließen“)'},
+      {f:gaussN(o.xc / 2, o.s), fails:['lage'], why:'Schwerpunkt mit der Phasengeschwindigkeit ħk0/2m'}
+    ]
+  });
+  const fA = fin({id:'frei-sk-A', k0tex:'1', ttex:'2\\sqrt3 \\approx 3{,}5', x:[-5, 11], xc:2 * Math.sqrt(3), xctex:'2\\sqrt3 \\approx 3{,}5', s:2, htex:'0{,}20',
+    ticks:[{x:-4, lab:'-4'}, {x:-2, lab:'-2'}, {x:0, lab:'0'}, {x:2, lab:'2'}, {x:4, lab:'4'}, {x:6, lab:'6'}, {x:8, lab:'8'}, {x:10, lab:'10'}]});
+  const fB = fin({id:'frei-sk-B', k0tex:'0{,}5', ttex:'4\\sqrt2 \\approx 5{,}7', x:[-9, 15], xc:2 * Math.sqrt(2), xctex:'2\\sqrt2 \\approx 2{,}8', s:3, htex:'0{,}13',
+    ticks:[{x:-8, lab:'-8'}, {x:-4, lab:'-4'}, {x:0, lab:'0'}, {x:4, lab:'4'}, {x:8, lab:'8'}, {x:12, lab:'12'}]});
+  return {s1, lab, fA, fB};
+})();
 topic({
   id:'frei', math:['m-fourier', 'm-analysis'], title:'Freies Teilchen und Wellenpakete', short:'Freies Teilchen',
   src:'Griffiths & Schroeter Kap. 2.4 · Nolting 5/1 Kap. 2 · Schwabl Kap. 2',
@@ -281,7 +354,7 @@ Das Paket **zerfließt**. Quadriert heißt das $\Delta x(t)^2 = \sigma^2 + (\Del
       {q:'Zwei Gauß-Pakete starten mit $\\sigma_A = 1\\,\\mathrm{nm}$ und $\\sigma_B = 2\\,\\mathrm{nm}$ (gleiche Masse). Welches ist nach langer Zeit breiter?', opts:['A', 'B', 'beide gleich'], a:0, ex:'Für große $t$ ist $\\Delta x \\approx \\hbar t/(2m\\sigma)$: das anfangs schmalere Paket hat das größere $\\Delta p$.'}
     ]
   },
-  lab:{type:'packet', title:'Freies Gauß-Paket',
+  lab:{type:'packet', sketch:SK.lab, title:'Freies Gauß-Paket',
     text:'Dicke Kurve: $|\\psi(x,t)|^2$, dünne Kurve: $\\operatorname{Re}\\psi$. Einheiten mit $\\hbar = m = 1$.',
     predict:{q:'Bevor du den Zeitregler bewegst: Stell $k_0 = 3$ ein. Wie bewegen sich die Wellenberge von $\\mathrm{Re}\\,\\psi$ im Vergleich zum Maximum von $|\\psi|^2$?', opts:['langsamer: Sie wandern im Paket nach hinten', 'gleich schnell: Das Muster läuft starr mit', 'schneller: Sie wandern im Paket nach vorn'], a:0,
       ex:'$v_\\mathrm{ph} = \\hbar k_0/2m$ ist halb so groß wie $v_\\mathrm{g} = \\hbar k_0/m$. Relativ zur Einhüllenden laufen die Wellenberge deshalb nach hinten.'},
@@ -378,6 +451,7 @@ Das Paket **zerfließt**. Quadriert heißt das $\Delta x(t)^2 = \sigma^2 + (\Del
       q:'Ist $\\psi(x) = \\cos(kx)$ für das freie Teilchen ein Eigenzustand von $\\hat H$? Und von $\\hat p$?', opts:['von $\\hat H$ ja, von $\\hat p$ nein', 'von beiden, weil $\\hat H$ nur $\\hat p$ enthält', 'von keinem, weil $\\cos kx$ reell ist'], a:0,
       ex:'$\\hat H\\cos kx = \\frac{\\hbar^2k^2}{2m}\\cos kx$, aber $\\hat p\\cos kx = i\\hbar k\\sin kx$. $\\hat H = \\hat p^2/2m$ enthält nur $\\hat p$, und doch ist nicht jede Eigenfunktion von $\\hat H$ eine von $\\hat p$: Zur Energie $\\hbar^2k^2/2m$ gehören die beiden Impulse $\\pm\\hbar k$ (Entartung), und $\\cos kx$ überlagert beide. Wie man gemeinsame Eigenfunktionen allgemein findet, zeigt Thema 6.'}
   ],
+  sketch:[SK.s1],
   final:[
     {aim:0, task:{id:'frei-fa1', title:'Phasen- und Gruppengeschwindigkeit im konstanten Potential',
       text:'In einem Bereich mit konstantem Potential $V_0$ gilt für ein Elektron $\\hbar\\omega = \\frac{\\hbar^2k^2}{2m} + V_0$. Schreibe $v_p$ und $v_g$.',
@@ -404,6 +478,7 @@ Das Paket **zerfließt**. Quadriert heißt das $\Delta x(t)^2 = \sigma^2 + (\Del
           model:['φ(k) = (2σ^2/π)^(1/4) e^(-σ^2 (k - k_0)^2)', '⟨p⟩ = ħ k_0', '⟨p^2⟩ = ħ^2 ∫_-∞^∞ k^2 |φ(k)|^2 dk', '= ħ^2 (k_0^2 + 1/(4σ^2))', 'Δp = sqrt(⟨p^2⟩ - ⟨p⟩^2)', '= ħ/(2σ)']},
         {id:'b', prompt:'b) Berechne $\\Delta x\\,\\Delta p$.', type:'value', target:'ħ/2', points:1, model:['Δx Δp = σ · ħ/(2σ)', '= ħ/2']}
       ]}},
+    {aim:2, sketch:SK.fA},
     {aim:'k', type:'mc2', id:'frei-fk1',
       q:'Zwei freie Gauß-Pakete gleicher Masse: A mit $\\sigma_A = 1\\,\\mathrm{nm}$, B mit $\\sigma_B = 3\\,\\mathrm{nm}$. Welches ist nach sehr langer Zeit breiter?', opts:['A', 'B', 'beide gleich'], a:0,
       ex:'Für große $t$ ist $\\Delta x \\approx \\hbar t/(2m\\sigma)$; A ist dann dreimal so breit wie B.',
@@ -441,6 +516,7 @@ Das Paket **zerfließt**. Quadriert heißt das $\Delta x(t)^2 = \sigma^2 + (\Del
           model:['⟨p⟩ = ħ k_0', '⟨p^2⟩ = ħ^2 (k_0^2 + 1/(2b^2))', 'Δp = sqrt(⟨p^2⟩ - ⟨p⟩^2)', '= ħ/(sqrt(2) b)']},
         {id:'b', prompt:'b) Berechne $\\Delta x\\,\\Delta p$.', type:'value', target:'ħ/2', points:1, model:['Δx Δp = b/sqrt(2) · ħ/(sqrt(2) b)', '= ħ/2']}
       ]}},
+    {aim:2, sketch:SK.fB},
     {aim:'k', type:'mc2', id:'frei-gk1',
       q:'Ein freies Elektronen-Wellenpaket soll nach einer festen Flugzeit $t$ möglichst schmal sein. Wie wählst du die Anfangsbreite $\\sigma$?', opts:['nicht beliebig klein: Für ein bestimmtes $\\sigma$ ist $\\Delta x(t)$ am kleinsten', 'so klein wie möglich, denn ein schmaler Start bleibt am schmalsten', 'so groß wie möglich, denn breite Pakete zerfließen am langsamsten'], a:0,
       ex:'$\\Delta x(t)^2 = \\sigma^2 + \\left(\\frac{\\hbar t}{2m\\sigma}\\right)^2$ ist am kleinsten für $\\sigma^2 = \\hbar t/(2m)$; dann ist $\\Delta x(t) = \\sqrt{\\hbar t/m}$.',

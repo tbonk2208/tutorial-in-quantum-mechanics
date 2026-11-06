@@ -154,6 +154,25 @@ topic({
     ]
   },
   lab:{type:'expand', title:'Entwicklung nach Sinusfunktionen',
+    sketch:{id:'mh-lab-s', kind:'curve', draw:'f', title:'Vorhersage: die beste Näherung mit einem Term',
+      text:'Gleich zeigt das Labor Teilsummen der Sinusentwicklung. Skizziere vorher $S_1 = c_1\\varphi_1$ für $f = 1$ auf $[0, L]$, mit $\\varphi_1 = \\sqrt{2/L}\\sin(\\pi x/L)$ und $c_1 = \\langle\\varphi_1|f\\rangle$. Die Achse ist absolut ($L = 1$); die Gerade $f = 1$ liegt in Höhe des Teilstrichs $1$. Stell danach die Funktion „Konstante 1“ und $N = 1$ ein und vergleiche.',
+      plot:{x:[0, 1], y:[-0.3, 1.5], abs:true, xlab:'x', ylab:'S_1(x)', ticks:[{x:0, lab:'0'}, {x:0.5, lab:'L/2'}, {x:1, lab:'L'}], yticks:[{y:0.5, lab:'0{,}5'}, {y:1, lab:'1'}]},
+      // c_1 = √2 ∫_0^1 sin(πx) dx = 2√2/π, S_1 = c_1·√2 sin(πx) = (4/π) sin(πx) ≈ 1,273 sin(πx); Mittel über [0,4; 0,6] ≈ 1,252
+      // 'hoehe' nimmt [1,05; 1,51] an: deutlich über f = 1 bis zum oberen Rahmen. Eine Kurve, die in der Mitte nur bis 1 reicht (Mittel 0,98), fällt durch.
+      f:x => 4 / Math.PI * Math.sin(Math.PI * x),
+      checks:[
+        {id:'rand', type:'zero', at:[0, 1], msg:'Welchen Wert hat $\\varphi_1$ bei $x = 0$ und $x = L$? Was folgt daraus für jedes Vielfache $c_1\\varphi_1$?'},
+        {id:'sym', type:'parity', p:'even', about:0.5, msg:'$f = 1$ und $\\varphi_1$ sind beide symmetrisch zur Mitte. Was gilt dann für $S_1$?'},
+        {id:'lage', type:'maxat', x:0.5, tol:0.15, msg:'Wo hat $\\sin(\\pi x/L)$ sein Maximum?'},
+        {id:'hoehe', type:'level', range:[0.4, 0.6], v:1.28, tol:0.18, msg:'Berechne $c_1 = \\sqrt{2/L}\\int_0^L\\sin(\\pi x/L)\\,dx$. Wie hoch ist $S_1$ dann in der Mitte – unter, auf oder über $f = 1$? Deine Kurve liegt dort bei {got}. (Abschnitt „Orthonormalsysteme und Komponenten“)'}
+      ],
+      reveal:'$c_1 = \\sqrt2\\int_0^1\\sin(\\pi x)\\,dx = 2\\sqrt2/\\pi$, also $S_1 = \\frac{4}{\\pi}\\sin(\\pi x/L) \\approx 1{,}27\\sin(\\pi x/L)$. $S_1$ ist an den Rändern null, weil $\\varphi_1$ dort null ist – gleichgültig, wie $f$ aussieht. In der Mitte ragt $S_1$ über $f = 1$ hinaus: Die beste Näherung im quadratischen Mittel gleicht das Zuwenig an den Rändern durch ein Zuviel in der Mitte aus. Mit wachsendem $N$ rückt die Teilsumme im Labor an $f$ heran, bleibt aber in $x = 0$ und $x = L$ null.',
+      hints:['Rechne zuerst $c_1$ aus; $S_1$ ist dann ein Vielfaches von $\\sin(\\pi x/L)$.', '$\\int_0^L\\sin(\\pi x/L)\\,dx = 2L/\\pi$, und $\\varphi_1$ trägt den Faktor $\\sqrt{2/L}$ zweimal bei: einmal in $c_1$, einmal in $\\varphi_1$ selbst.'],
+      wrong:[
+        {f:x => 1, fails:['rand'], why:'S₁ ≈ f gezeichnet, auch am Rand'},
+        {f:x => 2 / Math.PI * Math.sin(Math.PI * x), fails:['hoehe'], why:'mit dem nicht normierten sin(πx/L) gerechnet und nicht durch ⟨φ|φ⟩ geteilt'},
+        {f:x => Math.sin(Math.PI * x), fails:['hoehe'], why:'S₁ reicht in der Mitte nur bis f = 1: Überschießen der besten Näherung nicht erwartet'}
+      ]},
     text:'Die Funktion $f$ auf $[0, L]$ wird nach $\\varphi_n(x) = \\sqrt{2/L}\\sin(n\\pi x/L)$ entwickelt. Wähle $f$ (Parabel $x(L-x)$, Zelt, Stufe oder Konstante $1$) und mit dem Regler $N$ zwischen $1$ und $30$ die Zahl der Terme der Teilsumme $S_N = \\sum_{n\\le N}c_n\\varphi_n$. Die Anzeige vergleicht $\\sum_{n\\le N}|c_n|^2$ mit $\\int_0^L|f|^2dx$ (Anteil in Prozent), die Balken zeigen die einzelnen $|c_n|^2$ relativ zum größten Beitrag und logarithmisch (blau: in der Summe enthalten).',
     predict:{q:'Bevor du die Funktion wählst: Das Zelt hat seine Spitze bei $x = L/2$ und ist symmetrisch um diese Mitte. Welche Koeffizienten $c_n$ sind null?', opts:['alle mit geradem $n$', 'alle mit ungeradem $n$', 'keiner, alle tragen bei', 'alle außer $c_1$'], a:0, ex:'Für gerades $n$ ist $\\sin(n\\pi x/L)$ antisymmetrisch um $L/2$, das Zelt symmetrisch. Das Produkt ist antisymmetrisch, das Integral null. Dasselbe gilt für Parabel und Konstante.'},
     questions:[
@@ -258,6 +277,26 @@ topic({
           model:['⟨φ_2|f⟩ = 1/sqrt(2π) ∫_0^{2π} e^(-2ix) cos(x)^2 dx', {l:'= 1/sqrt(2π) ∫_0^{2π} e^(-2ix) (1/2 + e^(2ix)/4 + e^(-2ix)/4) dx', w:'Euler-Formel'}, '= 1/sqrt(2π) · 2π/4', '= sqrt(π/8)'],
           mistakes:[{expr:'1/4', msg:'Das ist der Koeffizient vor $e^{2ix}$. Bezüglich der normierten $\\varphi_2 = e^{2ix}/\\sqrt{2\\pi}$ kommt noch der Faktor $\\sqrt{2\\pi}$ hinzu.'}],
           note:'Das ist schon eine komplexe Fourier-Reihe (M6).'}
+      ]}
+  ],
+  sketch:[
+    {id:'mh-s1', kind:'curve', draw:'f', title:'Der Rest steht senkrecht',
+      text:'Für $f = 1$ auf $[0, L]$ ist $S_1 = c_1\\varphi_1 = \\frac{4}{\\pi}\\sin(\\pi x/L)$ die beste Näherung mit einem Term (Labor). Skizziere den Rest $r = f - S_1$ auf $[0, L]$. Die Skala der $y$-Achse ist frei.',
+      plot:{x:[0, 1], xlab:'x', ylab:'r(x)', ticks:[{x:0, lab:'0'}, {x:0.5, lab:'L/2'}, {x:1, lab:'L'}]},
+      // r = 1 − (4/π) sin(πx/L): r(0) = r(L) = 1, r(L/2) = 1 − 4/π ≈ −0,27, Nullstellen bei sin(πx/L) = π/4, also x ≈ 0,288 L und 0,712 L
+      f:x => 1 - 4 / Math.PI * Math.sin(Math.PI * x),
+      checks:[
+        {id:'knoten', type:'nodes', n:2, msg:'Der Rest steht senkrecht auf $\\varphi_1$: $\\int_0^L\\varphi_1\\,r\\,dx = 0$. Kann das gelten, wenn $r$ überall dasselbe Vorzeichen hat, obwohl $\\varphi_1 > 0$ ist? Deine Skizze hat {got} Vorzeichenwechsel. (Abschnitt „Orthonormalsysteme und Komponenten“)'},
+        {id:'sym', type:'parity', p:'even', about:0.5, msg:'$f$ und $S_1$ sind symmetrisch zur Mitte. Was gilt dann für ihre Differenz?'},
+        {id:'rand', type:'amp', a:[0, 0.08], b:[0.35, 0.65], cmp:'>', msg:'Welchen Wert hat $S_1$ am Rand, und welchen hat $r$ dort folglich? Vergleiche mit der Mitte.'},
+        {id:'mitte', type:'sign', s:-1, range:[0.4, 0.6], msg:'Ist $S_1$ in der Mitte größer oder kleiner als $f = 1$? Welches Vorzeichen hat $r$ dort?'}
+      ],
+      reveal:'$r = 1 - \\frac{4}{\\pi}\\sin(\\pi x/L)$ ist am Rand gleich $1$, weil $S_1$ dort null ist, und in der Mitte $1 - 4/\\pi \\approx -0{,}27$. Dazwischen wechselt $r$ zweimal das Vorzeichen. Das muss so sein: Der Rest steht senkrecht auf $\\varphi_1$, und weil $\\varphi_1$ im Inneren positiv ist, müssen sich positive und negative Beiträge von $\\varphi_1 r$ im Integral aufheben. Ohne Vorzeichenwechsel wäre $\\langle\\varphi_1|r\\rangle \\neq 0$, und $S_1$ wäre nicht die beste Näherung.',
+      hints:['Zeichne erst $f = 1$ und $S_1$ übereinander, dann ihre Differenz: Wo liegt $S_1$ unter, wo über der Geraden?', 'Orthogonal heißt $\\int_0^L\\varphi_1\\,r\\,dx = 0$. Für ein positives $\\varphi_1$ geht das nur, wenn $r$ positive und negative Teile hat.'],
+      wrong:[
+        {f:x => 1 - Math.sin(Math.PI * x), fails:['knoten'], why:'Koeffizient 1 statt 4/π: Rest ohne Vorzeichenwechsel'},
+        {f:x => 1 - 2 / Math.PI * Math.sin(Math.PI * x), fails:['knoten', 'mitte'], why:'mit dem nicht normierten sin(πx/L) gerechnet: Rest überall positiv'},
+        {f:x => Math.sin(3 * Math.PI * x), fails:['rand'], why:'Rest nur als nächster Term c₃φ₃ gezeichnet, der am Rand verschwindet'}
       ]}
   ],
   final:[

@@ -56,13 +56,20 @@ Startseite mit **Neues lernen**, **Üben**, **Wiederholen** (verteilte Wiederhol
 4. **Beispiel:** vorgerechnetes Beispiel mit Warum-Fragen, danach eine Lückenaufgabe; für Fortgeschrittene eine Knobelaufgabe.
 5. **Labor:** erst vorhersagen, dann ausprobieren (z. B. δ-Folgen, Fourier-Teilsummen, Wellenfunktion an der Barriere, Messfolgen, Bloch-Kugel), dann Fragen mit und ohne Bild.
 6. **Üben:** Herleitungen mit zeilenweiser Prüfung und gestuften Hinweisen, Konzeptaufgaben zu typischen Lernschwierigkeiten der Quantenmechanik, zwei Lösungswege im Vergleich, Fehler finden.
-7. **Abschluss:** fünf Aufgaben unter Prüfungsbedingungen (ohne Rückmeldung bis zur Abgabe), mit Sicherheitsurteil je Aufgabe. „Vorläufig sicher“ ab 80 % und mit allen Lernzielen; „sicher“ erst nach einer bestandenen Wiederholung frühestens zwei Tage später. Für einen neuen Versuch gibt es eine Parallelform.
+7. **Abschluss:** fünf Aufgaben (bei manchen Themen dazu eine Skizze) unter Prüfungsbedingungen (ohne Rückmeldung bis zur Abgabe), mit Sicherheitsurteil je Aufgabe. „Vorläufig sicher“ ab 80 % und mit allen Lernzielen; „sicher“ erst nach einer bestandenen Wiederholung frühestens zwei Tage später. Für einen neuen Versuch gibt es eine Parallelform.
 
 Die Abfolge stützt sich auf Lern- und Physikdidaktik-Forschung (siehe „Quellen“ in der App).
 
 ## Formeln eingeben
 
 Tastatur mit Symbolleiste, Vorschau unter jeder Zeile. Beispiele: `∫_0^L |ψ|^2 dx = 1`, `ħ^2/2m` (= ħ²/(2m)), `d^2/dx^2 ψ`, `∂ψ/∂t`, `[x̂, p̂] f`, `⟨n|x̂|m⟩`, `⟨x^2⟩`, `Δx`, `|↑⟩`, `S_z`, `(1, 0; 0, -1)`, `Σ_{n=1}^∞ |c_n|^2`. LaTeX (`\frac`, `\int`, `\langle`) geht auch. Neue Abkürzungen führt man mit `κ = sqrt(2m(V_0 - E))/ħ` ein.
+
+## Stift, Skizzen und Schmierzettel
+
+- **Rechenzeilen mit dem Stift:** Vorn in jeder Zeile wechselst du mit ✎ und ⌨ zwischen Stift und Tastatur. Die Handschrift wird im Gerät gelesen, nach einer kurzen Pause steht die Lesart im Feld. Ein Handballen-Schutz ist aktiv, sobald ein Stift benutzt wurde; der Finger schreibt nur, wenn das in den Einstellungen eingeschaltet ist.
+- **Skizzen:** In „Üben“, als Vorhersage vor dem Labor und im Abschluss zeichnest du Graphen, z. B. ψₙ im Kasten oder den Streuzustand an einer Barriere, oder Pfeile in der komplexen Ebene. Gezeichnet wird mit Stift, Maus oder, auf Geräten ohne Stift, mit dem Finger; Werkzeuge sind Stift, Radierer, Rückgängig und Leeren. „Prüfen“ wertet Merkmale wie Knotenzahl, Symmetrie, Randwerte, Abklingen, Wellenlänge oder Amplitude aus und stellt zu den ersten zwei nicht erfüllten eine Rückfrage. Danach lässt sich die Musterskizze über die eigene legen. Im Abschluss gibt es bis zur Abgabe keine Rückmeldung; die Skizze bringt Punkte nach dem Anteil erfüllter Merkmale.
+- **Schmierzettel:** Unter jeder Rechenaufgabe klappt „✎ Schmierzettel“ eine freie Stiftfläche für Nebenrechnungen auf, wahlweise mit Kästchen und mit „Mehr Platz“. Der Zettel wird je Aufgabe gespeichert (im Abschluss je Versuch), aber nicht ausgewertet und nie gesendet.
+- Skizzen und Zettel liegen nur im Browser dieses Geräts (`qm-sketch-1`, `qm-scratch-1`, zusammen höchstens etwa 2,5 MB; die am längsten unbenutzten Zettel werden zuerst verdrängt). „Alles zurücksetzen“ löscht sie mit.
 
 ## Wie geprüft wird
 
@@ -88,4 +95,4 @@ Ohne Schlüssel sendet das Tutorial nichts ins Internet. Mit der Schreibprobe (E
 
 ## Entwicklung
 
-Der Quelltext liegt im Ordner `entwicklung/`: `src/engine` (Prüfkern: Parser, Ableitungen, Integrale, Orts- und Matrixdarstellung, Zeilenprüfung), `src/content` (ein Thema pro Datei; `00m*` = Mathematische Grundlagen), `src/ui` (Oberfläche, Labore, Stifteingabe `15-ink.js`, Erkennung `16-ink-recog.js`, Modell `model/sym-qm.json`) und `test/` (Stifttests in `test/ink/`, brauchen die nicht enthaltenen Testdaten). Die Skripte zum Training des Erkennungsnetzes liegen in `entwicklung/handschrift-training/`. `node build.js` baut `index.html` neu (KaTeX 0.16 wird aus einem lokalen npm-Paket eingebettet). `node test/validate.js` prüft jede Musterlösung mit dem Prüfkern und alle Formeln mit KaTeX; `node test/mutate.js` prüft, ob veränderte Musterzeilen als falsch erkannt werden.
+Der Quelltext liegt im Ordner `entwicklung/`: `src/engine` (Prüfkern: Parser, Ableitungen, Integrale, Orts- und Matrixdarstellung, Zeilenprüfung), `src/content` (ein Thema pro Datei; `00m*` = Mathematische Grundlagen), `src/ui` (Oberfläche, Labore, Stifteingabe `15-ink.js`, Erkennung `16-ink-recog.js`, Skizzen und Schmierzettel `17-sketch.js`, Modell `model/sym-qm.json`) und `test/` (Stifttests in `test/ink/`, brauchen die nicht enthaltenen Testdaten). Die Skripte zum Training des Erkennungsnetzes liegen in `entwicklung/handschrift-training/`. `node build.js` baut `index.html` neu (KaTeX 0.16 wird aus einem lokalen npm-Paket eingebettet). `node test/validate.js` prüft jede Musterlösung mit dem Prüfkern und alle Formeln mit KaTeX; `node test/mutate.js` prüft, ob veränderte Musterzeilen als falsch erkannt werden.

@@ -6,6 +6,32 @@ const FORM_MAT = () => ({rep:'mat', mat:{preset:'spin', mats:{A:'(1, 2i; -2i, 1)
   states:{v:'(1; -i)/sqrt(2)', w:'(1; i)/sqrt(2)'}, unknowns:{λ:{ref:'3', kind:'real'}, μ:{ref:'-1', kind:'real'}}});
 const FORM_BOX = (st) => ({coords:['x'], domain:{x:['0', 'L']}, params:{L:'pos', m:'pos'}, defs:{'ψ_n(x)':'sqrt(2/L) sin(nπx/L)', 'E_n':'n^2 π^2 ħ^2/(2m L^2)', 'Ψ(x)':st}, state:'Ψ', normalized:true});
 const FORM_DYN = () => ({coords:['x', 't'], params:{m:'pos'}, abstract:{ψ:{args:['x', 't']}, V:{args:['x'], real:true}}, dyn:{fn:'ψ'}, normalized:true});
+/* ---- Skizzenaufgaben (didaktik/SKIZZE.md): Musterfunktionen aus den exakten Lösungen, dimensionslos ---- */
+const SK = (() => {
+  /* form-s1: Zustand nach der Messung (Postulat 5), reelle Komponenten in der Basis |1⟩, |2⟩.
+     |ψ⟩ = (3|1⟩ − |2⟩)/√10 ≈ (0,949; −0,316). B̂ hat |±⟩ = (|1⟩ ± |2⟩)/√2 zu b± = ±1.
+     P(b+) = |⟨+|ψ⟩|² = ((3 − 1)/√20)² = 0,2. Danach |+⟩ = (0,707; 0,707), Länge 1 (−|+⟩ ist derselbe Zustand → axis).
+     Fehlskizzen: unverändert ψ; Projektion ohne Normierung ⟨+|ψ⟩|+⟩ = (0,316; 0,316), Länge 0,447; B̂|ψ⟩ = (−0,316; 0,949) (an |+⟩ gespiegelt). */
+  const s10 = Math.sqrt(10), r2 = Math.SQRT1_2;
+  const s1 = {
+    id:'form-sk1', title:'Der Zustand nach der Messung', kind:'arrows',
+    text:'Ein System ist im Zustand $|\\psi\\rangle = (3|1\\rangle - |2\\rangle)/\\sqrt{10}$ (grauer Pfeil; ein Zustand $c_1|1\\rangle + c_2|2\\rangle$ mit reellen $c_n$ ist der Pfeil zum Punkt $(c_1, c_2)$). Die Observable $\\hat B$ hat die Eigenvektoren $|\\pm\\rangle = (|1\\rangle \\pm |2\\rangle)/\\sqrt2$ zu den Eigenwerten $b_\\pm = \\pm1$. Eine Messung von $\\hat B$ ergibt $b_+$. Zeichne den Zustand unmittelbar nach der Messung als Pfeil vom Ursprung.',
+    plot:{x:[-1.3, 1.3], y:[-1.3, 1.3], abs:true, xlab:'c_1', ylab:'c_2', unit:true, grid:0.5},
+    given:[{from:[0, 0], to:[3 / s10, -1 / s10], lab:'\\psi'}],
+    want:[{id:'nach', name:'Zustand nach der Messung', from:[0, 0], to:[r2, r2], lab:'\\psi\'', axis:true,
+      msg:'In welchem Zustand ist das System, nachdem die Messung $b_+$ ergeben hat? (Abschnitt ‚Postulat 5: der Zustand nach der Messung‘)',
+      msgDir:'Die Länge passt, die Richtung nicht. Zu welchem Eigenvektor gehört das Ergebnis $b_+$, und wohin zeigt er?',
+      msgLen:'Die Richtung stimmt. Welche Länge muss ein Zustandsvektor haben? Denk an $\\sum_n |c_n|^2 = 1$.'}],
+    reveal:'Nach Postulat 5 ist das System im Eigenzustand $|+\\rangle = (|1\\rangle + |2\\rangle)/\\sqrt2$: Richtung $45°$, Länge 1, die Spitze liegt auf dem Einheitskreis. Ob der Pfeil nach rechts oben oder nach links unten zeigt, ist gleich, denn $-|+\\rangle$ unterscheidet sich nur um die globale Phase $-1$. Die Projektion $\\langle +|\\psi\\rangle\\,|+\\rangle$ ist nur $2/\\sqrt{20} \\approx 0{,}45$ lang; ihr Quadrat $0{,}2$ ist die Wahrscheinlichkeit für $b_+$. Erst normiert ist sie der neue Zustand. $\\hat B|\\psi\\rangle$ wäre der an $|+\\rangle$ gespiegelte Pfeil: Einen Operator anwenden ist keine Messung.',
+    hints:['Frage zuerst: Welcher Vektor gehört zum Messwert $b_+$?', 'Nach der Messung ist das System im normierten Eigenvektor zum gemessenen Eigenwert. Auf den alten Zustand kommt es nur für die Wahrscheinlichkeit an.'],
+    wrong:[
+      {arrows:[{from:[0, 0], to:[3 / s10, -1 / s10]}], fails:[0], why:'Messung ändert den Zustand nicht'},
+      {arrows:[{from:[0, 0], to:[2 / Math.sqrt(20) * r2, 2 / Math.sqrt(20) * r2]}], fails:[0], why:'Projektion ⟨+|ψ⟩|+⟩ ohne Normierung'},
+      {arrows:[{from:[0, 0], to:[-1 / s10, 3 / s10]}], fails:[0], why:'B̂|ψ⟩ als Zustand nach der Messung: Operator angewendet statt gemessen (Singh & Marshman 2015)'}
+    ]
+  };
+  return {s1};
+})();
 topic({
   id:'form', math:['m-vektor', 'm-eigen', 'm-hilbert'], title:'Formalismus: Dirac-Notation, Operatoren, Messung', short:'Formalismus',
   src:'Griffiths & Schroeter Kap. 3 · Nolting 5/1 Kap. 3 · Sakurai Kap. 1',
@@ -451,6 +477,7 @@ Definiere $\Delta t_A = \Delta A/|d\langle A\rangle/dt|$, die Zeit, in der sich 
       q:'Für einen beliebigen normierten Zustand $|\\Psi\\rangle$ eines Teilchens im Kasten gilt …', opts:['$\\langle\\Psi|\\hat H|\\Psi\\rangle = \\langle H\\rangle$, aber meist $\\hat H|\\Psi\\rangle \\ne \\langle H\\rangle|\\Psi\\rangle$', '$\\hat H|\\Psi\\rangle = E|\\Psi\\rangle$ mit $E = \\langle H\\rangle$', '$\\hat H|\\Psi\\rangle = E_1|\\Psi\\rangle$, weil das System im Grundzustand ist'], a:0,
       ex:'$\\hat H\\Psi = E\\Psi$ gilt nur für Energieeigenzustände. Die Annahme, jeder Zustand erfülle sie, ist eine bekannte Lernschwierigkeit (Styer 1996; Singh & Marshman 2015).'}
   ],
+  sketch:[SK.s1],
   final:[
     {aim:0, task:{id:'form-fa1', title:'Skalarprodukt und Matrixelement',
       text:'$v = \\frac{1}{\\sqrt2}\\begin{pmatrix}1\\\\i\\end{pmatrix}$, $w = \\frac15\\begin{pmatrix}3\\\\4i\\end{pmatrix}$ und $A = \\begin{pmatrix}2&1-i\\\\1+i&3\\end{pmatrix}$. Matrizen schreibst du als `(2, 1 - i; 1 + i, 3)`, Spaltenvektoren als `(3; 4i)/5`.',

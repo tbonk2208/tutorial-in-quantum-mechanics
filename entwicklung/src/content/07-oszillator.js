@@ -1,4 +1,13 @@
 /* ===== Thema 7: Harmonischer Oszillator ===== */
+/* Skizzen (SKIZZE.md): Oszillator-Eigenfunktionen in x/x0 mit x0 = sqrt(ħ/(mω)), aus der Hermite-Rekursion H_{k+1} = 2ξH_k − 2kH_{k−1};
+   normiert ψ_n = H_n(ξ) e^{−ξ²/2}/sqrt(2^n n! √π). Kontrolle: ψ_3 hat Knoten bei 0, ±sqrt(3/2); |ψ_5|²: äußere/innere Spitze = 0,316/0,194 ≈ 1,64. */
+const OSZ_SK = (() => {
+  const herm = (n, x) => { let h0 = 1, h1 = 2 * x; if (n === 0) return h0; for (let k = 1; k < n; k++){ const h2 = 2 * x * h1 - 2 * k * h0; h0 = h1; h1 = h2; } return h1; };
+  const fac = n => n <= 1 ? 1 : n * fac(n - 1);
+  const psi = n => x => herm(n, x) * Math.exp(-x * x / 2) / Math.sqrt(Math.pow(2, n) * fac(n) * Math.sqrt(Math.PI));
+  return {psi, rho:n => x => psi(n)(x) ** 2, xt:n => Math.sqrt(2 * n + 1),
+    T:[{x:0, lab:'0'}, {x:0.5, lab:'T/2'}, {x:1, lab:'T'}, {x:1.5, lab:'3T/2'}, {x:2, lab:'2T'}]};
+})();
 const OSZ_MAT = (extra) => Object.assign({rep:'mat', mat:{preset:'osc'}, coords:['t'], params:{m:'pos', ω:'pos', n:{int:[0, 5]}}, sumFrom:0}, extra || {});
 const OSZ_POS = (extra) => Object.assign({coords:['x'], params:{m:'pos', ω:'pos'}, defs:{'ψ_0(x)':'(m ω/(π ħ))^(1/4) e^(-m ω x^2/(2ħ))', 'V(x)':'1/2 m ω^2 x^2'}, normalized:true, state:'ψ_0'}, extra || {});
 const OSZ_GROUND = () => ({coords:['x'], params:{m:'pos', ω:'pos'}, defs:{'ψ_0(x)':'A e^(-m ω x^2/(2ħ))', 'V(x)':'1/2 m ω^2 x^2'},
@@ -249,6 +258,22 @@ topic({
   },
   lab:{type:'osc', title:'Eigenfunktionen im Parabelpotential',
     text:'Die Parabel ist das Potential, die waagerechten Linien sind die Energien $E_n$, darauf liegt $|\\psi_n|^2$. Gestrichelt: die klassische Aufenthaltsdichte bei derselben Energie, die an den Umkehrpunkten unendlich wird.',
+    sketch:{id:'osz-lab-s', title:'$|\\psi_5|^2$ vorhersagen', kind:'curve', draw:'abs2',
+      text:'Skizziere vor dem Labor die Aufenthaltsdichte $|\\psi_5(x)|^2$. Die klassischen Umkehrpunkte liegen bei $\\pm\\sqrt{11}\\,x_0 \\approx \\pm3{,}3\\,x_0$. Die Höhe ist frei. Halte die Vorhersage fest, stell dann im Labor $n = 5$ ein und vergleiche mit der Kurve und mit der gestrichelten klassischen Dichte.',
+      plot:{x:[-5, 5], xlab:'x/x_0', ylab:'|\\psi_5(x)|^2', ticks:[{x:-OSZ_SK.xt(5), lab:'-\\sqrt{11}'}, {x:0, lab:'0'}, {x:OSZ_SK.xt(5), lab:'\\sqrt{11}'}], V:x => x * x / 2, Vr:[0, 7], E:5.5},
+      f:OSZ_SK.rho(5),
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Aufenthaltsdichte negativ werden?'},
+        {id:'knoten', type:'nodes', n:5, msg:'Wie viele Nullstellen hat $|\\psi_5|^2$? Deine Skizze hat {got}.'},
+        {id:'rand', name:'Höhe der Buckel', type:'amp', a:[2, 3.4], b:[-1.1, 1.1], cmp:'>', msg:'Wo ist ein klassisches Teilchen langsam und hält sich lange auf? Wo sollten die Buckel von $|\\psi_5|^2$ also höher sein? (Abschnitt ‚Zeitentwicklung, klassische Grenze und Molekülschwingungen‘)'},
+        {id:'aussen', name:'jenseits des Umkehrpunkts', type:'decay', toward:'right', range:[OSZ_SK.xt(5), 5], msg:'Was macht $|\\psi_5|^2$ jenseits des Umkehrpunkts, wo $E < V$ ist?'}
+      ],
+      reveal:'$|\\psi_5|^2$ hat fünf Nullstellen und sechs Buckel. Die äußeren Buckel sind etwa 1,6-mal so hoch wie die inneren und etwas breiter. Nahe den Umkehrpunkten ist $E - V$ klein: Das Teilchen ist dort langsam, die lokale Wellenlänge ist groß und die Amplitude auch. Im Mittel folgt $|\\psi_5|^2$ so der klassischen Dichte, die zu den Umkehrpunkten hin anwächst. Jenseits der Umkehrpunkte fällt die Dichte rasch ab, ist aber nicht null.',
+      wrong:[
+        {f:x => Math.sin(3 * Math.PI * x / OSZ_SK.xt(5)) ** 2 * Math.exp(-x * x / 5) * (Math.abs(x) < OSZ_SK.xt(5) ? 1 : Math.exp(-3 * (Math.abs(x) - OSZ_SK.xt(5)))), fails:['rand'], why:'Buckel zur Mitte hin höher, wie beim Grundzustand'},
+        {f:x => Math.abs(x) < OSZ_SK.xt(5) ? Math.sin(3 * Math.PI * (x + OSZ_SK.xt(5)) / OSZ_SK.xt(5)) ** 2 : 0, fails:['rand', 'aussen'], why:'wie im Kasten: alle Buckel gleich hoch, $|\\psi|^2 = 0$ jenseits der Umkehrpunkte'},
+        {f:x => { const X = OSZ_SK.xt(5), c = X - 0.15; return Math.abs(x) < c ? 1 / Math.sqrt(X * X - x * x) : Math.exp(-3 * (Math.abs(x) - c)) / Math.sqrt(X * X - c * c); }, fails:['knoten'], why:'klassische Dichte ohne Knoten'}
+      ]},
     predict:{q:'Bevor du den Regler bewegst: Wo ist $|\\psi_5|^2$ am größten?', opts:['nahe den klassischen Umkehrpunkten', 'in der Mitte bei $x = 0$', 'überall gleich groß zwischen den Umkehrpunkten'], a:0, ex:'Wie klassisch: Wo das Teilchen langsam ist, also $E - V$ klein, ist die Amplitude groß. Bei $x = 0$ hat $\\psi_5$ sogar einen Knoten, denn $\\psi_5$ ist ungerade.'},
     questions:[
       {q:'Grundzustand $n = 0$: Wie groß ist die Wahrscheinlichkeit, das Teilchen außerhalb der klassischen Umkehrpunkte zu finden?', opts:['etwa 16 %', 'genau 0 %', 'etwa 50 %'], a:0, ex:'$P = \\operatorname{erfc}(1) \\approx 0{,}157$. Klassisch wäre der Bereich verboten.'},
@@ -384,6 +409,25 @@ topic({
           note:'Nach der Messung ist der Zustand $|1\\rangle$ stationär: $\\langle x\\rangle$ schwingt nicht mehr, und eine zweite Energiemessung liefert sicher wieder $\\tfrac32\\hbar\\omega$.'}
       ]}
   ],
+  sketch:[
+    {id:'osz-s1', title:'$\\psi_3$ im Parabelpotential', kind:'curve', draw:'psi',
+      text:'Skizziere die Eigenfunktion $\\psi_3(x)$ des harmonischen Oszillators. Gegeben sind das Potential (grau), die Energie $E_3 = \\tfrac72\\hbar\\omega$ (gestrichelt) und die klassischen Umkehrpunkte $\\pm\\sqrt7\\,x_0$ mit $x_0 = \\sqrt{\\hbar/(m\\omega)}$. Die Höhe ist frei.',
+      plot:{x:[-4.5, 4.5], xlab:'x/x_0', ylab:'\\psi_3(x)', ticks:[{x:-OSZ_SK.xt(3), lab:'-\\sqrt7'}, {x:0, lab:'0'}, {x:OSZ_SK.xt(3), lab:'\\sqrt7'}], V:x => x * x / 2, Vr:[0, 6], E:3.5},
+      f:OSZ_SK.psi(3),
+      checks:[
+        {id:'knoten', type:'nodes', n:3, msg:'Wie viele Nullstellen hat $\\psi_3$? Deine Skizze hat {got}. (Abschnitt ‚Eigenfunktionen in Ortsdarstellung‘)'},
+        {id:'sym', type:'parity', p:'odd', about:0, msg:'Das Potential ist gerade. Welche Parität hat dann $\\psi_3$? Deine Skizze ist {got}.'},
+        {id:'links', name:'Abklingen links', type:'decay', toward:'left', range:[-4.5, -OSZ_SK.xt(3)], msg:'Ist der Bereich links vom Umkehrpunkt erlaubt oder verboten? Was macht $\\psi_3$ dort?'},
+        {id:'rechts', name:'Abklingen rechts', type:'decay', toward:'right', range:[OSZ_SK.xt(3), 4.5], msg:'Was macht $\\psi_3$ jenseits des rechten Umkehrpunkts, wo $E < V$ ist?'}
+      ],
+      reveal:'$\\psi_3 \\propto (8\\xi^3 - 12\\xi)\\,e^{-\\xi^2/2}$ mit $\\xi = x/x_0$: drei Knoten bei $0$ und $\\pm\\sqrt{3/2}\\,x_0$, ungerade wie $(-1)^3$. Zwischen den Umkehrpunkten ist $E > V$; dort krümmt sich $\\psi$ zur Achse hin und schwingt. Jenseits davon ist $E < V$: $\\psi$ krümmt sich von der Achse weg und fällt rasch ab, ist aber nicht null.',
+      hints:['Kläre zuerst Knotenzahl und Parität. Überlege dann getrennt, was innerhalb und außerhalb der Umkehrpunkte passiert.', '$\\psi_n$ hat $n$ Knoten und die Parität $(-1)^n$. Wo $E < V$ ist, hat $\\psi\'\'$ dasselbe Vorzeichen wie $\\psi$: Die Funktion klingt ab, statt zu schwingen.'],
+      wrong:[
+        {f:OSZ_SK.psi(4), fails:['knoten', 'sym'], why:'einen Knoten zu viel ($n + 1$ Knoten, mit der Zahl der Buckel verwechselt)'},
+        {f:OSZ_SK.psi(2), fails:['knoten', 'sym'], why:'einen Knoten zu wenig: Zählung wie im Kasten, wo $\\psi_n$ nur $n - 1$ Knoten hat'},
+        {f:x => Math.abs(x) < OSZ_SK.xt(3) ? Math.sin(2 * Math.PI * x / OSZ_SK.xt(3)) : 0, fails:['links', 'rechts'], why:'harte Wand am Umkehrpunkt: $\\psi = 0$ im klassisch verbotenen Bereich'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'osz-f3', title:'Der Aufsteiger hebt die Energie', text:'Besetzungszahlbasis; `H` ist $\\hbar\\omega(a^\\dagger a + \\tfrac12)$, `a` und `a†` sind die Leiteroperatoren.',
       ctx:OSZ_MAT(),
@@ -414,7 +458,23 @@ topic({
         {name:'Jonas', says:'Aus $\\langle p\\rangle = 0$ folgt nicht $\\langle p^2\\rangle = 0$. Die mittlere kinetische Energie ist $\\tfrac14\\hbar\\omega$.'}
       ],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], keep:true, a:1,
-      ex:'$\\langle T\\rangle = \\langle p^2\\rangle/(2m) = \\tfrac14\\hbar\\omega$ – die Hälfte der Nullpunktsenergie. $\\langle p\\rangle = 0$ heißt nur, dass positive und negative Impulse gleich wahrscheinlich sind.'}
+      ex:'$\\langle T\\rangle = \\langle p^2\\rangle/(2m) = \\tfrac14\\hbar\\omega$ – die Hälfte der Nullpunktsenergie. $\\langle p\\rangle = 0$ heißt nur, dass positive und negative Impulse gleich wahrscheinlich sind.'},
+    {aim:2, sketch:{id:'osz-fs1', title:'$\\langle x\\rangle(t)$ für $(|0\\rangle + i|1\\rangle)/\\sqrt2$', kind:'curve', draw:'f',
+      text:'Ein Oszillator ist bei $t = 0$ im Zustand $\\frac{1}{\\sqrt2}\\big(|0\\rangle + i|1\\rangle\\big)$. Skizziere $\\langle x\\rangle(t)$ für $0 \\le t \\le 2T$ mit $T = 2\\pi/\\omega$. Die Höhe ist frei; es zählen Vorzeichen, Nullstellen und Periode.',
+      plot:{x:[0, 2], xlab:'t', ylab:'\\langle x\\rangle', ticks:OSZ_SK.T},
+      // <x>(t) = sqrt(ħ/(2mω)) · 2 Re(c0* c1 e^{−iωt}) mit c0* c1 = i/2: = sqrt(ħ/(2mω)) sin ωt (t in Einheiten von T)
+      f:t => Math.sin(2 * Math.PI * t),
+      checks:[
+        {id:'start', name:'Startwert', type:'zero', at:[0], msg:'Wie groß ist $\\langle x\\rangle$ bei $t = 0$? Rechne $\\langle\\psi(0)|\\hat a + \\hat a^\\dagger|\\psi(0)\\rangle$ mit den Koeffizienten aus.'},
+        {id:'richtung', name:'Startrichtung', type:'sign', s:1, range:[0.06, 0.44], msg:'In welche Richtung läuft $\\langle x\\rangle$ zuerst? Achte auf die Phase des Mischterms $c_0^*c_1$.'},
+        {id:'periode', name:'Periode', type:'nodes', n:3, range:[0.1, 1.9], msg:'Mit welcher Kreisfrequenz schwingt $\\langle x\\rangle$? Zwischen $T/10$ und $19T/10$ hat deine Skizze {got} Nulldurchgänge.'}
+      ],
+      reveal:'Der Mischterm ist $c_0^*c_1 = \\tfrac{i}{2}$, also $\\delta = \\pi/2$ und $\\langle x\\rangle = \\sqrt{\\tfrac{\\hbar}{2m\\omega}}\\cos(\\omega t - \\tfrac\\pi2) = \\sqrt{\\tfrac{\\hbar}{2m\\omega}}\\sin\\omega t$. $\\langle x\\rangle$ startet bei null, läuft zuerst ins Positive und schwingt mit $\\omega$, der Frequenz zum Abstand $\\hbar\\omega$ benachbarter Niveaus. In $2T$ passen zwei volle Schwingungen.',
+      wrong:[
+        {f:t => Math.cos(2 * Math.PI * t), fails:['start', 'periode'], why:'Phase $i$ übersehen: Start im Maximum wie bei reellen Koeffizienten'},
+        {f:t => -Math.sin(2 * Math.PI * t), fails:['richtung'], why:'Vorzeichen der Phase vertauscht, z. B. $c_1^*c_0$ statt $c_0^*c_1$'},
+        {f:t => Math.sin(4 * Math.PI * t), fails:['periode'], why:'Frequenz $2\\omega$, mit der Schwingung von $\\langle x^2\\rangle$ verwechselt'}
+      ], points:3}}
   ],
   finalB:[
     {aim:0, task:{id:'osz-f5', title:'Besetzungszahl und Aufsteiger', text:'Besetzungszahlbasis; `N` ist $a^\\dagger a$, `a` und `a†` sind die Leiteroperatoren.',
@@ -446,7 +506,23 @@ topic({
         {name:'Jonas', says:'Aus $\\langle x\\rangle = 0$ folgt nicht $\\langle x^2\\rangle = 0$. Die mittlere potentielle Energie ist $\\tfrac34\\hbar\\omega$.'}
       ],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], keep:true, a:1,
-      ex:'$\\langle V\\rangle = \\tfrac12m\\omega^2\\langle x^2\\rangle = \\tfrac12m\\omega^2\\cdot\\frac{3\\hbar}{2m\\omega} = \\tfrac34\\hbar\\omega$ – die Hälfte von $E_1 = \\tfrac32\\hbar\\omega$. $\\langle x\\rangle = 0$ heißt nur, dass Auslenkungen nach links und rechts gleich wahrscheinlich sind.'}
+      ex:'$\\langle V\\rangle = \\tfrac12m\\omega^2\\langle x^2\\rangle = \\tfrac12m\\omega^2\\cdot\\frac{3\\hbar}{2m\\omega} = \\tfrac34\\hbar\\omega$ – die Hälfte von $E_1 = \\tfrac32\\hbar\\omega$. $\\langle x\\rangle = 0$ heißt nur, dass Auslenkungen nach links und rechts gleich wahrscheinlich sind.'},
+    {aim:2, sketch:{id:'osz-fs2', title:'$\\langle x\\rangle(t)$ für $(|1\\rangle - i|2\\rangle)/\\sqrt2$', kind:'curve', draw:'f',
+      text:'Ein Oszillator ist bei $t = 0$ im Zustand $\\frac{1}{\\sqrt2}\\big(|1\\rangle - i|2\\rangle\\big)$. Skizziere $\\langle x\\rangle(t)$ für $0 \\le t \\le 2T$ mit $T = 2\\pi/\\omega$. Die Höhe ist frei; es zählen Vorzeichen, Nullstellen und Periode.',
+      plot:{x:[0, 2], xlab:'t', ylab:'\\langle x\\rangle', ticks:OSZ_SK.T},
+      // <x>(t) = sqrt(ħ/(2mω)) · 2 Re(c1* c2 √2 e^{−iωt}) mit c1* c2 = −i/2: = −sqrt(ħ/(mω)) sin ωt (t in Einheiten von T)
+      f:t => -Math.sin(2 * Math.PI * t),
+      checks:[
+        {id:'start', name:'Startwert', type:'zero', at:[0], msg:'Wie groß ist $\\langle x\\rangle$ bei $t = 0$? Rechne $\\langle\\psi(0)|\\hat a + \\hat a^\\dagger|\\psi(0)\\rangle$ mit den Koeffizienten aus.'},
+        {id:'richtung', name:'Startrichtung', type:'sign', s:-1, range:[0.06, 0.44], msg:'In welche Richtung läuft $\\langle x\\rangle$ zuerst? Achte auf die Phase des Mischterms $c_1^*c_2$.'},
+        {id:'periode', name:'Periode', type:'nodes', n:3, range:[0.1, 1.9], msg:'Mit welcher Kreisfrequenz schwingt $\\langle x\\rangle$? Zwischen $T/10$ und $19T/10$ hat deine Skizze {got} Nulldurchgänge.'}
+      ],
+      reveal:'Der Mischterm ist $c_1^*c_2 = -\\tfrac{i}{2}$, und $\\hat x$ verbindet $|1\\rangle$ und $|2\\rangle$ mit dem Faktor $\\sqrt2\\,\\sqrt{\\hbar/(2m\\omega)}$. Es folgt $\\langle x\\rangle = -\\sqrt{\\tfrac{\\hbar}{m\\omega}}\\sin\\omega t$. $\\langle x\\rangle$ startet bei null, läuft zuerst ins Negative und schwingt mit $\\omega$, der Frequenz zum Abstand $\\hbar\\omega$ benachbarter Niveaus. In $2T$ passen zwei volle Schwingungen.',
+      wrong:[
+        {f:t => -Math.cos(2 * Math.PI * t), fails:['start', 'periode'], why:'Phase $-i$ übersehen: Start im Extremum wie bei reellen Koeffizienten'},
+        {f:t => Math.sin(2 * Math.PI * t), fails:['richtung'], why:'Vorzeichen der Phase vertauscht, z. B. $c_2^*c_1$ statt $c_1^*c_2$'},
+        {f:t => -Math.sin(4 * Math.PI * t), fails:['periode'], why:'Frequenz $2\\omega$, mit der Schwingung von $\\langle x^2\\rangle$ verwechselt'}
+      ], points:3}}
   ],
   errors:[
     {id:'osz-e1', title:'Ein vergessenes „+1“',

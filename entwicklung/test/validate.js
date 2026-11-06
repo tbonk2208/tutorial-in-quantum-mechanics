@@ -3,7 +3,7 @@ const fs = require('fs'), path = require('path');
 const katex = require('/opt/npm-tools/node_modules/katex');
 const ls = d => fs.readdirSync(path.join(__dirname, '..', d)).filter(f => f.endsWith('.js')).sort().map(f => fs.readFileSync(path.join(__dirname, '..', d, f), 'utf8'));
 const code = ls('src/engine').join('\n;\n') + '\n;\n' + ls('src/content').join('\n;\n');
-const E = new Function(code + '\n;return {TOPICS, LEX, checkTask, parseLine, texLine, makeCtx};')();
+const E = new Function(code + '\n;return {TOPICS, LEX, checkTask, parseLine, texLine, makeCtx, SKETCH};')();
 const args = process.argv.slice(2); const STRICT = args.includes('--strict'); const only = args.find(a => !a.startsWith('--'));
 let nWarn = 0; const warn = (...a) => { nWarn++; if (STRICT) err(...a); else if (args.includes('--warn')) console.log('WARNUNG', ...a); };
 let nErr = 0, nGoals = 0, nLines = 0;
@@ -37,6 +37,38 @@ function runGoal(task, g, where, given){
 function runTask(task, where){
   texCheck(task.title, where); texCheck(task.text, where);
   for (const g of task.goals) runGoal(task, g, where + '/' + task.id + ':' + g.id, task.given);
+}
+/* ---- Skizzenaufgaben (SKIZZE.md): t.sketch, t.lab.sketch, final/finalB-Einträge {aim, sketch} ---- */
+const texPure = (s, where) => { if (s === undefined || s === null || s === '') return; try { katex.renderToString(String(s), {throwOnError:true, strict:'ignore'}); } catch(e){ err('KaTeX', where, JSON.stringify(String(s)).slice(0, 80), e.message.slice(0, 100)); } };
+const sketchesOf = t => [...(Array.isArray(t.sketch) ? t.sketch.map((sp, i) => ({sp, where:'sketch' + i})) : t.sketch ? [{sp:t.sketch, where:'sketch'}] : []),
+  ...(t.lab && t.lab.sketch ? [{sp:t.lab.sketch, where:'lab.sketch'}] : []),
+  ...['final', 'finalB'].flatMap(key => (t[key] || []).map((it, i) => it && it.sketch ? {sp:it.sketch, where:key + i, entry:it, key} : null).filter(Boolean))];
+let nSketch = 0;
+function sketchCheck(t, W){
+  if (t.sketch !== undefined && !Array.isArray(t.sketch)) warn('t.sketch muss eine Liste sein', W);
+  for (const {sp, where, entry} of sketchesOf(t)){
+    nSketch++;
+    const SW = W + ' Skizze ' + where + ' ' + (sp && sp.id);
+    for (const m of E.SKETCH.validate(sp)) warn('Skizze ungültig:', m, SW);
+    if (entry && !(Number.isInteger(entry.aim) && entry.aim >= 0 && entry.aim < (t.goals || []).length)) warn('Abschluss-Skizze ohne gültiges aim (Index in goals)', SW, entry.aim);
+    if (!sp || typeof sp !== 'object') continue;
+    texCheck(sp.title, SW); texCheck(sp.text, SW); texCheck(sp.reveal, SW); (sp.hints || []).forEach(h => texCheck(h, SW)); texCheck(sp.extra, SW);
+    (sp.checks || []).forEach(c => texCheck(c && c.msg, SW + ' ' + (c && c.id)));
+    (sp.want || []).forEach((w, i) => { if (!w) return; texCheck(w.msg, SW + ' want' + i); texCheck(w.msgDir, SW); texCheck(w.msgLen, SW); texCheck(w.msgPos, SW); texPure(w.lab, SW + ' want' + i + '.lab'); });
+    (sp.given || []).forEach((g, i) => g && texPure(g.lab, SW + ' given' + i + '.lab'));
+    const p = sp.plot || {}; texPure(p.xlab, SW + ' xlab'); texPure(p.ylab, SW + ' ylab');
+    (p.ticks || []).forEach(q => q && texPure(q.lab, SW + ' ticks')); (p.yticks || []).forEach(q => q && texPure(q.lab, SW + ' yticks'));
+    if (E.SKETCH.validate(sp).length) continue;
+    // erzeugte Rückfragen (Überdeckung, Stellen mit Tick-Beschriftung) müssen ebenfalls setzbar sein
+    const gen = [E.SKETCH.evaluate(sp, [])];
+    (sp.wrong || []).forEach(w => gen.push(E.SKETCH.evaluate(sp, E.SKETCH.synth(sp, sp.kind === 'arrows' ? w.arrows : w.f, {seed:1, noise:0.03, strokes:1}))));
+    for (const r of gen) for (const x of [...r.first, ...r.results]) if (x && x.msg) texCheck(x.msg, SW + ' erzeugte Rückfrage');
+    const st = E.SKETCH.selfTest(sp);
+    if (!st.ok) for (const m of st.problems.slice(0, 6)) warn('Skizze Selbsttest:', m, SW);
+  }
+  // Form A und B parallel: gleiche Lernziele mit Skizze
+  const aimsOf = key => (t[key] || []).filter(x => x && x.sketch).map(x => x.aim).sort().join(',');
+  if (t.finalB && aimsOf('final') !== aimsOf('finalB')) warn('Skizzen im Abschluss: Form A und B nicht parallel (aim ' + (aimsOf('final') || '–') + ' / ' + (aimsOf('finalB') || '–') + ')', W);
 }
 for (const t of E.TOPICS){
   if (only && t.id !== only) continue;
@@ -74,12 +106,13 @@ for (const t of E.TOPICS){
     if (t.teach){ const lo = t.ch === 'math' ? 1200 : 1500; if (words < lo) (STRICT ? err : warn)('Erklärtext zu kurz: ' + words + ' Wörter (mind. ' + lo + ')', W); }
     t.__segs = segIds;
   }
-  need(t.lab.predict && t.lab.predict.q, 'lab.predict'); if (t.lab.predict) mcCheck(t.lab.predict, W + ' Labor-Vorhersage');
+  need((t.lab.predict && t.lab.predict.q) || t.lab.sketch, 'lab.predict'); if (t.lab.predict) mcCheck(t.lab.predict, W + ' Labor-Vorhersage');
   need(Array.isArray(t.concept) && t.concept.length >= 4 && t.concept.length <= 6, 'concept (4–6)');
   const conceptCheck = (c, where) => { if (!['mc', 'mc2', 'dialog', undefined].includes(c.type)) err('Konzeptaufgabe: Typ', where, c.type); texCheck(c.text, where); (c.people || []).forEach(p => texCheck(p.says, where)); mcCheck(c, where); if (c.type === 'mc2'){ if (!c.reason) err('mc2 ohne reason', where); else mcCheck(c.reason, where + ' Begründung'); } if (c.type === 'dialog' && !(c.people && c.people.length >= 2)) err('dialog braucht people', where); if (c.seg && t.__segs && !t.__segs.has(c.seg)) err('seg unbekannt', where, c.seg); if (c.lex && !E.LEX.find(x => x.id === c.lex)) err('lex fehlt', where, c.lex); };
   (t.concept || []).forEach((c, i) => conceptCheck(c, W + ' Konzept' + i));
-  for (const [key, F] of [['final', t.final], ['finalB', t.finalB]]){
-    if (!F) { need(false, key); continue; }
+  for (const [key, F0] of [['final', t.final], ['finalB', t.finalB]]){
+    if (!F0) { need(false, key); continue; }
+    const F = F0.filter(x => !x.sketch);   // Skizzeneinträge {aim, sketch} zählen zusätzlich (SKIZZE.md), Prüfung unten in sketchCheck
     if (STRICT || t.finalB){
       if (F.length !== 5) err(key + ' braucht 5 Einträge', W);
       const aims = F.map(x => x.aim); for (const a of [0, 1, 2]) if (!aims.includes(a)) err(key + ': Lernziel ' + a + ' nicht abgedeckt', W);
@@ -90,8 +123,8 @@ for (const t of E.TOPICS){
   }
   for (const k of t.practice) for (const g of k.goals) if (!(g.hints && g.hints.length >= 2)) warn('Ziel ohne 2 Hinweisstufen', W, k.id + ':' + g.id);
   t.check.forEach((q, i) => { if (q.seg){ const p = E.TOPICS.find(x => x.id === q.prev); if (!p || !(p.teach || []).some(sg => sg.id === q.seg)) (STRICT ? err : warn)('check.seg unbekannt', W, q.prev, q.seg); } });
-  if (!t.finalB && !STRICT && t.final.length !== 4) err('Abschluss braucht 4 Aufgaben', W);
-  t.final.forEach((it, i) => { if (it.task) runTask(it.task, W + ' Abschluss' + i); else if (!(it.aim === 'k' || it.type)) mcCheck(it, W + ' Abschluss' + i); });
+  if (!t.finalB && !STRICT && t.final.filter(x => !x.sketch).length !== 4) err('Abschluss braucht 4 Aufgaben', W);
+  t.final.forEach((it, i) => { if (it.sketch) return; if (it.task) runTask(it.task, W + ' Abschluss' + i); else if (!(it.aim === 'k' || it.type)) mcCheck(it, W + ' Abschluss' + i); });
   for (const e of t.errors || []){
     const r = E.checkTask(e.ctx, e.fix, e.lines, 'err');
     const firstBad = r.lines.findIndex(l => !['ok', 'def', 'info'].includes(l.status));
@@ -99,13 +132,17 @@ for (const t of E.TOPICS){
     mcCheck(e.why, W + ' ' + e.id);
     runGoal({id:e.id, ctx:e.ctx}, e.fix, W + ' ' + e.id + ' Berichtigung', null);
   }
+  sketchCheck(t, W);
 }
 for (const l of E.LEX) texCheck(l.text, 'Lexikon ' + l.id);
 { const seen = new Set(); for (const l of E.LEX){ if (seen.has(l.id)) err('Lexikon-ID doppelt', l.id); seen.add(l.id); } }
 { const seen = new Set(); for (const t of E.TOPICS){ if (seen.has(t.id)) err('Themen-ID doppelt', t.id); seen.add(t.id);
   const ids = [...t.practice.map(k => k.id), ...t.final.filter(x => x.task).map(x => x.task.id), ...(t.finalB || []).filter(x => x.task).map(x => x.task.id), ...(t.concept || []).map(c => 'c:' + c.id), ...(t.example.faded ? [t.example.faded.id] : []), ...(t.errors || []).map(e => e.id)];
   for (const id of ids){ if (seen.has('task:' + id)) err('Aufgaben-ID doppelt', id); seen.add('task:' + id); } } }
+{ const ids = new Set(), sk = new Set();
+  for (const t of E.TOPICS){ for (const id of [...t.practice.map(k => k.id), ...t.final.filter(x => x.task).map(x => x.task.id), ...(t.finalB || []).filter(x => x.task).map(x => x.task.id), ...(t.concept || []).map(c => c.id), ...(t.example.faded ? [t.example.faded.id] : []), ...(t.errors || []).map(e => e.id)]) ids.add(id); }
+  for (const t of E.TOPICS) for (const {sp, where} of sketchesOf(t)){ const id = sp && sp.id; if (!id) continue; if (sk.has(id)) warn('Skizzen-ID doppelt', id, t.id, where); else if (ids.has(id)) warn('Skizzen-ID gleich einer Aufgaben-ID', id, t.id, where); sk.add(id); } }
 for (const t of E.TOPICS){ if (t.ch && !['math', 'qm'].includes(t.ch)) err('Kapitel unbekannt', t.id, t.ch); for (const mid of t.math || []) if (!E.TOPICS.find(x => x.id === mid)) err('Mathe-Verweis fehlt', t.id, mid); }
 for (const t of E.TOPICS){ if (!LABTYPES.includes(t.lab.type)) err('Labortyp unbekannt', t.id, t.lab.type); }
-console.log('Ziele:', nGoals, 'Zeilen:', nLines, 'Fehler:', nErr, nWarn ? '(Warnungen: ' + nWarn + (STRICT ? ', als Fehler gezählt' : '; anzeigen mit --warn') + ')' : '');
+console.log('Ziele:', nGoals, 'Zeilen:', nLines, 'Skizzen:', nSketch, 'Fehler:', nErr, nWarn ? '(Warnungen: ' + nWarn + (STRICT ? ', als Fehler gezählt' : '; anzeigen mit --warn') + ')' : '');
 process.exit(nErr ? 1 : 0);

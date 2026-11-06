@@ -149,6 +149,24 @@ topic({
     ]
   },
   lab:{type:'fourier', title:'Teilsummen und Breiten',
+    sketch:{id:'mf-lab-s', kind:'curve', draw:'abs2', title:'Vorhersage: die Breite im $k$-Raum',
+      text:'Gleich zeigt das Labor im Modus „Fourier-Transformation (Gauß)“ die Dichten $|\\psi(x)|^2$ und $|\\varphi(k)|^2$. Für $\\sigma = 0{,}5$ ist $|\\psi(x)|^2$ eine Normalverteilung mit $\\Delta x = 0{,}5$. Skizziere vorher $|\\varphi(k)|^2$. Die Achse ist absolut. Stell danach diesen Modus und $\\sigma = 0{,}5$ ein und vergleiche mit der roten Kurve.',
+      plot:{x:[-6, 6], y:[-0.25, 1], abs:true, xlab:'k', ylab:'|\\varphi(k)|^2', ticks:[{x:-4, lab:'-4'}, {x:-2, lab:'-2'}, {x:0, lab:'0'}, {x:2, lab:'2'}, {x:4, lab:'4'}], yticks:[{y:0.2, lab:'0{,}2'}, {y:0.4, lab:'0{,}4'}, {y:0.6, lab:'0{,}6'}, {y:0.8, lab:'0{,}8'}]},
+      // |φ(k)|² = √(2/π)·σ·e^{−2σ²k²}, σ = 0,5: Höhe 0,399, Δk = 1/(2σ) = 1, Halbwertsbreite 2,355, Fläche 1 (Plancherel)
+      f:k => Math.sqrt(2 / Math.PI) * 0.5 * Math.exp(-2 * 0.25 * k * k),
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann $|\\varphi(k)|^2$ negativ sein?'},
+        {id:'lage', type:'maxat', x:0, tol:0.4, msg:'$\\psi$ ist reell und gerade. Wo liegt dann das Maximum von $|\\varphi(k)|^2$?'},
+        {id:'breite', type:'fwhm', v:2.355, tol:0.3, msg:'Wie hängt $\\Delta k$ mit $\\Delta x = \\sigma$ zusammen: wird $|\\varphi|^2$ schmaler oder breiter als $|\\psi|^2$? Auf halber Höhe ist deine Kurve {got} breit. (Abschnitt „Breiten“)'},
+        {id:'flaeche', type:'area', range:[-4.5, 4.5], v:1, tol:0.25, msg:'Welche Fläche hat $|\\varphi(k)|^2$, wenn $\\psi$ normiert ist? Deine ist etwa {got}.'}
+      ],
+      reveal:'$|\\varphi(k)|^2 = \\sqrt{2/\\pi}\\,\\sigma\\,e^{-2\\sigma^2k^2}$ ist wieder eine Normalverteilung, mit $\\Delta k = 1/(2\\sigma) = 1$, also doppelt so breit wie $|\\psi(x)|^2$ mit $\\Delta x = 0{,}5$. Nach Plancherel ist ihre Fläche ebenfalls 1; darum ist sie nur halb so hoch ($\\approx 0{,}40$). Im Labor siehst du beide Kurven gegenläufig: Machst du $\\sigma$ kleiner, wird die blaue schmaler und die rote breiter, und $\\Delta x\\,\\Delta k = \\frac12$ bleibt.',
+      hints:['Bestimme zuerst $\\Delta k$ aus $\\Delta x$, dann die Höhe aus der Fläche.', 'Für das Gauß-Paket gilt $\\Delta x\\,\\Delta k = \\frac12$. Eine Normalverteilung mit Standardabweichung $s$ hat die Höhe $1/(\\sqrt{2\\pi}\\,s)$ und auf halber Höhe die Breite $2{,}35\\,s$.'],
+      wrong:[
+        {f:k => Math.exp(-k * k / (2 * 0.25)) / (Math.sqrt(2 * Math.PI) * 0.5), fails:['breite'], why:'gleiche Breite wie |ψ|² (Δk = Δx)'},
+        {f:k => Math.exp(-k * k / (2 * 4)) / (Math.sqrt(2 * Math.PI) * 2), fails:['breite'], why:'Δk = 1/σ statt 1/(2σ)'},
+        {f:k => 2 * Math.sqrt(2 / Math.PI) * 0.5 * Math.exp(-2 * 0.25 * k * k), fails:['flaeche'], why:'gleiche Höhe wie |ψ|²: Plancherel übersehen'}
+      ]},
     text:'**Modus „Fourier-Reihe“:** Wähle eine $2\\pi$-periodische Funktion (Rechteck, Sägezahn oder Dreieck) auf $[-\\pi, \\pi]$ und mit dem Regler „höchste Ordnung $N$“ ($1$ bis $40$) die Teilsumme bis $n = N$. Beim Rechteck und beim Dreieck tragen nur ungerade $n$ bei. Beim Rechteck und beim Sägezahn zeigt die Anzeige das Überschwingen an der Sprungstelle; beim Sägezahn nähert es sich langsamer dem Grenzwert von etwa 9 %, bei kleinem $N$ liegt das Maximum sogar noch unter $\\pi$.\n\n**Modus „Fourier-Transformation (Gauß)“:** $\\psi(x) = (2\\pi\\sigma^2)^{-1/4}e^{-x^2/(4\\sigma^2)}$ mit $\\sigma$ zwischen $0{,}3$ und $3$. Gezeichnet sind $|\\psi(x)|^2$ und $|\\varphi(k)|^2$, angezeigt $\\Delta x = \\sigma$, $\\Delta k = 1/(2\\sigma)$ und ihr Produkt.',
     predict:{q:'Bevor du den Modus „Fourier-Transformation (Gauß)“ benutzt: Du halbierst $\\sigma$ von $2$ auf $1$, das Paket im Ort wird also schmaler. Was passiert mit der roten Kurve $|\\varphi(k)|^2$?', opts:['Sie wird doppelt so breit und halb so hoch.', 'Sie wird halb so breit und doppelt so hoch.', 'Sie bleibt gleich; nur $|\\psi|^2$ ändert sich.', 'Sie wird doppelt so breit und doppelt so hoch.'], a:0, ex:'$|\\varphi(k)|^2 = \\sqrt{2/\\pi}\\,\\sigma\\,e^{-2\\sigma^2k^2}$: Die Breite geht wie $1/\\sigma$, die Höhe wie $\\sigma$. Die Fläche bleibt $1$ (Plancherel), deshalb kann sie nicht zugleich breiter und höher werden.'},
     questions:[
@@ -261,6 +279,26 @@ topic({
         model:['1/sqrt(2π) ∫_-∞^∞ ψ\'(x) e^(-ikx) dx = 1/sqrt(2π) [ψ(x) e^(-ikx)]_{x=-∞}^∞ - 1/sqrt(2π) ∫_-∞^∞ ψ(x) (-ik) e^(-ikx) dx', {l:'= ik/sqrt(2π) ∫_-∞^∞ ψ(x) e^(-ikx) dx', w:'ψ → 0 für |x| → ∞'}, '= i k φ(k)'],
         note:'Mit $\\hat p = -i\\hbar\\,d/dx$ folgt: $\\hat p\\psi \\mapsto \\hbar k\\,\\varphi(k)$. Im $k$-Raum ist der Impuls einfach ein Faktor.'}]}
   ],
+  sketch:[
+    {id:'mf-s1', kind:'curve', draw:'f', title:'Die Transformierte eines Kastens',
+      text:'$\\psi(x) = 1/\\sqrt a$ für $|x| < a/2$, sonst $0$, mit $a = 2$. Skizziere die Fourier-Transformierte $\\varphi(k)$ im Bereich $-10 \\le k \\le 10$. Sie ist reell. Die Skala der $y$-Achse ist frei, aber Nullstellen und Vorzeichen sollen stimmen.',
+      plot:{x:[-10, 10], xlab:'k', ylab:'\\varphi(k)', ticks:[{x:-3 * Math.PI, lab:'-3\\pi'}, {x:-2 * Math.PI, lab:'-2\\pi'}, {x:-Math.PI, lab:'-\\pi'}, {x:0, lab:'0'}, {x:Math.PI, lab:'\\pi'}, {x:2 * Math.PI, lab:'2\\pi'}, {x:3 * Math.PI, lab:'3\\pi'}]},
+      // φ(k) = (1/√(2π))∫_{−1}^{1} (1/√2) e^{−ikx} dx = sin(k)/(√π k): Nullstellen bei k = nπ (n ≠ 0), erstes Nebenminimum ≈ −0,22·φ(0) bei k ≈ 4,49
+      f:k => Math.abs(k) < 1e-9 ? 1 / Math.sqrt(Math.PI) : Math.sin(k) / (Math.sqrt(Math.PI) * k),
+      checks:[
+        {id:'sym', type:'parity', p:'even', about:0, msg:'$\\psi$ ist reell und gerade. Was folgt daraus für $\\varphi(k)$?'},
+        {id:'max', type:'maxat', x:0, tol:0.5, msg:'Wo ist $\\varphi(k)$ am größten? Denk an $\\varphi(0) = \\frac{1}{\\sqrt{2\\pi}}\\int\\psi\\,dx$.'},
+        {id:'null1', type:'zero', at:[-Math.PI, Math.PI], tol:0.3, msg:'Wo endet das Hauptmaximum? Bei welchem $k$ wird $\\sin(ka/2)$ zum ersten Mal null? (Abschnitt „Breiten“)'},
+        {id:'neg', type:'sign', s:-1, range:[3.7, 5.6], msg:'Welches Vorzeichen hat $\\sin(ka/2)/k$ zwischen der ersten und der zweiten Nullstelle?'}
+      ],
+      reveal:'$\\varphi(k) = \\frac{1}{\\sqrt{2\\pi a}}\\int_{-a/2}^{a/2}e^{-ikx}dx = \\sqrt{\\frac{2}{\\pi a}}\\,\\frac{\\sin(ka/2)}{k}$, für $a = 2$ also $\\sin k/(\\sqrt\\pi\\,k)$. Das Hauptmaximum reicht von $-2\\pi/a = -\\pi$ bis $\\pi$; ein schmalerer Kasten gäbe ein breiteres. Danach folgen Nebenmaxima mit wechselndem Vorzeichen, die nur wie $1/k$ abklingen. Die Ursache sind die Sprünge des Kastens.',
+      hints:['Rechne $\\varphi(k)$ aus (Übung „Fourier-Transformierte eines Kastens“) und bestimme dann die Nullstellen des Zählers.', '$\\sin(ka/2) = 0$ für $ka/2 = n\\pi$. Zwischen zwei Nullstellen wechselt das Vorzeichen.'],
+      wrong:[
+        {f:k => Math.exp(-k * k / 8), fails:['null1', 'neg'], why:'wie beim Gauß-Paket: Glocke ohne Nullstellen'},
+        {f:k => Math.abs(k) < 1e-9 ? 0.5 : Math.sin(k / 2) / k, fails:['null1', 'neg'], why:'Breite a mit der halben Breite verwechselt: Nullstellen bei ±2π'},
+        {f:k => Math.abs(k) < 1e-9 ? 1 : Math.abs(Math.sin(k) / k), fails:['neg'], why:'Vorzeichenwechsel übersehen: alle Nebenmaxima positiv'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'mf-f3', title:'Fourier-Reihe einer Halbwelle', text:'$f(x) = 1$ für $0 < x < \\pi$ und $f(x) = 0$ für $-\\pi < x < 0$, $2\\pi$-periodisch fortgesetzt. In der Eingabe heißt die Funktion `f(x)`.',
       ctx:PER({'f(x)':'(1 + sgn(x))/2'}),
@@ -285,7 +323,25 @@ topic({
       text:'Ein Kasten der Breite $a$ hat die Transformierte $\\varphi(k) \\propto \\sin(ka/2)/k$.',
       people:[{name:'Lena', says:'Die Standardabweichung $\\Delta k$ ist für den Kasten unendlich, weil $|\\varphi|^2$ nur wie $1/k^2$ abfällt.'}, {name:'Jonas', says:'Trotzdem wird das Hauptmaximum von $|\\varphi|^2$ breiter, wenn man den Kasten schmaler macht.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:2,
-      ex:'$\\int k^2|\\varphi|^2dk$ divergiert, also $\\Delta k = \\infty$. Das Hauptmaximum reicht von $-2\\pi/a$ bis $2\\pi/a$ und wächst mit $1/a$. Beide Aussagen beschreiben verschiedene Breitenmaße.'}
+      ex:'$\\int k^2|\\varphi|^2dk$ divergiert, also $\\Delta k = \\infty$. Das Hauptmaximum reicht von $-2\\pi/a$ bis $2\\pi/a$ und wächst mit $1/a$. Beide Aussagen beschreiben verschiedene Breitenmaße.'},
+    {aim:2, sketch:{id:'mf-fs-a', kind:'curve', draw:'abs2', title:'Ein Gauß-Paket mit Phasenfaktor', points:3,
+      text:'Ein Wellenpaket ist $\\psi(x) = (2\\pi\\sigma^2)^{-1/4}e^{-x^2/(4\\sigma^2)}\\,e^{ik_0x}$ mit $\\sigma = 1$ und $k_0 = 3$. Skizziere $|\\varphi(k)|^2$. Die Achse ist absolut: Achte auf Lage, Breite und Fläche.',
+      plot:{x:[-6, 6], y:[-0.25, 1], abs:true, xlab:'k', ylab:'|\\varphi(k)|^2', ticks:[{x:-4, lab:'-4'}, {x:-2, lab:'-2'}, {x:0, lab:'0'}, {x:2, lab:'2'}, {x:4, lab:'4'}], yticks:[{y:0.2, lab:'0{,}2'}, {y:0.4, lab:'0{,}4'}, {y:0.6, lab:'0{,}6'}, {y:0.8, lab:'0{,}8'}]},
+      // e^{ik_0x}ψ_0(x) ↦ φ_0(k − k_0): |φ|² = √(2/π)·σ·e^{−2σ²(k − 3)²}, Höhe 0,798, Δk = 0,5, Halbwertsbreite 1,177, Fläche 1
+      f:k => Math.sqrt(2 / Math.PI) * Math.exp(-2 * (k - 3) ** 2),
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann $|\\varphi(k)|^2$ irgendwo negativ sein?'},
+        {id:'lage', type:'center', x:3, tol:0.3, msg:'Was macht der Faktor $e^{ik_0x}$ im Ort mit $\\varphi(k)$? Wo liegt das Maximum von $|\\varphi|^2$?'},
+        {id:'breite', type:'fwhm', v:1.177, tol:0.3, msg:'Welche Breite $\\Delta k$ gehört zu $\\Delta x = \\sigma = 1$? Auf halber Höhe ist deine Kurve {got} breit.'},
+        {id:'flaeche', type:'area', range:[0.5, 5.5], v:1, tol:0.3, msg:'Welche Fläche hat $|\\varphi(k)|^2$, wenn $\\psi$ normiert ist? Deine ist etwa {got}.'}
+      ],
+      reveal:'Eine Phase im Ort gibt eine Verschiebung in $k$: $e^{ik_0x}\\psi_0(x) \\mapsto \\varphi_0(k - k_0)$. $|\\varphi|^2$ ist also eine Normalverteilung um $k = 3$, mit $\\Delta k = 1/(2\\sigma) = 0{,}5$ (Breite auf halber Höhe $\\approx 1{,}18$) und nach Plancherel mit der Fläche 1, also der Höhe $\\approx 0{,}80$. Die Phase ändert $|\\psi(x)|^2$ nicht, wohl aber die Lage im $k$-Raum: Das Paket hat den mittleren Impuls $\\hbar k_0$.',
+      wrong:[
+        {f:k => Math.sqrt(2 / Math.PI) * Math.exp(-2 * k * k), fails:['lage'], why:'Phase e^{ik0x} für bedeutungslos gehalten: Maximum bei k = 0'},
+        {f:k => Math.sqrt(2 / Math.PI) * Math.exp(-2 * (k + 3) ** 2), fails:['lage'], why:'Vorzeichen der Verschiebung falsch: Maximum bei −k0'},
+        {f:k => Math.exp(-((k - 3) ** 2) / 2) / Math.sqrt(2 * Math.PI), fails:['breite'], why:'Δk = σ statt 1/(2σ)'},
+        {f:k => 0.5 * Math.sqrt(2 / Math.PI) * Math.exp(-2 * (k - 3) ** 2), fails:['flaeche'], why:'Höhe von |ψ(x)|² übernommen: Plancherel übersehen'}
+      ]}}
   ],
   finalB:[
     {aim:0, task:{id:'mf-f4', title:'Fourier-Reihe eines Rechteckpulses', text:'$f(x) = 1$ für $|x| < \\pi/2$ und $f(x) = 0$ für $\\pi/2 < |x| < \\pi$, $2\\pi$-periodisch fortgesetzt. In der Eingabe heißt die Funktion `f(x)`.',
@@ -313,7 +369,27 @@ topic({
       text:'Die Funktion $\\psi(x) = e^{-|x|}$ hat bei $x = 0$ einen Knick. Ihre Transformierte ist $\\varphi(k) \\propto 1/(1 + k^2)$.',
       people:[{name:'Lena', says:'Wegen des Knicks fällt $|\\varphi|^2$ nur wie eine Potenz von $k$ ab. Dann ist die Standardabweichung $\\Delta k$ unendlich, wie beim Kasten.'}, {name:'Jonas', says:'$|\\varphi|^2 \\propto (1 + k^2)^{-2}$ fällt wie $k^{-4}$ ab. Dann ist $\\int k^2|\\varphi|^2dk$ endlich und $\\Delta k$ auch.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'$\\langle k^2\\rangle = \\int\\frac{k^2}{(1 + k^2)^2}dk \\Big/ \\int\\frac{dk}{(1 + k^2)^2} = \\frac{\\pi/2}{\\pi/2} = 1$, also $\\Delta k = 1$. Es kommt darauf an, **wie schnell** $|\\varphi|^2$ abfällt. Ein Sprung (Kasten) gibt $|\\varphi|^2 \\propto k^{-2}$, und $\\int k^2\\cdot k^{-2}dk$ divergiert. Ein Knick gibt $k^{-4}$, und das Integral konvergiert. Mit $\\Delta x = 1/\\sqrt2$ ist $\\Delta x\\,\\Delta k \\approx 0{,}71 \\ge \\frac12$.'}
+      ex:'$\\langle k^2\\rangle = \\int\\frac{k^2}{(1 + k^2)^2}dk \\Big/ \\int\\frac{dk}{(1 + k^2)^2} = \\frac{\\pi/2}{\\pi/2} = 1$, also $\\Delta k = 1$. Es kommt darauf an, **wie schnell** $|\\varphi|^2$ abfällt. Ein Sprung (Kasten) gibt $|\\varphi|^2 \\propto k^{-2}$, und $\\int k^2\\cdot k^{-2}dk$ divergiert. Ein Knick gibt $k^{-4}$, und das Integral konvergiert. Mit $\\Delta x = 1/\\sqrt2$ ist $\\Delta x\\,\\Delta k \\approx 0{,}71 \\ge \\frac12$.'},
+    {aim:2, sketch:{id:'mf-fs-b', kind:'curve', draw:'abs2', title:'Ein Gauß-Paket mit Phasenfaktor', points:3,
+      text:'Ein Wellenpaket ist $\\psi(x) = (2\\pi\\sigma^2)^{-1/4}e^{-x^2/(4\\sigma^2)}\\,e^{ik_0x}$ mit $\\sigma = 1{,}5$ und $k_0 = -2$. Skizziere $|\\varphi(k)|^2$. Die Achse ist absolut: Achte auf Lage, Breite und Fläche.',
+      plot:{x:[-5, 3], y:[-0.375, 1.5], abs:true, xlab:'k', ylab:'|\\varphi(k)|^2', ticks:[{x:-4, lab:'-4'}, {x:-3, lab:'-3'}, {x:-2, lab:'-2'}, {x:-1, lab:'-1'}, {x:0, lab:'0'}, {x:1, lab:'1'}, {x:2, lab:'2'}], yticks:[{y:0.4, lab:'0{,}4'}, {y:0.8, lab:'0{,}8'}, {y:1.2, lab:'1{,}2'}]},
+      // |φ|² = √(2/π)·σ·e^{−2σ²(k + 2)²} mit σ = 1,5: Höhe 1,197, Δk = 1/(2σ) = 1/3, Halbwertsbreite 0,785, Fläche 1
+      // (σ bewusst anders als im Labor, σ = 0,5, und in Form A, σ = 1)
+      f:k => Math.sqrt(2 / Math.PI) * 1.5 * Math.exp(-4.5 * (k + 2) ** 2),
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann $|\\varphi(k)|^2$ irgendwo negativ sein?'},
+        {id:'lage', type:'center', x:-2, tol:0.3, msg:'Was macht der Faktor $e^{ik_0x}$ im Ort mit $\\varphi(k)$? Wo liegt das Maximum von $|\\varphi|^2$?'},
+        {id:'breite', type:'fwhm', v:0.785, tol:0.3, msg:'Welche Breite $\\Delta k$ gehört zu $\\Delta x = \\sigma = 1{,}5$? Auf halber Höhe ist deine Kurve {got} breit.'},
+        {id:'flaeche', type:'area', range:[-3.5, -0.5], v:1, tol:0.3, msg:'Welche Fläche hat $|\\varphi(k)|^2$, wenn $\\psi$ normiert ist? Deine ist etwa {got}.'}
+      ],
+      reveal:'Eine Phase im Ort gibt eine Verschiebung in $k$: $e^{ik_0x}\\psi_0(x) \\mapsto \\varphi_0(k - k_0)$. $|\\varphi|^2$ ist also eine Normalverteilung um $k = -2$, mit $\\Delta k = 1/(2\\sigma) = 1/3$ (Breite auf halber Höhe $\\approx 0{,}79$) und nach Plancherel mit der Fläche 1, also der Höhe $\\approx 1{,}20$. Die Phase ändert $|\\psi(x)|^2$ nicht, wohl aber die Lage im $k$-Raum: Das Paket hat den mittleren Impuls $\\hbar k_0 < 0$ und läuft nach links.',
+      wrong:[
+        {f:k => Math.sqrt(2 / Math.PI) * 1.5 * Math.exp(-4.5 * k * k), fails:['lage'], why:'Phase e^{ik0x} für bedeutungslos gehalten: Maximum bei k = 0'},
+        {f:k => Math.sqrt(2 / Math.PI) * 1.5 * Math.exp(-4.5 * (k - 2) ** 2), fails:['lage'], why:'Vorzeichen der Verschiebung falsch: Maximum bei −k0'},
+        {f:k => Math.exp(-((k + 2) ** 2) / (2 * 2.25)) / (Math.sqrt(2 * Math.PI) * 1.5), fails:['breite'], why:'Δk = σ statt 1/(2σ)'},
+        {f:k => Math.exp(-((k + 2) ** 2) / (2 * 4 / 9)) / (Math.sqrt(2 * Math.PI) * 2 / 3), fails:['breite'], why:'Δk = 1/σ statt 1/(2σ)'},
+        {f:k => Math.exp(-4.5 * (k + 2) ** 2) / (Math.sqrt(2 * Math.PI) * 1.5), fails:['flaeche'], why:'Höhe von |ψ(x)|² übernommen: Plancherel übersehen'}
+      ]}}
   ],
   errors:[
     {id:'mf-e1', title:'Vorzeichenfehler bei der Gauß-Transformation',

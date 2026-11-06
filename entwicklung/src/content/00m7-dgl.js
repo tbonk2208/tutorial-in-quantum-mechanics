@@ -162,6 +162,24 @@ topic({
     ]
   },
   lab:{type:'ode', title:'Anfangswertproblem und Randbedingung',
+    sketch:{id:'md-lab-s', kind:'curve', draw:'f', title:'Vorhersage: Anfangswertproblem bei $k = 3\\pi$',
+      text:'Gleich löst das Labor $y\'\' = -k^2y$ mit $y(0) = 0$ und $y\'(0) = 1$ auf $[0, 1]$. Skizziere vorher die Lösung für $k = 3\\pi \\approx 9{,}42$. Die Skala der $y$-Achse ist frei. Stell danach die Gleichung $y\'\' = -k^2y$ und $k = 9{,}42$ ein und vergleiche; achte auch auf die Meldung zur Randbedingung $y(1) = 0$.',
+      plot:{x:[0, 1], xlab:'x', ylab:'y(x)', ticks:[{x:0, lab:'0'}, {x:0.5, lab:'0{,}5'}, {x:1, lab:'1'}]},
+      // y = sin(kx)/k mit k = 3π: Nullstellen bei 0, 1/3, 2/3, 1; drei Buckel; symmetrisch zu x = 1/2
+      f:x => Math.sin(3 * Math.PI * x) / (3 * Math.PI),
+      checks:[
+        {id:'rand', type:'zero', at:[0, 1], msg:'Welchen Wert hat die Lösung bei $x = 0$, und welchen hat $\\sin k$ für $k = 3\\pi$?'},
+        {id:'knoten', type:'nodes', n:2, msg:'Wie viele halbe Wellen der Länge $\\pi/k$ passen in das Intervall $[0, 1]$? Wie viele Nullstellen liegen dann im Inneren? Deine Skizze hat {got}.'},
+        {id:'buckel', type:'extrema', n:3, msg:'Wie viele Buckel hat $\\sin(3\\pi x)$ zwischen $0$ und $1$? Deine Skizze hat {got}.'},
+        {id:'sym', type:'parity', p:'even', about:0.5, msg:'Ist $\\sin(3\\pi x)$ zur Mitte $x = 1/2$ symmetrisch oder antisymmetrisch?'}
+      ],
+      reveal:'$y = \\sin(kx)/k$ mit $k = 3\\pi$: drei halbe Wellen, Nullstellen bei $x = 1/3$ und $2/3$ im Inneren und genau bei $x = 1$. Die Anfangswerte allein legen die Lösung für jedes $k$ fest; nur für $k = n\\pi$ erfüllt sie zusätzlich die Randbedingung $y(1) = 0$. Darum meldet das Labor bei $k \\approx 9{,}42$ „erfüllt“, bei $k = 9$ oder $k = 10$ nicht.',
+      hints:['Schreib die Lösung des Anfangswertproblems hin (Abschnitt „Anfangswerte, Randwerte“) und setze $k = 3\\pi$ ein.', '$\\sin(3\\pi x)$ ist null bei $x = 0, \\tfrac13, \\tfrac23, 1$.'],
+      wrong:[
+        {f:x => Math.sin(2 * Math.PI * x), fails:['knoten', 'buckel', 'sym'], why:'eine halbe Welle zu wenig (k = 2π)'},
+        {f:x => Math.cos(3 * Math.PI * x), fails:['rand'], why:'y(0) = 1 statt y′(0) = 1 eingesetzt'},
+        {f:x => Math.sinh(3 * Math.PI * x), fails:['rand', 'knoten'], why:'Vorzeichen in der Gleichung verwechselt: Wachstum statt Schwingung'}
+      ]},
     text:'Das Labor löst $y\'\' = -k^2y$ oder $y\'\' = +k^2y$ mit den Anfangswerten $y(0) = 0$, $y\'(0) = 1$ auf $[0, 1]$. Für jedes $k$ gibt es genau eine Lösung. Die Anzeige zeigt $y(1)$ und meldet, wenn zusätzlich die Randbedingung $y(1) = 0$ erfüllt ist.',
     predict:{q:'Bevor du das Labor bedienst: $y\'\' = -k^2y$ mit $y(0) = 0$, $y\'(0) = 1$ und $k = 10$. Wie viele Nullstellen hat $y$ im Inneren von $(0, 1)$?', opts:['3', '10', '1', 'keine'], a:0, ex:'$y = \\sin(10x)/10$ ist null bei $x = n\\pi/10$, also bei etwa $0{,}31$, $0{,}63$ und $0{,}94$. Je größer $k$, desto mehr Nullstellen – im Kasten entsprechen dem mehr Knoten bei höherer Energie.'},
     questions:[
@@ -263,6 +281,47 @@ topic({
       ex:'Reelle Exponentialfunktionen: Die Lösung wächst oder fällt, sie schwingt nicht.',
       reason:{q:'Warum?', opts:['Umgestellt $y\'\' - 4y = 0$, also $\\lambda^2 = 4$ und $\\lambda = \\pm 2$.', 'Aus $\\lambda^2 + 4 = 0$ folgt $\\lambda = \\pm 2i$.', 'Jede Gleichung mit $y\'\'$ hat Schwingungslösungen.'], a:0, ex:'Erst alles auf eine Seite bringen: $\\lambda^2 - 4 = 0$. Das Vorzeichen entscheidet zwischen Schwingen und Wachsen.'}}
   ],
+  sketch:[
+    {id:'md-s1', kind:'curve', draw:'f', title:'Exponentialansatz mit Anfangswerten',
+      text:'Bestimme mit dem Exponentialansatz die Form der Lösung von $y\'\' + 0{,}4\\,y\' + 9{,}04\\,y = 0$ mit $y(0) = 0$ und $y\'(0) = 3$ und skizziere sie für $0 \\le x \\le 10$. Die Skala der $y$-Achse ist frei.',
+      plot:{x:[0, 10], xlab:'x', ylab:'y(x)', ticks:[{x:0, lab:'0'}, {x:2, lab:'2'}, {x:4, lab:'4'}, {x:6, lab:'6'}, {x:8, lab:'8'}, {x:10, lab:'10'}]},
+      // λ² + 0,4λ + 9,04 = 0 → λ = −0,2 ± 3i; y = e^{−0,2x}(A cos 3x + B sin 3x), y(0) = 0 → A = 0, y'(0) = 3B = 3 → B = 1
+      // 'start': max|y| in [0; 0,1] ≤ 0,8·(Höhe des ersten Buckels in [0; 1,5]). Muster: 0,29/0,90. Unempfindlich dagegen, wo genau die Hand das erste Maximum (bei 0,49) setzt; y(0) = 1 (cos) gibt 1,0/0,81.
+      f:x => Math.exp(-0.2 * x) * Math.sin(3 * x),
+      checks:[
+        {id:'start', type:'amp', a:[0, 0.1], b:[0, 1.5], cmp:'<', name:'Anfangswert', msg:'Welchen Wert hat $y$ bei $x = 0$? Startet die Kurve beim Maximum oder bei null?'},
+        {id:'osc', type:'osc', min:5, msg:'Welche Wurzeln hat die charakteristische Gleichung, reelle oder komplexe? Was bedeutet ein Imaginärteil der Wurzeln für die Lösung? (Abschnitt „Der Exponentialansatz“)'},
+        {id:'amp', type:'amp', a:[0, 3], b:[6, 9], cmp:'>', msg:'Was macht der Realteil $\\alpha$ der Wurzeln mit der Hüllkurve $e^{\\alpha x}$? Welches Vorzeichen hat $\\alpha$ hier?'},
+        {id:'lam', type:'wavelength', a:[0, 4.5], b:[4.5, 9], cmp:'=', msg:'Ändert sich der Abstand der Nullstellen mit der Zeit, oder bleibt die Periode $2\\pi/\\beta$ gleich?'}
+      ],
+      reveal:'$\\lambda^2 + 0{,}4\\lambda + 9{,}04 = 0$ hat die Wurzeln $\\lambda = -0{,}2 \\pm 3i$. Die Lösung ist $y = e^{-0{,}2x}\\sin 3x$: Sie startet bei null, schwingt mit der festen Periode $2\\pi/3 \\approx 2{,}1$, und ihre Amplitude nimmt mit der Hüllkurve $e^{-0{,}2x}$ ab, bis $x = 10$ auf $e^{-2} \\approx 14\\,\\%$. Komplexe Wurzeln heißen also nicht „keine reelle Lösung“, sondern „Schwingung“.',
+      hints:['Stelle die charakteristische Gleichung auf und bestimme Real- und Imaginärteil der Wurzeln. Setze dann die Anfangswerte ein.', 'Bei $\\lambda = \\alpha \\pm i\\beta$ ist $y = e^{\\alpha x}(A\\cos\\beta x + B\\sin\\beta x)$: Schwingung mit der Hüllkurve $e^{\\alpha x}$.'],
+      wrong:[
+        {f:x => Math.sin(3 * x), fails:['amp'], why:'Dämpfungsterm vergessen'},
+        {f:x => Math.exp(0.2 * x) * Math.sin(3 * x), fails:['amp'], why:'Vorzeichen des Realteils falsch: anwachsende Schwingung'},
+        {f:x => Math.exp(-0.2 * x) * Math.cos(3 * x), fails:['start'], why:'Anfangswerte vertauscht: y(0) = 1 angenommen'},
+        {f:x => x * Math.exp(-x), fails:['osc'], why:'komplexe Wurzeln für „keine Schwingung“ gehalten: kriechende Lösung'}
+      ]},
+    {id:'md-s2', kind:'curve', draw:'f', title:'Zwei Gleichungen, ein Anschluss bei $x = 0$',
+      text:'Links ($x < 0$) gilt $y\'\' = -k^2y$, rechts ($x > 0$) gilt $y\'\' = \\kappa^2y$, mit $k = \\kappa = 1$. Rechts soll $y$ beschränkt bleiben. Bei $x = 0$ sind $y$ und $y\'$ stetig, und $y(0) = 1$. Skizziere $y$ für $-7 \\le x \\le 3$. Die Skala der $y$-Achse ist frei.',
+      plot:{x:[-7, 3], xlab:'x', ylab:'y(x)', ticks:[{x:-6, lab:'-6'}, {x:-4, lab:'-4'}, {x:-2, lab:'-2'}, {x:0, lab:'0'}, {x:2, lab:'2'}], regions:[{x:[0, 3], lab:"$y'' = +\\kappa^2y$"}]},
+      // rechts y = e^{−κx} (beschränkt), links y = cos kx + B sin kx mit y'(0): kB = −κ → y = cos x − sin x = √2 cos(x + π/4); Nullstellen −3π/4, −7π/4
+      f:x => x <= 0 ? Math.cos(x) - Math.sin(x) : Math.exp(-x),
+      checks:[
+        {id:'links', type:'osc', range:[-7, 0], min:2, msg:'Welche Lösungen hat $y\'\' = -k^2y$? Was macht die Kurve links von $x = 0$?'},
+        {id:'rechts', type:'decay', toward:'right', range:[0, 3], msg:'Welche der beiden Lösungen $e^{\\pm\\kappa x}$ bleibt für große $x$ beschränkt? (Abschnitt „Schwingen oder Abklingen“)'},
+        {id:'ruhig', type:'noosc', range:[0, 3], msg:'Hat $y\'\' = +\\kappa^2y$ Lösungen mit Nullstellen? Bring die Gleichung auf eine Seite und lies die charakteristische Gleichung ab.'},
+        {id:'glatt', type:'smooth', at:[0], msg:'Was verlangen die Anschlussbedingungen von der Steigung $y\'$ bei $x = 0$?'},
+        {id:'stetig', type:'cont', msg:'Darf $y$ bei $x = 0$ springen?'}
+      ],
+      reveal:'Rechts bleibt nur $y = e^{-x}$ beschränkt; es startet mit $y(0) = 1$ und $y\'(0) = -1$. Links ist $y = \\cos x + B\\sin x$, und die Stetigkeit von $y\'$ verlangt $B = -1$. Also $y = \\cos x - \\sin x = \\sqrt2\\cos(x + \\pi/4)$: eine Schwingung mit Amplitude $\\sqrt2$ und Nullstellen bei $-3\\pi/4$ und $-7\\pi/4$, die bei $x = 0$ ohne Knick in das Abklingen übergeht. So sieht eine Wellenfunktion an einer endlichen Potentialstufe aus (Thema 5).',
+      hints:['Löse zuerst rechts: Welche Konstante muss wegen der Beschränktheit null sein? Bestimme dann links die Konstanten aus $y(0)$ und $y\'(0)$.', 'Bei $y\'\' = -k^2y$ krümmt sich die Kurve zur Achse hin, bei $y\'\' = +\\kappa^2y$ von ihr weg.'],
+      wrong:[
+        {f:x => x <= 0 ? Math.cos(x) - Math.sin(x) : Math.exp(-4 * x), fails:['glatt'], why:'Knick: Steigung bei x = 0 nicht angeglichen'},
+        {f:x => x <= 0 ? Math.cos(x) - Math.sin(x) : Math.cos(1.6 * x) * Math.exp(-0.2 * x) - 0.62 * Math.sin(1.6 * x) * Math.exp(-0.2 * x), fails:['rechts', 'ruhig'], why:'Vorzeichenfehler λ² + κ² = 0: Schwingung auch rechts'},
+        {f:x => x <= 0 ? -Math.sin(x) : 0, fails:['rechts'], why:'wie an einer unendlich hohen Wand: y = 0 rechts'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'md-f1', title:'Anfangswertproblem', text:'Löse $y\'\' + 9y = 0$ mit $y(0) = 2$ und $y\'(0) = 3$.',
       ctx:DGL({unknowns:{λ:{ref:'3i', alt:['-3i'], kind:'complex'}, A:{ref:'2', kind:'real'}, B:{ref:'1', kind:'real'}, C:{ref:'(2 - i)/2', kind:'complex'}, D:{ref:'(2 + i)/2', kind:'complex'}}}),
@@ -281,7 +340,23 @@ topic({
     {aim:'k', id:'md-fk2', type:'dialog', text:'Betrachtet wird $y\'\' = -k^2y$ mit $y(0) = 0$ und $y\'(0) = 1$.',
       people:[{name:'Lena', says:'Eine Lösung gibt es nur für $k = n\\pi$, sonst passt sie nicht.'}, {name:'Jonas', says:'Für jedes $k > 0$ gibt es genau eine Lösung, $y = \\sin(kx)/k$. Erst eine zweite Bedingung bei $x = 1$ würde einzelne $k$ auswählen.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'Beide Bedingungen stehen an derselben Stelle: ein Anfangswertproblem. Das hat immer genau eine Lösung. Lena verwechselt es mit dem Randwertproblem $y(0) = y(1) = 0$.'}
+      ex:'Beide Bedingungen stehen an derselben Stelle: ein Anfangswertproblem. Das hat immer genau eine Lösung. Lena verwechselt es mit dem Randwertproblem $y(0) = y(1) = 0$.'},
+    {aim:1, sketch:{id:'md-fs-a', kind:'curve', draw:'psi', title:'Gemischte Randbedingungen', points:3,
+      text:'$y\'\' = -k^2y$ auf $[0, L]$ mit $y(0) = 0$ und $y\'(L) = 0$. Skizziere die nichttriviale Lösung zum **kleinsten** erlaubten $k > 0$. Skala und Vorzeichen sind frei.',
+      plot:{x:[0, 1], xlab:'x', ylab:'y(x)', ticks:[{x:0, lab:'0'}, {x:0.5, lab:'L/2'}, {x:1, lab:'L'}]},
+      // y(0) = 0 → y = A sin kx; y'(L) = kA cos kL = 0 → kL = (2n − 1)π/2; kleinstes k = π/(2L): ein Viertel einer Welle
+      f:x => Math.sin(Math.PI * x / 2),
+      checks:[
+        {id:'start', type:'zero', at:[0], msg:'Welche Lösungen von $y\'\' = -k^2y$ erfüllen $y(0) = 0$?'},
+        {id:'knoten', type:'nodes', n:0, msg:'Hat die Lösung zum kleinsten $k$ eine Nullstelle im Inneren? Deine Skizze hat {got}.'},
+        {id:'ende', type:'maxat', x:1, tol:0.33, msg:'Was bedeutet $y\'(L) = 0$ für die Kurve am rechten Rand: Nullstelle oder waagrechte Tangente? Wo ist $|y|$ dann am größten?'}
+      ],
+      reveal:'Aus $y(0) = 0$ folgt $y = A\\sin kx$. Die Bedingung $y\'(L) = kA\\cos kL = 0$ verlangt $\\cos kL = 0$, also $kL = \\pi/2, 3\\pi/2, \\dots$ Die kleinste Lösung $\\sin(\\pi x/2L)$ ist eine Viertelwelle: Sie startet bei null, steigt ohne Nullstelle und erreicht bei $x = L$ ihr Maximum mit waagrechter Tangente. Andere $k$ erfüllen beide Bedingungen nicht.',
+      wrong:[
+        {f:x => Math.sin(Math.PI * x), fails:['ende'], why:'y(L) = 0 statt y′(L) = 0: halbe Welle wie im Kasten'},
+        {f:x => Math.cos(Math.PI * x / 2), fails:['start', 'ende'], why:'Randbedingungen vertauscht'},
+        {f:x => Math.sin(3 * Math.PI * x / 2), fails:['knoten'], why:'nicht die kleinste Lösung (kL = 3π/2)'}
+      ]}}
   ],
   finalB:[
     {aim:0, task:{id:'md-fb1', title:'Anfangswertproblem', text:'Löse $y\'\' + 16y = 0$ mit $y(0) = 1$ und $y\'(0) = 8$.',
@@ -301,7 +376,23 @@ topic({
     {aim:'k', id:'md-fbk2', type:'dialog', text:'Betrachtet wird $y\'\' = -k^2y$ auf $[0, L]$ mit $y(0) = y(L) = 0$.',
       people:[{name:'Lena', says:'$y \\equiv 0$ erfüllt die Gleichung und beide Randbedingungen für jedes $k$. Also ist jedes $k$ erlaubt.'}, {name:'Jonas', says:'Gesucht sind Lösungen, die nicht überall null sind. Die gibt es nur für $k = n\\pi/L$.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'$y \\equiv 0$ ist die triviale Lösung und beschreibt nichts. Eigenwerte sind die $k$, für die es eine nichttriviale Lösung gibt.'}
+      ex:'$y \\equiv 0$ ist die triviale Lösung und beschreibt nichts. Eigenwerte sind die $k$, für die es eine nichttriviale Lösung gibt.'},
+    {aim:1, sketch:{id:'md-fs-b', kind:'curve', draw:'psi', title:'Gemischte Randbedingungen', points:3,
+      text:'$y\'\' = -k^2y$ auf $[0, L]$ mit $y\'(0) = 0$ und $y(L) = 0$. Skizziere die nichttriviale Lösung zum **kleinsten** erlaubten $k > 0$. Skala und Vorzeichen sind frei.',
+      plot:{x:[0, 1], xlab:'x', ylab:'y(x)', ticks:[{x:0, lab:'0'}, {x:0.5, lab:'L/2'}, {x:1, lab:'L'}]},
+      // y'(0) = 0 → y = A cos kx; y(L) = A cos kL = 0 → kL = (2n − 1)π/2; kleinstes k = π/(2L)
+      f:x => Math.cos(Math.PI * x / 2),
+      checks:[
+        {id:'ende', type:'zero', at:[1], msg:'Welchen Wert muss $y$ bei $x = L$ haben?'},
+        {id:'knoten', type:'nodes', n:0, msg:'Hat die Lösung zum kleinsten $k$ eine Nullstelle im Inneren? Deine Skizze hat {got}.'},
+        {id:'start', type:'maxat', x:0, tol:0.33, msg:'Was bedeutet $y\'(0) = 0$ für die Kurve am linken Rand: Nullstelle oder waagrechte Tangente? Wo ist $|y|$ dann am größten?'}
+      ],
+      reveal:'Aus $y\'(0) = 0$ folgt $y = A\\cos kx$. Die Bedingung $y(L) = A\\cos kL = 0$ verlangt $kL = \\pi/2, 3\\pi/2, \\dots$ Die kleinste Lösung $\\cos(\\pi x/2L)$ ist eine Viertelwelle: Sie beginnt mit waagrechter Tangente bei ihrem Maximum, fällt ohne Nullstelle im Inneren und erreicht bei $x = L$ die Null. Andere $k$ erfüllen beide Bedingungen nicht.',
+      wrong:[
+        {f:x => Math.sin(Math.PI * x), fails:['start'], why:'y(0) = 0 statt y′(0) = 0: halbe Welle wie im Kasten'},
+        {f:x => Math.sin(Math.PI * x / 2), fails:['ende', 'start'], why:'Randbedingungen vertauscht'},
+        {f:x => Math.cos(3 * Math.PI * x / 2), fails:['knoten'], why:'nicht die kleinste Lösung (kL = 3π/2)'}
+      ]}}
   ],
   errors:[
     {id:'md-e1', title:'Die triviale Lösung',

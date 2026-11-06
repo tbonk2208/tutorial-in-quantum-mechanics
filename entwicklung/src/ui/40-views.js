@@ -14,7 +14,7 @@ const STEPS_NEW = [['Ziel und Diagnose', 'Lernziele, wozu du das brauchst und wa
   ['Beispiel', 'Ein vorgerechnetes Beispiel mit Warum-Fragen, danach eine Aufgabe mit Lücken.'],
   ['Labor', 'Erst vorhersagen, dann ausprobieren und erklären. Zum Schluss eine Frage ohne Bild.'],
   ['Üben', 'Rechenaufgaben mit zeilenweiser Prüfung, Konzeptfragen, zwei Lösungswege im Vergleich, Fehler finden.'],
-  ['Abschluss', 'Fünf Aufgaben unter Prüfungsbedingungen. Ab 80 % und mit jedem Lernziel ist das Thema vorläufig sicher.']];
+  ['Abschluss', 'Fünf Aufgaben, bei manchen Themen dazu eine Skizze, unter Prüfungsbedingungen. Ab 80 % und mit jedem Lernziel ist das Thema vorläufig sicher.']];
 const STEPS = STEPS_NEW;
 const isV4 = t => !!t && (['teach', 'diag', 'concept', 'finalB'].some(k => Array.isArray(t[k]) && t[k].length > 0) || !!t.phenomenon || (t.final || []).some(x => x && x.aim !== undefined));
 const stepsOf = t => isV4(t) ? STEPS_NEW : STEPS_OLD;
@@ -144,8 +144,8 @@ VIEWS.start = main => {
     + '<li><b>Reihenfolge:</b> Arbeite die Themen der <b>Quantenmechanik</b> der Reihe nach durch, beginnend mit Thema 1. Die <b>Mathematischen Grundlagen</b> (M1–M' + chTopics('math').length + ') nimmst du bei Bedarf: Der Eingangscheck jedes Themas zeigt Lücken und bietet eine kurze Auffrischung an.</li>'
     + '<li><b>Zeitbedarf:</b> Plane je Thema etwa 3 bis 5 Stunden, verteilt auf zwei oder drei Sitzungen (grobe Schätzung). Lieber oft und kurz als selten und lang.</li>'
     + '<li><b>Lernweg:</b> Jedes Thema hat sieben Schritte. Erst sagst du ein Ergebnis vorher, dann liest du die Erklärung in kurzen Abschnitten mit Fragen. Danach folgen ein vorgerechnetes Beispiel, das Labor und die Übungen. Lies gründlich und beantworte die Fragen ehrlich: Falsche Antworten sind beim Lernen nützlich.</li>'
-    + '<li><b>Abschluss:</b> fünf Aufgaben ohne Hilfe, einmal abgeben. Ab 80 % und mit jedem Lernziel ist ein Thema <b>vorläufig sicher</b>. <b>Sicher</b> wird es, wenn du frühestens zwei Tage später die Wiederholung bestehst.</li>'
-    + '<li><b>Hilfen:</b> Hinweise kommen in Stufen, die Lösung erst nach einem eigenen Versuch. Deine Fehler sammelt das <a href="#/review/heft">Fehlerheft</a>.</li></ul>'
+    + '<li><b>Abschluss:</b> fünf Aufgaben ohne Hilfe (bei manchen Themen dazu eine Skizze), einmal abgeben. Ab 80 % und mit jedem Lernziel ist ein Thema <b>vorläufig sicher</b>. <b>Sicher</b> wird es, wenn du frühestens zwei Tage später die Wiederholung bestehst.</li>'
+    + '<li><b>Hilfen:</b> Hinweise kommen in Stufen, die Lösung erst nach einem eigenen Versuch. Deine Fehler sammelt das <a href="#/review/heft">Fehlerheft</a>. Unter jeder Rechenaufgabe gibt es einen <b>Schmierzettel</b> (✎) nur für dich; Skizzen prüft das Tutorial selbst und fragt nach, wenn ein Merkmal nicht passt.</li></ul>'
     + '<p class="small muted">Formeln eintippen: <a href="#/lex/schreibweise">Nachschlagen → Schreibweise</a>. Ein Lehrbuch zum Nachlesen ist trotzdem nützlich; die Kapitel stehen bei jedem Thema.</p>';
   main.append(how);
 };
@@ -522,49 +522,65 @@ STEPVIEW[5] = (body, t, s, nextBtn) => {
   body.append(h('h3', {}, 'Labor: ' + L.title));
   s.lab = s.lab || {};
   const qs = L.questions || [];
-  const nb = nextBtn(null, () => (!L.predict || s.lab.pr !== undefined) && qs.every((q, i) => s.lab[i] !== undefined) && (!L.noPic || s.lab.np !== undefined));
-  let pred = null;
-  if (L.predict){
-    body.append(h('p', {class:'muted small'}, 'Erst vorhersagen, dann beobachten, dann erklären. Was erwartest du, bevor du die Regler bewegst?'));
-    pred = mcBox(L.predict, {hold:true, label:'Vorhersage', saved:s.lab.pr, onAnswer:(ok, k) => { s.lab.pr = k; store.save(); showLab(); nb.upd(); }});
-    body.append(pred);
+  /* Vorhersage als Skizze (lab.sketch): zeichnen ohne Rückmeldung → festhalten (oder bewusst überspringen) → Labor → auflösen */
+  const SKS = L.sketch || null;
+  const skDone = () => !SKS || s.lab.sk === 'held' || s.lab.sk === 'skip';
+  const nb = nextBtn(null, () => skDone() && (!L.predict || s.lab.pr !== undefined) && qs.every((q, i) => s.lab[i] !== undefined) && (!L.noPic || s.lab.np !== undefined), SKS ? 'Halte zuerst deine Skizze fest (oder überspring sie) und beantworte die Fragen.' : undefined);
+  let pred = null, skb = null, predSlot = null;
+  if (L.predict || SKS) body.append(h('p', {class:'muted small'}, 'Erst vorhersagen, dann beobachten, dann erklären. Was erwartest du, bevor du die Regler bewegst?'));
+  if (SKS){
+    skb = SKUI.sketchBox(SKS, {mode:'predict', topic:t, ctx:'#lab', held:s.lab.sk === 'held', skipped:s.lab.sk === 'skip',
+      onHold:() => { s.lab.sk = 'held'; store.save(); afterSketch(); nb.upd(); },
+      onSkip:() => { s.lab.sk = 'skip'; store.save(); afterSketch(); nb.upd(); }});
+    body.append(skb);
+    predSlot = h('div', {class:'stack'}); body.append(predSlot);
   }
+  function mkPred(){
+    if (pred || !L.predict) return;
+    pred = mcBox(L.predict, {hold:true, label:'Vorhersage', saved:s.lab.pr, onAnswer:(ok, k) => { s.lab.pr = k; store.save(); showLab(); nb.upd(); }});
+    (predSlot || body).append(pred);
+  }
+  if (skDone()) mkPred();
   const labWrap = h('div', {class:'stack'});
   body.append(labWrap);
+  function afterSketch(){ if (L.predict){ mkPred(); if (s.lab.pr !== undefined) showLab(); } else showLab(); }
   function showLab(){
     if (labWrap.children.length) return;
     labWrap.append(h('div', {class:'stack', html:md(L.text)}));
     const lab = h('div'); labWrap.append(lab);
     labRun(lab, L.type, L, {});
     const bR = h('button', {class:'btn btn-sm', type:'button'}, 'Mit dem Labor verglichen? Vorhersage auflösen');
-    const rv = () => { if (!pred) return; pred.reveal(s.lab.pr); s.lab.prShown = true; store.save(); bR.remove(); };
-    if (pred){ bR.onclick = rv; labWrap.append(bR); if (s.lab.prShown) rv(); }
+    const rv = () => { if (!pred && !skb) return; if (pred) pred.reveal(s.lab.pr); if (skb) skb.reveal(); s.lab.prShown = true; store.save(); bR.remove(); };
+    if (pred || skb){ bR.onclick = () => { rv(); if (skb) skb.scrollIntoView({block:'nearest', behavior:'smooth'}); }; labWrap.append(bR); if (s.lab.prShown) rv(); }
     qs.forEach((q, i) => labWrap.append(mcBox(q, {label:'Mit Bild ' + (i + 1), saved:s.lab[i], onAnswer:(ok, j) => { s.lab[i] = j; store.save(); nb.upd(); showNp(); }})));
     const np = h('div', {class:'stack'}); labWrap.append(np);
     function showNp(){
       if (!L.noPic || np.children.length || !qs.every((q, i) => s.lab[i] !== undefined)) return;
-      if (pred && !s.lab.prShown) rv();
+      if ((pred || skb) && !s.lab.prShown) rv();
       np.append(h('h3', {}, 'Jetzt ohne Bild'));
       np.append(mcBox(L.noPic, {label:'Ohne Bild', saved:s.lab.np, onAnswer:(ok, j) => { s.lab.np = j; store.save(); nb.upd(); }}));
     }
     showNp();
   }
-  if (!L.predict || s.lab.pr !== undefined) showLab();
+  if (skDone() && (!L.predict || s.lab.pr !== undefined)) showLab();
   body.append(nb);
 };
 STEPVIEW[6] = (body, t, s, nextBtn) => {
   body.append(summaryPanel(t));
   body.append(h('p', {class:'muted', html:'Rechne Zeile für Zeile. Mit <b>Enter</b> wird die Zeile geprüft und eine neue angelegt. ✓ richtig, ↪ folgerichtig (Fehler weiter oben), ✗ falsch, i nicht bewertbar. Hinweise kommen in Stufen; die Lösung gibt es nach einem eigenen Versuch. Die <b>Zusammenfassung</b> klappst du rechts auf.'}));
-  const P = t.practice || [], Cc = t.concept || [];
+  const P = t.practice || [], Cc = t.concept || [], Sk = t.sketch || [];
   s.cc = s.cc || {};
-  let ci = 0;
+  let ci = 0, si = 0;
   const cItem = c => conceptItem(t, c, s.cc[c.id], a => { s.cc[c.id] = a; store.save(); });
+  if (Sk.length) body.append(h('p', {class:'muted small'}, 'Skizzen zeichnest du mit Stift, Maus oder Finger. „Prüfen“ fragt nach, wenn ein Merkmal nicht passt; danach kannst du die Musterskizze vergleichen.'));
   P.forEach((task, i) => {
     body.append(taskBox(task, {}));
+    if (si < Sk.length && i === si) body.append(SKUI.sketchBox(Sk[si++], {mode:'practice', topic:t}));   /* Skizze k nach Rechenaufgabe k */
     if (i === 1 && t.compare) body.append(compareBox(t, s, 'Zwei Wege vergleichen'));
     if (ci < Cc.length) body.append(cItem(Cc[ci++]));
   });
   if (P.length < 2 && t.compare) body.append(compareBox(t, s, 'Zwei Wege vergleichen'));
+  while (si < Sk.length) body.append(SKUI.sketchBox(Sk[si++], {mode:'practice', topic:t}));
   while (ci < Cc.length) body.append(cItem(Cc[ci++]));
   if (t.errors && t.errors.length){ body.append(h('h2', {style:'margin-top:26px'}, 'Fehler finden')); for (const e of t.errors) body.append(errorBox(t, e)); }
   body.append(nextBtn());
@@ -573,11 +589,12 @@ STEPVIEW[7] = (body, t, s, nextBtn) => finalView(body, t, s, nextBtn);
 
 /* ---------- Abschluss unter Prüfungsbedingungen ---------- */
 const finItems = (t, form) => form === 'B' && Array.isArray(t.finalB) && t.finalB.length ? t.finalB : t.final;
-const finKind = it => it.task ? 'task' : (it.aim === 'k' || it.type) ? 'concept' : 'mc';
+const finKind = it => it.task ? 'task' : it.sketch ? 'sketch' : (it.aim === 'k' || it.type) ? 'concept' : 'mc';
 const finSlot = fa => '#fin' + fa.form + (fa.id || fa.n);
 function finAnswered(it, a, slot){
   const k = finKind(it);
   if (k === 'task') return it.task.goals.some(g => (store.goal(it.task.id + slot, g.id).lines || []).some(l => l.m && String(l.m).trim()));
+  if (k === 'sketch') return SKUI.hasInk(it.sketch, slot);
   if (!a) return false;
   return a.k !== undefined && a.k !== null && (k !== 'concept' || it.type !== 'mc2' || (a.k2 !== undefined && a.k2 !== null));
 }
@@ -606,12 +623,14 @@ function finalView(body, t, s, nextBtn){
     w.append(h('div', {class:'fhead'}, 'Aufgabe ' + (i + 1) + ' von ' + F.length + (aimTxt ? ' · ' + aimTxt : '')));
     if (!fa.done){
       if (kind === 'task'){ const tb = taskBox(it.task, {exam:true, slot}); ['input', 'focusout', 'pointerup'].forEach(ev => tb.addEventListener(ev, () => setTimeout(upd, 150))); w.append(tb); }
+      else if (kind === 'sketch') w.append(SKUI.sketchBox(it.sketch, {mode:'exam', topic:t, ctx:slot, onChange:() => upd()}));
       else if (kind === 'concept') w.append(conceptBox(it, {exam:true, topic:t, saved:fa.ans[i], onSelect:a => { fa.ans[i] = a; store.save(); upd(); }}));
       else w.append(mcBox(it, {exam:true, saved:fa.ans[i] ? fa.ans[i].k : undefined, onSelect:k => { fa.ans[i] = {k}; store.save(); upd(); }}));
       w.append(confBox(fa.conf[i], c => { fa.conf[i] = c; store.save(); upd(); }));
     } else {
       const r = (fa.res && fa.res.items[i]) || {};
       if (kind === 'task') w.append(taskBox(it.task, {locked:true, solution:true, slot}));
+      else if (kind === 'sketch') w.append(SKUI.sketchBox(it.sketch, {mode:'review', topic:t, ctx:slot}));
       else if (kind === 'concept'){ const cb = conceptBox(it, {exam:true, topic:t, saved:fa.ans[i]}); cb.reveal(); w.append(cb); }
       else { const mb = mcBox(it, {exam:true, saved:fa.ans[i] ? fa.ans[i].k : undefined}); mb.reveal(fa.ans[i] ? fa.ans[i].k : null); w.append(mb); }
       w.append(h('p', {class:'small fres ' + (r.ok ? 'good' : 'bad'), html:(r.ok ? '✓ gelöst' : '✗ nicht gelöst') + ' · ' + (r.pts || 0) + ' von ' + (r.max || 0) + ' Punkten' + (r.conf != null ? ' · dein Urteil: <b>' + escH(CONF_LEVELS[r.conf]) + '</b>' + (r.conf >= 2 && !r.ok ? ' – hier hast du dich überschätzt.' : r.conf <= 1 && r.ok ? ' – du kannst mehr, als du dachtest.' : '') : '')}));
@@ -642,20 +661,23 @@ function submitFinal(t, s){
   const fa = s.fa, F = finItems(t, fa.form), slot = finSlot(fa);
   let got = 0, max = 0; const items = [];
   F.forEach((it, i) => {
-    const kind = finKind(it); let r;
+    const kind = finKind(it); let r, sk = null;
     if (kind === 'task'){
       let p = 0, P = 0, ok = true;
       for (const g of it.task.goals){ const st = store.goal(it.task.id + slot, g.id); const sc = scoreGoal(it.task, g, (st.lines || []).map(l => l.m)); p += sc.p; P += sc.P; if (!sc.solved) ok = false; st.state = sc.state; st.lastPoints = sc.p; }
       r = {ok, pts:p, max:P};
-    } else if (kind === 'concept') r = conceptScore(it, fa.ans[i]);
+    } else if (kind === 'sketch'){ sk = SKUI.score(it.sketch, slot); r = {ok:sk.ok, pts:sk.pts, max:sk.max}; }
+    else if (kind === 'concept') r = conceptScore(it, fa.ans[i]);
     else { const k = fa.ans[i] ? fa.ans[i].k : undefined; r = {ok:k === it.a, pts:k === it.a ? 2 : 0, max:2}; }
     r.conf = fa.conf[i]; r.aim = it.aim;
     got += r.pts; max += r.max; items.push(r);
     store.calibAdd(r.conf, r.ok, t.id, 'final');
-    if (!r.ok) store.errAdd({k:'final', t:t.id, ref:'final' + fa.form + ':' + i, text:kind === 'task' ? it.task.title : (it.q || 'Wer hat recht?'), msg:kind === 'task' ? 'Abschluss, Form ' + fa.form + ': Rechenaufgabe nicht gelöst.' : (it.ex || ''), right:kind === 'task' ? '' : (it.opts || [])[it.a], seg:it.seg || null, lex:it.lex || null});
+    if (!r.ok && kind === 'sketch') store.errAdd({k:'sketch', t:t.id, ref:it.sketch.id, text:it.sketch.title || 'Skizze', msg:SKUI.firstMsg(it.sketch, sk && sk.ev) || 'Abschluss, Form ' + fa.form + ': Skizze nicht gelöst.', fin:fa.form});
+    else if (!r.ok) store.errAdd({k:'final', t:t.id, ref:'final' + fa.form + ':' + i, text:kind === 'task' ? it.task.title : (it.q || 'Wer hat recht?'), msg:kind === 'task' ? 'Abschluss, Form ' + fa.form + ': Rechenaufgabe nicht gelöst.' : (it.ex || ''), right:kind === 'task' ? '' : (it.opts || [])[it.a], seg:it.seg || null, lex:it.lex || null});
   });
   const pct = max ? got / max : 0;
-  const aims = [0, 1, 2].filter(a => F.some(it => it.aim === a));
+  /* „jedes Lernziel gelöst“ = jeder Eintrag mit diesem aim gelöst (auch Skizzen; deren aim darf über 2 hinausgehen) */
+  const aims = [...new Set([0, 1, 2].concat(F.filter(it => it.sketch && typeof it.aim === 'number').map(it => it.aim)))].filter(a => F.some(it => it.aim === a)).sort((x, y) => x - y);
   const aimOk = {}; aims.forEach(a => { aimOk[a] = F.every((it, i) => it.aim !== a || items[i].ok); });
   const pass = pct >= 0.8 - 1e-9 && aims.every(a => aimOk[a]);
   fa.done = true; fa.res = {got, max, pct, items, aimOk, pass, date:today()};
@@ -681,6 +703,7 @@ function finalSummary(t, s){
   else {
     html += '<p>Nötig sind 80 % der Punkte und jedes Lernziel. ' + (pc < 80 ? 'Es fehlen ' + (80 - pc) + ' Prozentpunkte. ' : '') + 'Das wiederholst du am besten:</p><ul class="clean">';
     aims.filter(a => !R.aimOk[a]).forEach(a => { html += '<li>' + inl(t.goals[a] || '') + ' – <a href="#/learn/' + t.id + '/6">Übungen (Schritt 6)</a>' + ((t.teach || []).length ? ', <a href="#/learn/' + t.id + '/3">Erklärteil (Schritt 3)</a>' : '') + '</li>'; });
+    F.forEach((it, i) => { if (finKind(it) === 'sketch' && !R.items[i].ok) html += '<li>Skizze ' + (i + 1) + ': ' + inl(it.sketch.title || '') + ' – vergleiche oben mit der Musterskizze' + ((t.sketch || []).length ? ', dann <a href="#/learn/' + t.id + '/6">Skizzen in Schritt 6</a>' : '') + '</li>'; });
     F.forEach((it, i) => { if (finKind(it) === 'concept' && !R.items[i].ok) html += '<li>Konzeptfrage ' + (i + 1) + (it.seg ? ': ' + segLinkHTML(t.id, it.seg) : it.lex ? ': ' + refLinkHTML(it.lex) : ' – <a href="#/learn/' + t.id + '/6">Konzeptfragen in Schritt 6</a>') + '</li>'; });
     html += '</ul><p class="small muted">Die falschen Aufgaben stehen auch im <a href="#/review/heft">Fehlerheft</a>.</p>';
   }
@@ -908,7 +931,9 @@ VIEWS.practice = (main, args) => {
       main.append(h('h1', {}, 'Üben: ' + t.title));
       main.append(summaryPanel(t));
       main.append(h('p', {class:'muted small', html:'Alle Übungsaufgaben des Themas. Die <b>Zusammenfassung</b> klappst du rechts auf' + ((t.teach || []).length ? '; den ganzen Erklärteil findest du im <a href="#/learn/' + t.id + '/3">Lernweg, Schritt 3</a>.' : '; mehr steht im Lernweg unter „Klären“.')}));
-      for (const task of t.practice) main.append(taskBox(task, {}));
+      const Sk = t.sketch || [];
+      t.practice.forEach((task, i) => { main.append(taskBox(task, {})); if (Sk[i]) main.append(SKUI.sketchBox(Sk[i], {mode:'practice', topic:t})); });
+      for (const sp of Sk.slice(t.practice.length)) main.append(SKUI.sketchBox(sp, {mode:'practice', topic:t}));
       if (t.concept && t.concept.length){
         s.cc = s.cc || {};
         main.append(h('h2', {style:'margin-top:26px'}, 'Konzeptfragen'));
@@ -923,7 +948,7 @@ VIEWS.practice = (main, args) => {
   main.append(h('p', {class:'muted'}, 'Wähle ein Thema – oder eine gemischte Runde mit Aufgaben aus Themen, die du schon begonnen hast.'));
   const mix = h('button', {class:'btn btn-primary', type:'button', style:'margin-top:12px'}, 'Gemischte Runde');
   mix.onclick = () => go('mixed');
-  main.append(h('div', {class:'row'}, mix, h('span', {class:'small muted'}, 'Drei Rechenaufgaben und zwei Konzeptfragen, bevorzugt aus deinen schwachen Themen.')));
+  main.append(h('div', {class:'row'}, mix, h('span', {class:'small muted'}, TOPICS.some(t => (t.sketch || []).length) ? 'Drei Rechenaufgaben, zwei Konzeptfragen und eine Skizze, bevorzugt aus deinen schwachen Themen.' : 'Drei Rechenaufgaben und zwei Konzeptfragen, bevorzugt aus deinen schwachen Themen.')));
   main.append(topicList(t => go('practice/' + t.id), 'Aufgaben'));
 };
 /* Gewicht eines Themas für die gemischte Runde: schwache Themen häufiger */
@@ -950,8 +975,10 @@ function newMix(){
   const base = started.length ? started : chTopics(curCh()).slice(0, 3);
   const T = base.flatMap(t => t.practice.map(k => ({t:t.id, k:'task', id:k.id, w:weakness(t) / Math.max(1, t.practice.length)})));
   const Cc = base.flatMap(t => (t.concept || []).map(c => ({t:t.id, k:'concept', id:c.id, w:weakness(t) / t.concept.length})));
-  const a = pickWeighted(T, 3), b = pickWeighted(Cc, 2), items = [];
+  const Sk = base.flatMap(t => (t.sketch || []).map(sp => ({t:t.id, k:'sketch', id:sp.id, w:weakness(t) / t.sketch.length})));
+  const a = pickWeighted(T, 3), b = pickWeighted(Cc, 2), c = pickWeighted(Sk, 1), items = [];
   while (a.length || b.length){ if (a.length) items.push(a.shift()); if (b.length) items.push(b.shift()); }
+  if (c.length) items.splice(Math.min(3, items.length), 0, c[0]);   /* eine Skizze, wenn begonnene Themen welche haben */
   return {id:Date.now().toString(36), date:today(), items:items.map(({t, k, id}) => ({t, k, id}))};
 }
 VIEWS.mixed = (main, args) => {
@@ -959,7 +986,7 @@ VIEWS.mixed = (main, args) => {
   main.append(h('h1', {}, 'Gemischte Runde'));
   let run = store.data.mix;
   if (!run || !Array.isArray(run.items) || args[0] === 'neu'){
-    if (run && run.id) for (const k of Object.keys(store.data.tasks)) if (k.endsWith('#mix' + run.id)) delete store.data.tasks[k];
+    if (run && run.id){ for (const k of Object.keys(store.data.tasks)) if (k.endsWith('#mix' + run.id)) delete store.data.tasks[k]; SKUI.dropCtx('#mix' + run.id); }
     run = store.data.mix = newMix(); store.save();
   }
   main.append(h('p', {class:'muted small'}, 'Vermischtes Üben: Du musst erst erkennen, welches Verfahren passt. Das ist anstrengender, bleibt aber länger hängen. Aus welchem Thema eine Aufgabe stammt, siehst du erst nach dem Lösen.'));
@@ -971,6 +998,9 @@ VIEWS.mixed = (main, args) => {
     if (it.k === 'concept'){
       const c = (t.concept || []).find(x => x.id === it.id); if (!c) return;
       main.append(lab, conceptItem(t, c, it.ans, a => { it.ans = a; store.save(); show(); }));
+    } else if (it.k === 'sketch'){
+      const sp = (t.sketch || []).find(x => x.id === it.id); if (!sp) return;
+      main.append(lab, SKUI.sketchBox(sp, {mode:'practice', topic:t, ctx:'#mix' + run.id, onSolved:show}));
     } else {
       const task = t.practice.find(k => k.id === it.id); if (!task) return;
       main.append(lab, taskBox(task, {slot:'#mix' + run.id, onResult:(tk, g, r, all) => { if (tk.goals.every(gg => all[gg.id] && all[gg.id].state === 'solved')) show(); }}));
@@ -1108,14 +1138,14 @@ function errbookView(main){
   main.append(h('label', {class:'fld'}, 'Anzeigen', sel));
   const B = store.data.errbook.slice().reverse().filter(e => flt === 'all' || (!e.done && !e.solved));
   if (!B.length){ main.append(h('p', {style:'margin-top:16px'}, flt === 'all' ? 'Das Fehlerheft ist leer.' : 'Keine offenen Einträge.')); return; }
-  const KIND = {line:'Rechenzeile', concept:'Konzeptfrage', seg:'Frage im Erklärteil', final:'Abschluss'};
+  const KIND = {line:'Rechenzeile', concept:'Konzeptfrage', seg:'Frage im Erklärteil', final:'Abschluss', sketch:'Skizze'};
   const list = h('div', {class:'eblist'});
   for (const e of B){
     const t = topicById(e.t);
     const it = h('div', {class:'eb-item' + (e.done || e.solved ? ' done' : '')});
     const tk = e.k === 'line' ? (t && t.practice.find(k => k.id === e.ref)) : null;
     const ctx = tk ? ctxOf(tk.ctx) : null;
-    let html = '<div class="small muted">' + fmtD(e.d) + ' · ' + escH(KIND[e.k] || e.k) + (t ? ' · ' + escH(tname(t) + ': ' + (t.short || t.title)) : '') + (e.n > 1 ? ' · ' + e.n + '×' : '') + (e.solved ? ' · <b class="okc">später gelöst</b>' : '') + '</div>';
+    let html = '<div class="small muted">' + fmtD(e.d) + ' · ' + escH(KIND[e.k] || e.k) + (e.k === 'sketch' && e.fin ? ' im Abschluss, Form ' + escH(e.fin) : '') + (t ? ' · ' + escH(tname(t) + ': ' + (t.short || t.title)) : '') + (e.n > 1 ? ' · ' + e.n + '×' : '') + (e.solved ? ' · <b class="okc">später gelöst</b>' : '') + '</div>';
     if (e.k === 'line'){
       html += '<div class="small">' + inl(e.title || '') + (e.prompt ? ' – ' + inl(e.prompt) : '') + '</div><div class="ebline">' + lineHTML(e.text, ctx) + '</div>' + (e.msg ? '<div class="small ebmsg">' + inl(e.msg) + '</div>' : '');
     } else {
@@ -1128,6 +1158,7 @@ function errbookView(main){
     if (t && e.k === 'seg' && e.seg) links.push('<a href="#/learn/' + t.id + '/3/' + encodeURIComponent(e.seg) + '">Zum Abschnitt</a>');
     if (t && e.k === 'seg' && !e.seg) links.push('<a href="#/learn/' + t.id + '/4">Zum Beispiel</a>');
     if (t && e.k === 'final') links.push('<a href="#/learn/' + t.id + '/6">Üben</a>');
+    if (e.k === 'sketch'){ const inPr = t && (t.sketch || []).some(x => x.id === e.ref); links.push('<a href="#/' + (inPr ? 'practice/' + t.id + '/' + encodeURIComponent('s:' + e.ref) : 'sketch/' + encodeURIComponent(e.ref)) + '">Zur Skizze</a>'); }
     if (t && e.seg && e.k !== 'seg') links.push(segLinkHTML(t.id, e.seg));
     if (e.lex) links.push(refLinkHTML(e.lex));
     html += '<div class="row small eblinks">' + links.filter(Boolean).join(' · ') + '</div>';
@@ -1140,6 +1171,16 @@ function errbookView(main){
   bc.onclick = () => { store.data.errbook = store.data.errbook.filter(e => !e.done && !e.solved); store.save(); go('review/heft', true); };
   main.append(bc);
 }
+
+/* Einzelne Skizze zum Nacharbeiten (aus dem Fehlerheft, z. B. eine Abschlussskizze): wie im Üben, eigener Speicher-Kontext */
+VIEWS.sketch = (main, args) => {
+  main.append(h('button', {class:'back', type:'button', onclick:() => go('review/heft')}, '← Fehlerheft'));
+  const r = SKUI.byId(args[0] || '');
+  if (!r){ main.append(h('h1', {}, 'Skizze'), h('p', {class:'muted'}, 'Diese Skizze gibt es nicht mehr.')); return; }
+  main.append(h('h1', {}, 'Skizze noch einmal'));
+  main.append(h('p', {class:'small muted', html:escH(tname(r.topic) + ': ' + r.topic.title) + (r.where === 'final' ? ' · aus dem Abschluss' : r.where === 'lab' ? ' · aus dem Labor' : '') + '. Zeichne neu, prüfe und vergleiche mit der Musterskizze.'}));
+  main.append(SKUI.sketchBox(r.spec, {mode:'practice', topic:r.topic, ctx:'#eb', book:false}));
+};
 
 /* ---------- Klausur vorbereiten ---------- */
 /* Probeklausur: [Rechenaufgaben, Konzeptfragen (20–30 %), Minuten] */
@@ -1277,7 +1318,8 @@ VIEWS.settings = (main, args) => {
     pen.innerHTML = `<h3>Stift und Handschrift</h3>
     <label class="fld">Eingabe in den Rechenzeilen <select class="s-input"><option value="kbd">Tastatur</option><option value="pen">Stift</option><option value="auto">automatisch (Stift, sobald ein Stift benutzt wurde)</option></select></label>
     <label class="ckm"><input type="checkbox" class="s-finger"> <span>Mit dem Finger schreiben (für Geräte ohne Stift). Aus: Finger und Handballen schreiben nicht.</span></label>
-    <p class="small muted">In jeder Zeile kannst du vorn mit ✎ (Stift) und ⌨ (Tastatur) wechseln. ${escH(INKUI.status())}</p>`;
+    <p class="small muted">In jeder Zeile kannst du vorn mit ✎ (Stift) und ⌨ (Tastatur) wechseln. ${escH(INKUI.status())}</p>
+    <p class="small muted">Skizzen und Schmierzettel nehmen auch den Finger, solange auf diesem Gerät nie ein Stift benutzt wurde. Sie bleiben nur auf diesem Gerät und werden nie gesendet.</p>`;
     $('.s-input', pen).value = INKUI.pref(); $('.s-finger', pen).checked = !!S.inkFinger;
     pen.addEventListener('change', () => { S.input = $('.s-input', pen).value; S.inkFinger = $('.s-finger', pen).checked; store.save(); toast('Gespeichert.'); });
     const bh = h('button', {class:'btn btn-sm', type:'button'}, 'Handschrift anlernen');
@@ -1295,7 +1337,7 @@ VIEWS.settings = (main, args) => {
   const fi = h('input', {type:'file', accept:'application/json', 'aria-label':'Lernstand einlesen', style:'max-width:260px'});
   fi.onchange = () => { const r = new FileReader(); r.onload = () => { try { const d = JSON.parse(r.result); if (!d || typeof d !== 'object' || !d.topics) throw new Error('keine Lernstand-Datei'); store.load(d); store.save(); toast('Lernstand eingelesen.'); render(); } catch(e){ toast('Datei passt nicht: ' + e.message); } }; r.readAsText(fi.files[0]); };
   const bd = h('button', {class:'btn btn-sm', type:'button'}, 'Alles zurücksetzen');
-  bd.onclick = () => { if (!bd.dataset.sure){ bd.dataset.sure = '1'; bd.textContent = 'Wirklich alles löschen? Noch einmal tippen'; setTimeout(() => { delete bd.dataset.sure; bd.textContent = 'Alles zurücksetzen'; }, 5000); return; } store.load({}); store.save(); render(); };
+  bd.onclick = () => { if (!bd.dataset.sure){ bd.dataset.sure = '1'; bd.textContent = 'Wirklich alles löschen? Noch einmal tippen'; setTimeout(() => { delete bd.dataset.sure; bd.textContent = 'Alles zurücksetzen'; }, 5000); return; } store.load({}); store.save(); SKUI.resetAll(); render(); };
   const bc = h('button', {class:'btn btn-sm', type:'button'}, 'In die Zwischenablage');
   bc.onclick = () => { try { navigator.clipboard.writeText(JSON.stringify(store.data)).then(() => toast('Kopiert. In eine Textdatei einfügen und sichern.'), () => toast('Kopieren nicht möglich.')); } catch(e){ toast('Kopieren nicht möglich.'); } };
   data.append(h('div', {class:'row'}, bx, bc, fi, bd));

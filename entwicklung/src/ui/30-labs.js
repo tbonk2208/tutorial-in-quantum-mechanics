@@ -128,7 +128,7 @@ LABS.prob = (el, L, o) => {
     sup:{name:'(ψ₁ + ψ₂)/√2', f:x => (S2 * Math.sin(Math.PI * x) + S2 * Math.sin(2 * Math.PI * x)) / S2},
     tri:{name:'Dreieck', f:x => Math.sqrt(3) * 2 * (x < 0.5 ? x : 1 - x)},
     gauss:{name:'Gauß (σ = 0,13 L)', f:x => Math.pow(2 * Math.PI * 0.0169, -0.25) * Math.exp(-Math.pow(x - 0.5, 2) / (4 * 0.0169))},
-    exp:{name:'Exponentialdichte (a = 0,7 L)', f:x => Math.sqrt(2 / 0.7 / (1 - Math.exp(-2 / 0.7))) * Math.exp(-x / 0.7)}
+    exp:{name:'Exponentialdichte (Abklinglänge ℓ = 0,7 L)', f:x => Math.sqrt(2 / 0.7 / (1 - Math.exp(-2 / 0.7))) * Math.exp(-x / 0.7)}
   };
   let key = F[I.f] ? I.f : F[I.key] ? I.key : 'par', a = I.a ?? 0.2, b = I.b ?? 0.5;
   const integ = (f, lo, hi) => { const n = 600; let s = 0; for (let i = 0; i < n; i++){ const x = lo + (hi - lo) * (i + 0.5) / n; s += f(x); } return s * (hi - lo) / n; };

@@ -117,10 +117,12 @@ const INKUI = (() => {
     down(e){
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       if (e.pointerType === 'touch'){
-        /* Finger und Handballen schreiben nicht – außer „Mit dem Finger schreiben“ ist an und in der letzten Minute kam kein Stift */
-        if (!finger() || PEN.contact || (PEN.seen && now() - PEN.penT < 60000)){
+        /* Finger und Handballen schreiben nicht – außer „Mit dem Finger schreiben“ ist an und in der letzten Minute kam kein Stift.
+           opt.finger() ersetzt die Einstellung für einzelne Flächen (Skizzen, Schmierzettel: Finger auch, solange nie ein Stift da war). */
+        const fok = this.opt.finger ? !!this.opt.finger() : finger();
+        if (!fok || PEN.contact || (PEN.seen && now() - PEN.penT < 60000)){
           e.preventDefault();
-          if (!finger() && !PEN.seen && this.opt.onTouchIgnored) this.opt.onTouchIgnored();
+          if (!fok && !PEN.seen && this.opt.onTouchIgnored) this.opt.onTouchIgnored();
           return;
         }
       }

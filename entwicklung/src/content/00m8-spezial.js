@@ -160,6 +160,23 @@ topic({
     ]
   },
   lab:{type:'special', title:'Hermite, Legendre, Laguerre',
+    sketch:{id:'ms-lab-s', kind:'curve', draw:'psi', title:'Vorhersage: die Hermite-Funktion $u_4$',
+      text:'Gleich zeichnet das Labor die Hermite-Funktionen $u_n = H_n(x)\\,e^{-x^2/2}/\\sqrt{\\sqrt\\pi\\,2^nn!}$. Skizziere vorher $u_4$ für $-5 \\le x \\le 5$. Skala und Vorzeichen sind frei. Stell danach die Familie „Hermite-Funktionen“ und $n = 4$ ein und vergleiche; die Anzeige zählt auch die Nullstellen.',
+      plot:{x:[-5, 5], xlab:'x', ylab:'u_4(x)', ticks:[{x:-4, lab:'-4'}, {x:-2, lab:'-2'}, {x:0, lab:'0'}, {x:2, lab:'2'}, {x:4, lab:'4'}]},
+      // H_4 = 16x⁴ − 48x² + 12: Nullstellen ±0,525 und ±1,651; Extrema von H_4 e^{−x²/2} bei 0 (12), ±1,075 (−12,4), ±2,418 (15,0)
+      f:x => (16 * x ** 4 - 48 * x * x + 12) * Math.exp(-x * x / 2),
+      checks:[
+        {id:'knoten', type:'nodes', n:4, msg:'Wie viele Nullstellen hat ein Polynom vom Grad $n$ aus dieser Familie? Deine Skizze hat {got}. (Abschnitt „Orthogonale Polynome mit Gewicht“)'},
+        {id:'sym', type:'parity', p:'even', about:0, msg:'Welche Parität hat $H_n$ für gerades $n$? Deine Skizze ist {got}.'},
+        {id:'links', type:'decay', toward:'left', range:[-5, -2.6], msg:'Was macht der Faktor $e^{-x^2/2}$ für große $|x|$ gegen das Polynom?'},
+        {id:'rechts', type:'decay', toward:'right', range:[2.6, 5], msg:'Was macht $u_4$ für große $x$? Wer gewinnt: $x^4$ oder $e^{-x^2/2}$?'}
+      ],
+      reveal:'$u_4 \\propto (16x^4 - 48x^2 + 12)\\,e^{-x^2/2}$: vier Nullstellen bei $\\pm 0{,}52$ und $\\pm 1{,}65$, gerade, mit fünf Buckeln. Die äußeren Buckel sind die höchsten, weiter außen klingt die Funktion rasch ab, weil die Gauß-Funktion jede Potenz übertrifft. Genau so sieht der Oszillatorzustand $\\psi_4$ aus (Thema 7); das Labor zählt vier Nullstellen.',
+      hints:['Zähle zuerst die Nullstellen, dann überlege die Symmetrie, zuletzt das Verhalten für große $|x|$.', '$H_n$ hat $n$ einfache Nullstellen und die Parität $(-1)^n$; der Gauß-Faktor $e^{-x^2/2}$ sorgt für das Abklingen.'],
+      wrong:[
+        {f:x => (8 * x ** 3 - 12 * x) * Math.exp(-x * x / 2), fails:['knoten', 'sym'], why:'u₃ gezeichnet: Grad und Knotenzahl um eins verschoben'},
+        {f:x => 16 * x ** 4 - 48 * x * x + 12, fails:['links', 'rechts'], why:'Gauß-Faktor vergessen: nur das Polynom H₄'}
+      ]},
     text:'Wähle die Familie und die Grade $n$ und $m$. Gezeichnet werden $f_n$ und $f_m$: bei Hermite die normierten Hermite-Funktionen $u_n = H_ne^{-x^2/2}/\\sqrt{\\sqrt\\pi\\,2^nn!}$, bei Legendre $P_n$, bei Laguerre $L_ne^{-x/2}$. Die Anzeige nennt das Polynom, die Zahl seiner Nullstellen und das Orthogonalitätsintegral mit Gewicht: $\\int H_nH_me^{-x^2}dx$, $\\int_{-1}^1P_nP_m\\,dx$ bzw. $\\int_0^\\infty L_nL_me^{-x}dx$.',
     predict:{q:'Bevor du das Labor bedienst: Hat die Hermite-Funktion $u_5$ eine Nullstelle bei $x = 0$?', opts:['ja, weil $H_5$ ungerade ist', 'nein, weil $u_5$ dort maximal ist', 'nur bei geradem Vergleichsgrad $m$'], a:0, ex:'$H_5$ hat die Parität $(-1)^5 = -1$, ist also ungerade und verschwindet bei $x = 0$. Die übrigen vier Nullstellen liegen symmetrisch dazu.'},
     questions:[
@@ -266,6 +283,43 @@ topic({
     {id:'ms-c5', type:'mc', seg:'ms-t1', lex:'kugelkoordinaten', q:'Jemand berechnet den vollen Raumwinkel als $\\int_0^{2\\pi}\\!\\int_0^{2\\pi}\\sin\\theta\\,d\\theta\\,d\\varphi$ und erhält $0$. Was ist falsch?', opts:['$\\theta$ läuft nur von $0$ bis $\\pi$.', 'Im Integranden fehlt der Faktor $r^2$.', '$\\varphi$ läuft nur von $0$ bis $\\pi$.'], a:0,
       ex:'Mit $0 \\le \\theta \\le \\pi$ ist $\\int_0^\\pi\\sin\\theta\\,d\\theta = 2$ und der Raumwinkel $4\\pi$. Bis $2\\pi$ würde jede Richtung doppelt gezählt, und der negative Teil des Sinus hebt alles auf. $r^2$ gehört zum Volumen, nicht zum Raumwinkel.'}
   ],
+  sketch:[
+    {id:'ms-s1', kind:'curve', draw:'abs2', title:'Radiale Dichte eines Gauß-Zustands',
+      text:'Ein Zustand hat $\\psi(r) = A\\,e^{-r^2/(2b^2)}$ und hängt nicht von $\\theta$ und $\\varphi$ ab. Skizziere die radiale Wahrscheinlichkeitsdichte $P(r)$ für $0 \\le r \\le 3{,}5\\,b$. Die Skala der $y$-Achse ist frei.',
+      plot:{x:[0, 3.5], xlab:'r/b', ylab:'P(r)', ticks:[{x:0, lab:'0'}, {x:1, lab:'1'}, {x:2, lab:'2'}, {x:3, lab:'3'}]},
+      // P(r) = 4πr²|ψ|² ∝ r² e^{−r²/b²}: P(0) = 0, Maximum bei r = b aus d/dr(r² e^{−r²}) = 0
+      f:r => r * r * Math.exp(-r * r),
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Wahrscheinlichkeitsdichte negativ sein?'},
+        {id:'null', type:'zero', at:[0], msg:'Wie viel Volumen hat eine dünne Kugelschale bei $r \\to 0$? Welchen Wert hat $P(0)$ deshalb? (Abschnitt „Radiale Funktionen“)'},
+        {id:'max', type:'maxat', x:1, tol:0.25, msg:'Wo hat $r^2e^{-r^2/b^2}$ sein Maximum? Leite ab und setze null.'},
+        {id:'aussen', type:'decay', toward:'right', range:[1.8, 3.5], msg:'Was macht $P(r)$ für große $r$?'}
+      ],
+      reveal:'$P(r) = 4\\pi r^2|\\psi|^2 \\propto r^2e^{-r^2/b^2}$. Der Faktor $r^2$ (Schalenvolumen) macht $P(0) = 0$, obwohl $|\\psi|^2$ bei $r = 0$ am größten ist. Aus $\\frac{d}{dr}(r^2e^{-r^2/b^2}) = 2r(1 - r^2/b^2)\\,e^{-r^2/b^2} = 0$ folgt das Maximum bei $r = b$. Für große $r$ gewinnt die Gauß-Funktion.',
+      hints:['Schreib $P(r)$ mit dem Faktor $4\\pi r^2$ hin und überlege, was bei $r = 0$ und für große $r$ passiert.', 'Dichte pro Volumen und Dichte pro Abstand unterscheiden sich um das Schalenvolumen $4\\pi r^2\\,dr$.'],
+      wrong:[
+        {f:r => Math.exp(-r * r), fails:['null', 'max'], why:'Radialdichte ohne r²: |ψ|² statt 4πr²|ψ|²'},
+        {f:r => r * r * Math.exp(-r * r / 2), fails:['max'], why:'ψ statt |ψ|² mit r² multipliziert'}
+      ]},
+    {id:'ms-s2', kind:'curve', draw:'f', title:'Ein Legendre-Polynom als Funktion des Winkels',
+      text:'Die Winkelabhängigkeit von $Y_2^0$ ist $P_2(\\cos\\theta)$ mit $P_2(x) = \\frac12(3x^2 - 1)$. Skizziere $P_2(\\cos\\theta)$ für $0 \\le \\theta \\le \\pi$. Die Skala der $y$-Achse ist frei; Vorzeichen und Nullstellen sollen stimmen.',
+      plot:{x:[0, Math.PI], xlab:'\\theta', ylab:'P_2(\\cos\\theta)', ticks:[{x:0, lab:'0'}, {x:Math.PI / 4, lab:'\\pi/4'}, {x:Math.PI / 2, lab:'\\pi/2'}, {x:3 * Math.PI / 4, lab:'3\\pi/4'}, {x:Math.PI, lab:'\\pi'}]},
+      // P_2(cos θ) = (3cos²θ − 1)/2: 1 an den Polen, −1/2 am Äquator, Nullstellen bei cos θ = ±1/√3, also θ ≈ 0,955 und 2,186
+      f:t => (3 * Math.cos(t) ** 2 - 1) / 2,
+      checks:[
+        {id:'knoten', type:'nodes', n:2, msg:'Wie viele Nullstellen hat $P_2(x)$ zwischen $-1$ und $1$? Jede gehört zu einem Winkel $\\theta$. Deine Skizze hat {got}. (Abschnitt „Orthogonale Polynome mit Gewicht“)'},
+        {id:'sym', type:'parity', p:'even', about:Math.PI / 2, msg:'Was macht $\\cos\\theta$, wenn man $\\theta$ durch $\\pi - \\theta$ ersetzt? Was folgt daraus für das gerade Polynom $P_2$?'},
+        {id:'pole', type:'amp', a:[0, 0.3], b:[1.27, 1.87], cmp:'>', msg:'Vergleiche $P_2$ am Pol ($\\theta = 0$, also $x = 1$) mit dem Äquator ($\\theta = \\pi/2$, also $x = 0$).'},
+        {id:'aeq', type:'sign', s:-1, range:[1.3, 1.84], msg:'Welches Vorzeichen hat $P_2(0)$? Das ist der Wert am Äquator.'}
+      ],
+      reveal:'An den Polen ist $\\cos\\theta = \\pm 1$ und $P_2 = 1$, am Äquator $\\cos\\theta = 0$ und $P_2 = -\\frac12$. Dazwischen liegen die zwei Nullstellen von $P_2$, bei $\\cos\\theta = \\pm 1/\\sqrt3$, also $\\theta \\approx 55°$ und $125°$: die Knotenkegel von $Y_2^0$. Weil $P_2$ gerade ist und $\\cos(\\pi - \\theta) = -\\cos\\theta$ gilt, ist die Kurve symmetrisch zu $\\theta = \\pi/2$.',
+      hints:['Rechne die Werte bei $\\theta = 0$, $\\pi/2$ und $\\pi$ aus und bestimme die Winkel, bei denen $P_2(\\cos\\theta) = 0$ wird.', '$P_l$ hat $l$ Nullstellen in $(-1, 1)$; jede entspricht genau einem $\\theta$ zwischen $0$ und $\\pi$.'],
+      wrong:[
+        {f:t => Math.cos(t) ** 2, fails:['knoten'], why:'mit |Y₁₀|² ∝ cos²θ verwechselt: kein Vorzeichenwechsel'},
+        {f:t => Math.cos(t), fails:['knoten', 'sym'], why:'P₁ statt P₂'},
+        {f:t => (3 * Math.sin(t) ** 2 - 1) / 2, fails:['pole', 'aeq'], why:'θ wie eine geographische Breite vom Äquator statt vom Pol gemessen: P₂(sin θ) statt P₂(cos θ) (plausible Verwechslung, ohne Beleg)'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'ms-f1', title:'Kugelschale', text:'Berechne $\\int\\frac1r\\,d^3r$ über die Kugelschale $a < r < b$.',
       ctx:SPH({params:{a:'pos', b:{range:['a', '3a']}}}),
@@ -284,7 +338,22 @@ topic({
     {aim:'k', id:'ms-fk2', type:'dialog', text:'Gesucht ist der Mittelwert von $\\cos^2\\theta$ über alle Richtungen im Raum, gleichmäßig gewichtet.',
       people:[{name:'Lena', says:'Das ist $1/2$, denn $\\cos^2$ hat über eine volle Periode den Mittelwert $1/2$.'}, {name:'Jonas', says:'Mit dem Raumwinkelelement $\\sin\\theta\\,d\\theta\\,d\\varphi$ kommt $\\frac{1}{4\\pi}\\int\\cos^2\\theta\\,d\\Omega = 1/3$ heraus.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'Gleichmäßig über Richtungen heißt: mit $d\\Omega$ gewichten. $\\frac{1}{4\\pi}\\cdot 2\\pi\\int_{-1}^1u^2du = \\frac13$. Lenas $1/2$ wäre der Mittelwert über $\\theta$ ohne $\\sin\\theta$; sie gewichtet die Pole zu stark.'}
+      ex:'Gleichmäßig über Richtungen heißt: mit $d\\Omega$ gewichten. $\\frac{1}{4\\pi}\\cdot 2\\pi\\int_{-1}^1u^2du = \\frac13$. Lenas $1/2$ wäre der Mittelwert über $\\theta$ ohne $\\sin\\theta$; sie gewichtet die Pole zu stark.'},
+    {aim:2, sketch:{id:'ms-fs-a', kind:'curve', draw:'psi', title:'Ein Legendre-Polynom', points:2,
+      text:'Skizziere das Legendre-Polynom $P_3(x)$ auf $[-1, 1]$. Skala und Vorzeichen sind frei; Nullstellen und Symmetrie sollen stimmen.',
+      plot:{x:[-1, 1], xlab:'x', ylab:'P_3(x)', ticks:[{x:-1, lab:'-1'}, {x:-0.5, lab:'-0{,}5'}, {x:0, lab:'0'}, {x:0.5, lab:'0{,}5'}, {x:1, lab:'1'}]},
+      // P_3 = (5x³ − 3x)/2: Nullstellen 0 und ±√(3/5) ≈ ±0,775, Extrema bei ±1/√5 ≈ ±0,447 (Wert ∓0,447), P_3(±1) = ±1
+      f:x => (5 * x ** 3 - 3 * x) / 2,
+      checks:[
+        {id:'knoten', type:'nodes', n:3, msg:'Wie viele Nullstellen hat $P_3$ in $(-1, 1)$? Deine Skizze hat {got}.'},
+        {id:'sym', type:'parity', p:'odd', about:0, msg:'Welche Parität hat $P_n$ für ungerades $n$? Deine Skizze ist {got}.'},
+        {id:'buckel', type:'extrema', n:2, msg:'Wie viele Extrema liegen zwischen drei einfachen Nullstellen? Deine Skizze hat {got} im Inneren.'}
+      ],
+      reveal:'$P_3(x) = \\frac12(5x^3 - 3x)$ hat drei einfache Nullstellen in $(-1, 1)$, bei $0$ und $\\pm\\sqrt{3/5} \\approx \\pm 0{,}77$, und ist ungerade, wie jedes $P_n$ mit ungeradem $n$. Zwischen den Nullstellen liegen zwei Extrema bei $\\pm 1/\\sqrt5$. An den Rändern ist $|P_3| = 1$.',
+      wrong:[
+        {f:x => (3 * x * x - 1) / 2, fails:['knoten', 'sym'], why:'P₂ gezeichnet: Grad um eins verschoben'},
+        {f:x => x ** 3, fails:['knoten', 'buckel'], why:'nur die führende Potenz x³: eine Nullstelle statt drei'}
+      ]}}
   ],
   finalB:[
     {aim:0, task:{id:'ms-fb4', title:'Radiales Integral', text:'Berechne $\\int r\\,e^{-r/a}\\,d^3r$ über den ganzen Raum ($a > 0$).',
@@ -304,7 +373,22 @@ topic({
     {aim:'k', id:'ms-fbk2', type:'dialog', text:'Gesucht ist $\\langle r\\rangle$ für $\\psi(r) = e^{-r/a}/\\sqrt{\\pi a^3}$.',
       people:[{name:'Lena', says:'$\\langle r\\rangle = \\int_0^\\infty r\\,|\\psi|^2\\,dr$, wie in einer Dimension.'}, {name:'Jonas', says:'$\\langle r\\rangle = 4\\pi\\int_0^\\infty r\\,|\\psi|^2\\,r^2\\,dr$, mit dem Maß der Kugelschalen.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'Erwartungswerte brauchen dasselbe Maß wie die Normierung: $d^3r = 4\\pi r^2\\,dr$ für radiale Funktionen. Jonas erhält $\\langle r\\rangle = \\frac32a$; Lenas Integral hat nicht einmal die richtige Einheit.'}
+      ex:'Erwartungswerte brauchen dasselbe Maß wie die Normierung: $d^3r = 4\\pi r^2\\,dr$ für radiale Funktionen. Jonas erhält $\\langle r\\rangle = \\frac32a$; Lenas Integral hat nicht einmal die richtige Einheit.'},
+    {aim:2, sketch:{id:'ms-fs-b', kind:'curve', draw:'psi', title:'Ein Legendre-Polynom', points:2,
+      text:'Skizziere das Legendre-Polynom $P_4(x)$ auf $[-1, 1]$. Skala und Vorzeichen sind frei; Nullstellen und Symmetrie sollen stimmen.',
+      plot:{x:[-1, 1], xlab:'x', ylab:'P_4(x)', ticks:[{x:-1, lab:'-1'}, {x:-0.5, lab:'-0{,}5'}, {x:0, lab:'0'}, {x:0.5, lab:'0{,}5'}, {x:1, lab:'1'}]},
+      // P_4 = (35x⁴ − 30x² + 3)/8: Nullstellen ±0,340 und ±0,861, Extrema bei 0 (3/8) und ±√(3/7) ≈ ±0,655 (−3/7), P_4(±1) = 1
+      f:x => (35 * x ** 4 - 30 * x * x + 3) / 8,
+      checks:[
+        {id:'knoten', type:'nodes', n:4, msg:'Wie viele Nullstellen hat $P_4$ in $(-1, 1)$? Deine Skizze hat {got}.'},
+        {id:'sym', type:'parity', p:'even', about:0, msg:'Welche Parität hat $P_n$ für gerades $n$? Deine Skizze ist {got}.'},
+        {id:'buckel', type:'extrema', n:3, msg:'Wie viele Extrema liegen zwischen vier einfachen Nullstellen? Deine Skizze hat {got} im Inneren.'}
+      ],
+      reveal:'$P_4(x) = \\frac18(35x^4 - 30x^2 + 3)$ hat vier einfache Nullstellen in $(-1, 1)$, bei $\\pm 0{,}34$ und $\\pm 0{,}86$, und ist gerade, wie jedes $P_n$ mit geradem $n$. Zwischen den Nullstellen liegen drei Extrema, bei $0$ und $\\pm\\sqrt{3/7}$. An den Rändern ist $P_4 = 1$.',
+      wrong:[
+        {f:x => (5 * x ** 3 - 3 * x) / 2, fails:['knoten', 'sym'], why:'P₃ gezeichnet: Grad um eins verschoben'},
+        {f:x => x ** 4, fails:['knoten', 'buckel'], why:'nur die führende Potenz x⁴: kein Vorzeichenwechsel'}
+      ]}}
   ],
   errors:[
     {id:'ms-e1', title:'Normierung ohne Volumenelement',

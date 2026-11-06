@@ -162,6 +162,25 @@ topic({
     ]
   },
   lab:{type:'delta', title:'Die δ-Distribution als Grenzwert',
+    sketch:{id:'ma-lab-s', kind:'curve', draw:'f', title:'Vorhersage: eine δ-Folge',
+      text:'Gleich zeigt das Labor eine δ-Folge. Skizziere vorher die Gauß-Form $\\delta_\\varepsilon(x - a)$ aus dem Lerntext (Fläche 1) für $\\varepsilon = 0{,}25$ und $a = 1$. Achte auf Lage, Breite und Höhe; die Achse ist absolut. Stell danach im Labor die Form „Gauß“, $\\varepsilon = 0{,}25$ und $a = 1$ ein und vergleiche mit der schmalen Spitze.',
+      plot:{x:[-3, 3], y:[-0.5, 2], abs:true, xlab:'x', ylab:'\\delta_\\varepsilon(x - a)', ticks:[{x:-2, lab:'-2'}, {x:-1, lab:'-1'}, {x:0, lab:'0'}, {x:1, lab:'1'}, {x:2, lab:'2'}], yticks:[{y:0.5, lab:'0{,}5'}, {y:1, lab:'1'}, {y:1.5, lab:'1{,}5'}]},
+      // δ_ε(x − a) = e^{−(x−a)²/(2ε²)}/(√(2π) ε), ε = 0,25: Höhe 1,596, Halbwertsbreite 2√(2 ln 2)·ε = 0,589, Fläche 1
+      f:x => Math.exp(-((x - 1) ** 2) / (2 * 0.0625)) / (Math.sqrt(2 * Math.PI) * 0.25),
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Die Gauß-Kurve $e^{-u^2}$ ist überall positiv. Kann $\\delta_\\varepsilon(x - a)$ dann negativ werden?'},
+        {id:'lage', type:'center', x:1, tol:0.2, msg:'Wo sitzt die Spitze von $\\delta_\\varepsilon(x - a)$? An welcher Stelle wird das Argument null?'},
+        {id:'breite', type:'fwhm', v:0.589, tol:0.3, msg:'Wie hängt die Breite der Spitze von $\\varepsilon$ ab? Auf halber Höhe ist deine Kurve {got} breit.'},
+        {id:'hoehe', type:'level', range:[0.95, 1.05], v:1.585, tol:0.4, msg:'Wie hoch ist die Spitze bei $x = a$? Deine liegt bei etwa {got}.'},
+        {id:'flaeche', type:'area', range:[0.2, 1.8], v:1, tol:0.3, msg:'Welche Fläche hat jedes Glied einer δ-Folge? Deine ist etwa {got}. Wie hoch muss eine so schmale Spitze dann sein? (Abschnitt „Die δ-Distribution“)'}
+      ],
+      reveal:'Die Spitze sitzt bei $x = a = 1$, wo das Argument $x - a$ null wird. Ihre Breite auf halber Höhe ist $2\\sqrt{2\\ln 2}\\,\\varepsilon \\approx 0{,}59$. Damit die Fläche 1 bleibt, ist sie $1/(\\sqrt{2\\pi}\\,\\varepsilon) \\approx 1{,}6$ hoch – höher als 1. Halbiert man $\\varepsilon$, wird sie halb so breit und doppelt so hoch. Im Labor siehst du zusätzlich, wie die Spitze aus der Testfunktion den Wert $f(a)$ herausgreift.',
+      hints:['Kläre nacheinander: Wo liegt die Mitte, wie breit ist die Glocke, und welche Fläche muss sie haben?', 'Eine Gauß-Glocke der Fläche 1 mit Standardabweichung $\\varepsilon$ hat die Höhe $1/(\\sqrt{2\\pi}\\,\\varepsilon)$.'],
+      wrong:[
+        {f:x => Math.exp(-((x + 1) ** 2) / (2 * 0.0625)) / (Math.sqrt(2 * Math.PI) * 0.25), fails:['lage'], why:'δ(x − a) bei x = −a statt bei x = a'},
+        {f:x => Math.exp(-((x - 1) ** 2) / (2 * 0.0625)), fails:['hoehe'], why:'Höhe 1 statt Fläche 1'},
+        {f:x => Math.exp(-((x - 1) ** 2) / (2 * 0.25)) / (Math.sqrt(2 * Math.PI) * 0.25), fails:['breite', 'flaeche'], why:'Höhe zu ε passend, aber doppelt so breit (σ = 2ε): Fläche 2'}
+      ]},
     text:'Die schmale Spitze ist $\\delta_\\varepsilon(x - a)$, die zweite Kurve die Testfunktion $f$, die helle Fläche das Produkt $\\delta_\\varepsilon(x - a)f(x)$. Wähle die Form von $\\delta_\\varepsilon$ (Gauß, Lorentz oder Rechteck, jeweils mit Fläche 1) und eine Testfunktion, verkleinere $\\varepsilon$ und verschiebe die Spitze mit $a$. Die Anzeige vergleicht den Inhalt der hellen Fläche, $\\int\\delta_\\varepsilon(x - a)f(x)\\,dx$, mit $f(a)$.',
     predict:{q:'Bevor du die Regler bewegst: Hängt der Grenzwert von $\\int\\delta_\\varepsilon(x - a)f(x)\\,dx$ für $\\varepsilon \\to 0$ von der Form der Spitze ab?', opts:['Nein, alle drei Formen geben $f(a)$.', 'Ja, nur die Gauß-Form gibt genau $f(a)$.', 'Ja, nur das Rechteck gibt genau $f(a)$.'], a:0, ex:'Entscheidend sind die Fläche 1 und das Schmalerwerden. Bei endlichem $\\varepsilon$ unterscheiden sich die Formen; die Lorentz-Form konvergiert wegen ihrer langen Ausläufer am langsamsten.'},
     questions:[
@@ -284,6 +303,43 @@ topic({
       ex:'Randterme verschwinden nur, wenn $fg$ an beiden Grenzen null ist – etwa bei Wellenfunktionen, die im Unendlichen oder an Kastenwänden verschwinden. Jonas’ Ergebnis $1 - e < 0$ ist für einen positiven Integranden unmöglich.',
       seg:'ma-t4', lex:'partielle-integration'}
   ],
+  sketch:[
+    {id:'ma-s1', kind:'curve', draw:'f', title:'Taylor-Näherung zweiter Ordnung',
+      text:'Skizziere die Taylor-Näherung zweiter Ordnung von $\\cos x$ um $x_0 = 0$, also das Polynom $p_2(x)$, im Bereich $-2 \\le x \\le 2$. Die Skala der $y$-Achse ist frei, aber die Nullstellen sollen an der richtigen Stelle liegen.',
+      plot:{x:[-2, 2], xlab:'x', ylab:'p_2(x)', ticks:[{x:-2, lab:'-2'}, {x:-1, lab:'-1'}, {x:0, lab:'0'}, {x:1, lab:'1'}, {x:2, lab:'2'}]},
+      // p_2(x) = 1 − x²/2: p_2(0) = 1, Nullstellen ±√2 ≈ ±1,41, p_2(±2) = −1 (cos 2 ≈ −0,42)
+      f:x => 1 - x * x / 2,
+      checks:[
+        {id:'sym', type:'parity', p:'even', about:0, msg:'$\\cos x$ ist gerade. Welche Potenzen von $x$ kommen in seiner Taylor-Reihe deshalb vor?'},
+        {id:'max', type:'maxat', x:0, tol:0.4, msg:'Welches Vorzeichen hat $f\'\'(0)$ für $f = \\cos x$? Hat $p_2$ bei $x = 0$ ein Maximum oder ein Minimum?'},
+        {id:'null', type:'zero', at:[-Math.SQRT2, Math.SQRT2], tol:0.1, msg:'Wo wird $p_2(x)$ null? Rechne die Nullstellen aus und prüfe dabei den Koeffizienten $f\'\'(0)/2!$. (Abschnitt „Taylor-Reihen“)'},
+        {id:'fern', type:'amp', a:[1.7, 2], b:[-0.5, 0.5], cmp:'=', f:1.6, msg:'Vergleiche $|p_2(2)|$ mit $p_2(0)$. Bleibt das Polynom so flach wie $\\cos x$, das bei $x = 2$ erst bei $-0{,}42$ liegt?'}
+      ],
+      reveal:'$p_2(x) = 1 - \\frac{x^2}{2}$: eine nach unten offene Parabel mit Maximum $1$ bei $x = 0$ und Nullstellen bei $\\pm\\sqrt2 \\approx \\pm 1{,}41$. Nahe $x = 0$ stimmt sie mit $\\cos x$ in Wert, Steigung und Krümmung überein. Weiter weg fällt sie schneller: $p_2(\\pm 2) = -1$, aber $\\cos 2 \\approx -0{,}42$, und bei $x = \\pm 3$ wäre $p_2 = -3{,}5$, während $\\cos x$ nie unter $-1$ sinkt. Für kleine $x$ ist der Fehler etwa der erste weggelassene Term $x^4/24$.',
+      hints:['Bestimme $f(0)$, $f\'(0)$ und $f\'\'(0)$ für $f = \\cos x$, setze sie in die Taylor-Formel ein und berechne $p_2$ an ein paar Stellen.', 'Der Koeffizient von $x^n$ ist $f^{(n)}(0)/n!$, nicht $f^{(n)}(0)$.'],
+      wrong:[
+        {f:x => Math.cos(x), fails:['fern'], why:'cos x selbst gezeichnet: Näherung und Funktion gleichgesetzt, auch weit weg von x0'},
+        {f:x => 1 - x * x, fails:['null', 'fern'], why:'Faktor 1/n! vergessen: 1 − x²'},
+        {f:x => 1 + x * x / 2, fails:['max', 'null', 'fern'], why:'Vorzeichen der zweiten Ableitung falsch'}
+      ]},
+    {id:'ma-s2', kind:'curve', draw:'f', title:'Wo sitzt die Glocke?',
+      text:'Skizziere den Integranden $g(x) = x\\,e^{-(x - 1)^2}$ des Integrals $\\int_{-\\infty}^\\infty x\\,e^{-(x - 1)^2}dx$ im Bereich $-2{,}5 \\le x \\le 3{,}5$. Die Skala der $y$-Achse ist frei. Überlege danach: Ist das Integral null?',
+      plot:{x:[-2.5, 3.5], xlab:'x', ylab:'g(x)', ticks:[{x:-2, lab:'-2'}, {x:-1, lab:'-1'}, {x:0, lab:'0'}, {x:1, lab:'1'}, {x:2, lab:'2'}, {x:3, lab:'3'}]},
+      // g = x e^{−(x−1)²}: g' = 0 bei x = (1 ± √3)/2, Maximum 1,195 bei 1,366, Minimum −0,057 bei −0,366
+      f:x => x * Math.exp(-((x - 1) ** 2)),
+      checks:[
+        {id:'null', type:'zero', at:[0], msg:'Welchen Wert hat $g$ bei $x = 0$?'},
+        {id:'asym', type:'amp', a:[0, 3.5], b:[-2.5, 0], cmp:'>', msg:'Ist $g$ ungerade? Vergleiche $g(1)$ mit $g(-1)$. Wo sitzt die Glocke $e^{-(x - 1)^2}$? (Abschnitt „Gauß-Integrale“)'},
+        {id:'lage', type:'maxat', x:1.366, tol:0.3, msg:'Wo liegt das Maximum von $g$? Die Glocke sitzt bei $x = 1$, und der Faktor $x$ wächst nach rechts.'},
+        {id:'abkl', type:'decay', toward:'right', range:[2.5, 3.5], msg:'Was macht $g$ für große $x$: Gewinnt der Faktor $x$ oder die Gauß-Funktion?'}
+      ],
+      reveal:'Die Glocke $e^{-(x - 1)^2}$ sitzt bei $x = 1$. Der Faktor $x$ macht $g$ links von null negativ, dort ist die Glocke aber schon klein: Der negative Teil reicht nur bis etwa $-0{,}06$. Das Maximum $\\approx 1{,}2$ liegt bei $x = (1 + \\sqrt3)/2 \\approx 1{,}37$. $g$ ist also **nicht** ungerade, und das Integral ist nicht null: Mit $u = x - 1$ wird es $\\int(u + 1)e^{-u^2}du = 0 + \\sqrt\\pi$.',
+      hints:['Zeichne zuerst die Glocke $e^{-(x - 1)^2}$ und multipliziere dann in Gedanken mit $x$: Wo ist $x$ negativ, wo größer als 1?', 'Ein Integrand ist nur dann ungerade, wenn $g(-x) = -g(x)$ gilt. Die Glocke ist um $x = 1$ symmetrisch, nicht um $x = 0$.'],
+      wrong:[
+        {f:x => x * Math.exp(-x * x), fails:['asym', 'lage'], why:'Symmetrie gesehen, wo keine ist: Glocke bei 0, Integrand ungerade'},
+        {f:x => Math.exp(-((x - 1) ** 2)), fails:['null'], why:'Faktor x vergessen'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'ma-f3', title:'Geometrische Reihe', text:'Berechne $\\sum_{n=2}^\\infty 3^{-n}$.', ctx:{coords:['y'], params:{}},
       goals:[{id:'a', prompt:'Ergebnis:', type:'value', target:'1/6', points:2, model:['Σ_{n=2}^∞ 3^(-n) = 1/9 Σ_{n=0}^∞ (1/3)^n', '= 1/9 · 3/2', '= 1/6'],
@@ -300,7 +356,24 @@ topic({
     {aim:'k', id:'ma-fk2', type:'dialog', text:'Ein Pendel der Länge $l$ ist längs seiner Kreisbahn um die Bogenlänge $s$ aus der Ruhelage ausgelenkt. Seine potentielle Energie ist $V(s) = mgl\\,(1 - \\cos(s/l))$. Gesucht ist eine Näherung für kleine Auslenkungen.',
       people:[{name:'Lena', says:'Man muss bis zur ersten Ordnung gehen, die nicht verschwindet: $\\cos(s/l) \\approx 1 - s^2/(2l^2)$, also $V \\approx \\frac{mg}{2l}s^2$ – ein harmonisches Potential.'}, {name:'Jonas', says:'Für kleine $s$ ist $\\cos(s/l) \\approx 1$, also $V \\approx 0$. Das Potential ist dann vernachlässigbar.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:0,
-      ex:'Jonas’ Näherung ist zu grob: Sie verliert genau den Term, der die Schwingung antreibt. Mit $m\\omega^2 = V\'\'(0) = mg/l$ folgt die bekannte Kreisfrequenz $\\omega = \\sqrt{g/l}$.'}
+      ex:'Jonas’ Näherung ist zu grob: Sie verliert genau den Term, der die Schwingung antreibt. Mit $m\\omega^2 = V\'\'(0) = mg/l$ folgt die bekannte Kreisfrequenz $\\omega = \\sqrt{g/l}$.'},
+    {aim:2, sketch:{id:'ma-fs-a', kind:'curve', draw:'f', title:'Eine δ-Folge mit skaliertem Argument', points:3,
+      text:'Für die Gauß-Folge $\\delta_\\varepsilon(x) = \\frac{1}{\\sqrt{2\\pi}\\,\\varepsilon}e^{-x^2/(2\\varepsilon^2)}$ mit $\\varepsilon = 0{,}5$ ist $g(x) = \\delta_\\varepsilon(2x)$. Skizziere $g$. Die Achse ist absolut: Achte auf Höhe, Breite und Fläche.',
+      plot:{x:[-2, 2], y:[0, 2], abs:true, xlab:'x', ylab:'\\delta_\\varepsilon(2x)', ticks:[{x:-1, lab:'-1'}, {x:-0.5, lab:'-0{,}5'}, {x:0, lab:'0'}, {x:0.5, lab:'0{,}5'}, {x:1, lab:'1'}], yticks:[{y:0.5, lab:'0{,}5'}, {y:1, lab:'1'}, {y:1.5, lab:'1{,}5'}]},
+      // δ_ε(2x) = 0,798·e^{−8x²}: Höhe δ_ε(0) = 0,798, Standardabweichung ε/2 = 0,25, Halbwertsbreite 0,589, Fläche 1/2
+      f:x => Math.exp(-4 * x * x / (2 * 0.25)) / (Math.sqrt(2 * Math.PI) * 0.5),
+      checks:[
+        {id:'hoehe', type:'level', range:[-0.05, 0.05], v:0.798, tol:0.25, msg:'Welchen Wert hat $\\delta_\\varepsilon(2x)$ bei $x = 0$? Deine Höhe ist {got}.'},
+        {id:'breite', type:'fwhm', v:0.589, tol:0.3, msg:'Bei welchem $x$ erreicht $\\delta_\\varepsilon(2x)$ denselben Wert wie $\\delta_\\varepsilon(x)$ bei $x = 0{,}5$? Auf halber Höhe ist deine Kurve {got} breit.'},
+        {id:'flaeche', type:'area', range:[-0.8, 0.8], v:0.5, tol:0.25, msg:'Welche Fläche hat $\\delta_\\varepsilon(2x)$? Substituiere $u = 2x$. Deine ist etwa {got}.'},
+        {id:'lage', type:'maxat', x:0, tol:0.15, msg:'Wo wird das Argument $2x$ null?'}
+      ],
+      reveal:'$\\delta_\\varepsilon(2x)$ hat bei $x = 0$ denselben Wert $1/(\\sqrt{2\\pi}\\cdot 0{,}5) \\approx 0{,}80$ wie $\\delta_\\varepsilon(x)$, ist aber halb so breit: Den Wert, den $\\delta_\\varepsilon$ bei $x$ hat, erreicht $\\delta_\\varepsilon(2x)$ schon bei $x/2$. Deshalb ist die Fläche $\\tfrac12$. Das ist die Regel $\\delta(cx) = \\delta(x)/|c|$: Unter dem Integral wirkt die gestauchte Spitze wie $\\tfrac12\\delta(x)$. Die Glieder selbst sind aber schmaler, nicht niedriger. Wer $\\delta(2x) = 2\\delta(x)$ schreibt, verwechselt „schmaler“ mit „höher“.',
+      wrong:[
+        {f:x => 2 * Math.exp(-x * x / (2 * 0.25)) / (Math.sqrt(2 * Math.PI) * 0.5), fails:['hoehe', 'breite', 'flaeche'], why:'δ(2x) = 2δ(x): „schmaler“ mit „höher“ verwechselt'},
+        {f:x => Math.exp(-x * x / (2 * 0.0625)) / (Math.sqrt(2 * Math.PI) * 0.25), fails:['hoehe', 'flaeche'], why:'schmaler, aber auf Fläche 1 nachnormiert (δ_{ε/2})'},
+        {f:x => 0.5 * Math.exp(-x * x / (2 * 0.25)) / (Math.sqrt(2 * Math.PI) * 0.5), fails:['hoehe', 'breite'], why:'Regel δ(x)/|c| als halbe Höhe bei gleicher Breite gezeichnet'}
+      ]}}
   ],
   finalB:[
     {aim:0, task:{id:'ma-g1', title:'Geometrische Reihe', text:'Berechne $\\sum_{n=3}^\\infty 2^{-n}$.', ctx:{coords:['y'], params:{}},
@@ -318,7 +391,24 @@ topic({
     {aim:'k', id:'ma-gk2', type:'dialog', text:'Ein Potential $V$ hat bei $x_0$ ein Minimum. Für kleine Auslenkungen $s = x - x_0$ soll es genähert werden.',
       people:[{name:'Lena', says:'$V \\approx V(x_0) + V\'(x_0)\\,s$. Die lineare Näherung genügt für kleine $s$.'}, {name:'Jonas', says:'Im Minimum ist $V\'(x_0) = 0$. Die erste nicht triviale Ordnung ist $\\tfrac12V\'\'(x_0)\\,s^2$.'}],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], a:1,
-      ex:'Lenas Näherung ergibt nur die Konstante $V(x_0)$ und damit keine rücktreibende Kraft. Die quadratische Ordnung liefert das harmonische Potential mit $m\\omega^2 = V\'\'(x_0)$.'}
+      ex:'Lenas Näherung ergibt nur die Konstante $V(x_0)$ und damit keine rücktreibende Kraft. Die quadratische Ordnung liefert das harmonische Potential mit $m\\omega^2 = V\'\'(x_0)$.'},
+    {aim:2, sketch:{id:'ma-fs-b', kind:'curve', draw:'f', title:'Eine δ-Folge mit skaliertem Argument', points:3,
+      text:'Für die Gauß-Folge $\\delta_\\varepsilon(x) = \\frac{1}{\\sqrt{2\\pi}\\,\\varepsilon}e^{-x^2/(2\\varepsilon^2)}$ mit $\\varepsilon = 0{,}25$ ist $g(x) = \\delta_\\varepsilon(x/2)$. Skizziere $g$. Die Achse ist absolut: Achte auf Höhe, Breite und Fläche.',
+      plot:{x:[-2.5, 2.5], y:[0, 3.5], abs:true, xlab:'x', ylab:'\\delta_\\varepsilon(x/2)', ticks:[{x:-2, lab:'-2'}, {x:-1, lab:'-1'}, {x:-0.5, lab:'-0{,}5'}, {x:0, lab:'0'}, {x:0.5, lab:'0{,}5'}, {x:1, lab:'1'}, {x:2, lab:'2'}], yticks:[{y:0.5, lab:'0{,}5'}, {y:1, lab:'1'}, {y:1.5, lab:'1{,}5'}, {y:2, lab:'2'}, {y:3, lab:'3'}]},
+      // δ_ε(x/2) = 1,596·e^{−2x²}: Höhe δ_ε(0) = 1,596, Standardabweichung 2ε = 0,5, Halbwertsbreite 1,177, Fläche 2
+      f:x => Math.exp(-x * x / 4 / (2 * 0.0625)) / (Math.sqrt(2 * Math.PI) * 0.25),
+      checks:[
+        {id:'hoehe', type:'level', range:[-0.05, 0.05], v:1.596, tol:0.35, msg:'Welchen Wert hat $\\delta_\\varepsilon(x/2)$ bei $x = 0$? Deine Höhe ist {got}.'},
+        {id:'breite', type:'fwhm', v:1.177, tol:0.3, msg:'Bei welchem $x$ erreicht $\\delta_\\varepsilon(x/2)$ denselben Wert wie $\\delta_\\varepsilon(x)$ bei $x = 0{,}25$? Auf halber Höhe ist deine Kurve {got} breit.'},
+        {id:'flaeche', type:'area', range:[-1.6, 1.6], v:2, tol:0.25, msg:'Welche Fläche hat $\\delta_\\varepsilon(x/2)$? Substituiere $u = x/2$. Deine ist etwa {got}.'},
+        {id:'lage', type:'maxat', x:0, tol:0.25, msg:'Wo wird das Argument $x/2$ null?'}
+      ],
+      reveal:'$\\delta_\\varepsilon(x/2)$ hat bei $x = 0$ denselben Wert $1/(\\sqrt{2\\pi}\\cdot 0{,}25) \\approx 1{,}6$ wie $\\delta_\\varepsilon(x)$, ist aber doppelt so breit: Den Wert, den $\\delta_\\varepsilon$ bei $x$ hat, erreicht $\\delta_\\varepsilon(x/2)$ erst bei $2x$. Deshalb ist die Fläche $2$. Das ist die Regel $\\delta(cx) = \\delta(x)/|c|$ mit $c = \\tfrac12$: Unter dem Integral wirkt die gestreckte Spitze wie $2\\delta(x)$. Die Glieder selbst sind aber breiter, nicht höher.',
+      wrong:[
+        {f:x => 0.5 * Math.exp(-x * x / (2 * 0.0625)) / (Math.sqrt(2 * Math.PI) * 0.25), fails:['hoehe', 'breite', 'flaeche'], why:'δ(x/2) = δ(x)/2: Faktor falsch herum und Breite nicht geändert'},
+        {f:x => Math.exp(-x * x / (2 * 0.25)) / (Math.sqrt(2 * Math.PI) * 0.5), fails:['hoehe', 'flaeche'], why:'breiter, aber auf Fläche 1 nachnormiert (δ_{2ε})'},
+        {f:x => 2 * Math.exp(-x * x / (2 * 0.0625)) / (Math.sqrt(2 * Math.PI) * 0.25), fails:['hoehe', 'breite'], why:'Regel als doppelte Höhe bei gleicher Breite gezeichnet'}
+      ]}}
   ],
   errors:[
     {id:'ma-e1', title:'Partielle Integration mit Vorzeichenfehler',

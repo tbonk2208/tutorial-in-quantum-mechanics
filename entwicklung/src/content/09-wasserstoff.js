@@ -1,4 +1,17 @@
 /* ===== Thema 9: Wasserstoffatom ===== */
+/* Skizzen (SKIZZE.md): radiale Aufenthaltsdichten P(r) = r²|R_nl|² mit a0 = 1, aus den normierten Radialfunktionen
+   R10 = 2e^{−r}, R20 = (1/√2)(1 − r/2)e^{−r/2}, R21 = (1/√24) r e^{−r/2}, R30 = 2/(81√3)(27 − 18r + 2r²)e^{−r/3}, R31 = 4/(81√6) r(6 − r)e^{−r/3}.
+   Numerisch geprüft: ∫P dr = 1. Maxima: 1s bei 1; 2s bei 3 ∓ √5 (Höhen 0,27 : 1); 2p bei 4; 3s bei 0,74 / 4,19 / 13,07 (0,15 : 0,38 : 1); 3p bei 3 und 12 (0,39 : 1).
+   maxat in den Abschlüssen und im Labor: Fenster über den ganzen äußeren Buckel (hinter dem letzten Knoten). Geprüft wird „das äußere Maximum ist das höchste“,
+   nicht seine genaue Lage (die Hand legt es oft bei n²a0 ab). */
+const H_SK = {
+  P10:r => 4 * r * r * Math.exp(-2 * r),
+  P20:r => r * r * (1 - r / 2) ** 2 * Math.exp(-r) / 2,
+  P21:r => r ** 4 * Math.exp(-r) / 24,
+  P30:r => r * r * (2 / (81 * Math.sqrt(3)) * (27 - 18 * r + 2 * r * r) * Math.exp(-r / 3)) ** 2,
+  P31:r => r * r * (4 / (81 * Math.sqrt(6)) * r * (6 - r) * Math.exp(-r / 3)) ** 2,
+  ticks:(step, max) => { const t = []; for (let x = 0; x <= max + 1e-9; x += step) t.push({x, lab:String(x)}); return t; }
+};
 const HRAD = extra => Object.assign({coords:['r'], space:['r'], radial:true, params:{a_0:'pos', m:'pos'}}, extra || {});
 const HDEFS = {'V(r)':'-ħ^2/(m a_0 r)', 'R_10(r)':'2 a_0^(-3/2) e^(-r/a_0)', 'R_20(r)':'1/sqrt(2) a_0^(-3/2) (1 - r/(2a_0)) e^(-r/(2a_0))', 'R_21(r)':'1/sqrt(24) a_0^(-3/2) (r/a_0) e^(-r/(2a_0))', 'E_n':'-ħ^2/(2 m a_0^2 n^2)'};
 topic({
@@ -243,6 +256,22 @@ topic({
   },
   lab:{type:'hydrogen', title:'Radiale Aufenthaltswahrscheinlichkeit',
     text:'Das Bild zeigt $P(r) = r^2|R_{nl}(r)|^2$ (Längen in $a_0$). Die rote Linie ist $\\langle r\\rangle$. Wähle $n$ und $l$.',
+    sketch:{id:'h-lab-s', title:'$P(r)$ für $n = 3$, $l = 1$ vorhersagen', kind:'curve', draw:'abs2',
+      text:'Skizziere vor dem Labor die radiale Aufenthaltsdichte $P(r) = r^2|R_{31}|^2$ des Zustands $n = 3$, $l = 1$ (ein $3p$-Zustand). Überlege: Wie viele radiale Knoten gibt es, was passiert bei $r = 0$, und wie weit reicht die Verteilung? Die Höhe ist frei. Halte die Vorhersage fest, stell dann im Labor $n = 3$, $l = 1$ ein und vergleiche.',
+      plot:{x:[0, 33], xlab:'r/a_0', ylab:'r^2|R_{31}|^2', ticks:H_SK.ticks(5, 30)},
+      f:H_SK.P31,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Aufenthaltsdichte negativ sein? Welches Vorzeichen haben $r^2$ und $|R|^2$?'},
+        {id:'null', name:'Wert am Kern', type:'zero', at:[0], msg:'Welchen Wert hat $P(r)$ am Kern?'},
+        {id:'knoten', type:'nodes', n:1, msg:'Wie viele radiale Knoten hat der Zustand $n = 3$, $l = 1$? Deine Skizze hat {got}.'},
+        {id:'max', name:'größtes Maximum außen', type:'maxat', x:12, tol:4.5, msg:'Liegt das größte Maximum innen oder außen? Wie wächst die Größe des Atoms mit $n$?'},
+        {id:'aussen', name:'große Abstände', type:'decay', toward:'right', range:[18, 33], msg:'Was macht $P(r)$ weit draußen?'}
+      ],
+      reveal:'$R_{31} \\propto r\\,(6 - r/a_0)\\,e^{-r/(3a_0)}$ hat einen radialen Knoten ($n - l - 1 = 1$) bei $r = 6a_0$. Davor liegt ein kleines Maximum bei $3a_0$, dahinter das große bei $12a_0$, etwa 2,5-mal so hoch. Die Verteilung reicht bis etwa $25a_0$, denn die Größe des Atoms wächst wie $n^2$. Am Kern ist $P \\propto r^4$ null, wie bei jedem Zustand mit $l = 1$.',
+      wrong:[
+        {f:r => r ** 6 * Math.exp(-2 * r / 3), fails:['knoten'], why:'kein Knoten: Knotenzahl nicht mit $n - l - 1$ bestimmt (Form wie bei $3d$)'},
+        {f:r => r * r * (6 - r) ** 2 * Math.exp(-2 * r / 3) * (r < 6 ? 30 : 1), fails:['max'], why:'inneres Maximum höher („das Elektron ist meist nahe am Kern“)'}
+      ]},
     predict:{q:'Bevor du die Regler bewegst: Wo liegt das Maximum von $P(r)$ für $n = 3$, $l = 2$ ungefähr?', opts:['bei $9a_0$', 'bei $3a_0$', 'bei $r = 0$'], a:0, ex:'Für $l = n - 1$ ist $P \\propto r^{2n}e^{-2r/(na_0)}$ mit dem Maximum bei $n^2a_0$ – dem Bohrschen Radius. Bei $r = 0$ ist $P$ immer null.'},
     questions:[
       {q:'Stelle $n = 2$, $l = 1$ ein. Wo hat $P(r)$ sein Maximum?', opts:['bei $4a_0$', 'bei $2a_0$', 'bei $5a_0$'], a:0, ex:'$P\\propto r^4e^{-r/a_0}$ ist bei $r = 4a_0$ maximal. $\\langle r\\rangle = 5a_0$ liegt weiter außen.'},
@@ -345,6 +374,42 @@ topic({
           model:['E_3 - E_2 = -ħ^2/(2m a_0^2) (1/9 - 1/4)', '= 5ħ^2/(72 m a_0^2)'], note:'Mit $\\hbar^2/(2ma_0^2) \\approx 13{,}6\\,\\mathrm{eV}$: $\\approx 1{,}89\\,\\mathrm{eV}$, also $\\lambda \\approx 656\\,\\mathrm{nm}$ (rot).'}
       ]}
   ],
+  sketch:[
+    {id:'h-s1', title:'Radiale Aufenthaltsdichte im Grundzustand', kind:'curve', draw:'abs2',
+      text:'Skizziere die radiale Aufenthaltsdichte $P(r) = r^2|R_{10}(r)|^2$ des Wasserstoff-Grundzustands mit $R_{10} = \\frac{2}{a_0^{3/2}}e^{-r/a_0}$. Die Höhe ist frei.',
+      plot:{x:[0, 6], xlab:'r/a_0', ylab:'P(r)', ticks:H_SK.ticks(1, 6)},
+      f:H_SK.P10,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Aufenthaltsdichte negativ sein? Welches Vorzeichen haben $r^2$ und $|R|^2$?'},
+        {id:'null', name:'Wert am Kern', type:'zero', at:[0], msg:'Welchen Wert hat $P(r)$ bei $r = 0$? Denk an das Volumen einer dünnen Kugelschale um den Kern. (Abschnitt ‚Radialfunktionen und wo das Elektron ist‘)'},
+        {id:'max', type:'maxat', x:1, tol:0.3, msg:'Bei welchem $r$ ist $P(r)$ am größten? Setze die Ableitung von $r^2e^{-2r/a_0}$ gleich null.'},
+        {id:'knoten', type:'nodes', n:0, msg:'Hat der Grundzustand einen radialen Knoten? Deine Skizze hat {got}.'},
+        {id:'aussen', name:'große Abstände', type:'decay', toward:'right', range:[2, 6], msg:'Was macht $P(r)$ weit draußen?'}
+      ],
+      reveal:'$P(r) = \\frac{4}{a_0^3}r^2e^{-2r/a_0}$. Der Faktor $r^2$ kommt vom Volumen $4\\pi r^2dr$ der Kugelschale. Er macht $P$ am Kern null, obwohl $|\\psi_{100}|^2$ dort am größten ist. Die Exponentialfunktion drückt $P$ weit draußen. Das Maximum liegt bei $r = a_0$; der Mittelwert $\\langle r\\rangle = \\tfrac32a_0$ liegt weiter außen, weil die Verteilung nach außen einen langen Ausläufer hat.',
+      hints:['Setze $R_{10}$ in $P = r^2|R|^2$ ein. Was macht jeder der beiden Faktoren bei kleinem und bei großem $r$?', 'Für $1s$ ist $P \\propto r^2e^{-2r/a_0}$. Das Maximum folgt aus $\\frac{d}{dr}\\big(r^2e^{-2r/a_0}\\big) = \\big(2r - 2r^2/a_0\\big)e^{-2r/a_0} = 0$.'],
+      wrong:[
+        {f:r => Math.exp(-2 * r), fails:['null', 'max'], why:'$|R|^2$ statt $r^2|R|^2$: Faktor $r^2$ vergessen, Maximum am Kern'},
+        {f:r => r * r * Math.exp(-4 * r / 3), fails:['max'], why:'wahrscheinlichster Abstand mit dem Mittelwert $\\langle r\\rangle = \\tfrac32a_0$ verwechselt'}
+      ]},
+    {id:'h-s2', title:'Radiale Aufenthaltsdichte des $2p$-Zustands', kind:'curve', draw:'abs2',
+      text:'Skizziere die radiale Aufenthaltsdichte $P(r) = r^2|R_{21}(r)|^2$ des Zustands $n = 2$, $l = 1$ mit $R_{21} \\propto \\frac{r}{a_0}\\,e^{-r/(2a_0)}$. Die Höhe ist frei.',
+      plot:{x:[0, 16], xlab:'r/a_0', ylab:'P(r)', ticks:H_SK.ticks(2, 16)},
+      f:H_SK.P21,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Aufenthaltsdichte negativ sein? Welches Vorzeichen haben $r^2$ und $|R|^2$?'},
+        {id:'null', name:'Wert am Kern', type:'zero', at:[0], msg:'Wie verhält sich $P(r)$ für $r \\to 0$, wenn $R_{21} \\propto r$ ist?'},
+        {id:'knoten', type:'nodes', n:0, msg:'Wie viele radiale Knoten hat ein Zustand mit $n = 2$, $l = 1$? Deine Skizze hat {got}.'},
+        {id:'max', type:'maxat', x:4, tol:0.8, msg:'Wo liegt das Maximum von $r^4e^{-r/a_0}$?'},
+        {id:'aussen', name:'große Abstände', type:'decay', toward:'right', range:[8, 16], msg:'Was macht $P(r)$ für große $r$?'}
+      ],
+      reveal:'$P(r) = \\frac{1}{24a_0^5}r^4e^{-r/a_0}$ hat $n - l - 1 = 0$ Knoten und ein einziges Maximum bei $r = 4a_0 = n^2a_0$. Für $l = 1$ ist $R \\propto r$ am Kern, also $P \\propto r^4$ statt $r^2$ wie bei $1s$: Die Zentrifugalbarriere, die es nur für $l > 0$ gibt, hält das Elektron vom Kern fern.',
+      hints:['Zähle zuerst die radialen Knoten. Setze dann $R_{21}$ in $P = r^2|R|^2$ ein.', 'Radiale Knoten: $n - l - 1$. $P \\propto r^4e^{-r/a_0}$ ist maximal, wo $4r^3 = r^4/a_0$ ist.'],
+      wrong:[
+        {f:H_SK.P20, fails:['knoten', 'max'], why:'Knoten wie beim $2s$-Zustand: Knotenzahl $n - 1$ statt $n - l - 1$'},
+        {f:r => r * r * Math.exp(-r), fails:['max'], why:'$|R_{21}|^2$ statt $r^2|R_{21}|^2$: Maximum bei $2a_0$'}
+      ]}
+  ],
   final:[
     {aim:0, task:{id:'h-f1', title:'Mittleres Abstandsquadrat im Zustand 2p', text:'$R_{21}(r) = \\frac{1}{\\sqrt{24}}a_0^{-3/2}\\frac{r}{a_0}e^{-r/(2a_0)}$.',
       ctx:HRAD({defs:HDEFS, state:'R_21'}),
@@ -366,7 +431,23 @@ topic({
         {name:'Jonas', says:'Nach Bohr hat das Elektron bei $n = 2$ den Drehimpuls $2\\hbar$. Weil die Energie dieselbe ist wie bei Bohr, muss auch der Drehimpuls derselbe sein.'}
       ],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], keep:true, a:0,
-      ex:'$|\\vec L| = \\hbar\\sqrt{l(l+1)} = \\sqrt2\\,\\hbar$. Gleiche Energie heißt nicht gleicher Drehimpuls: Zu $n = 2$ gehört auch $2s$ mit $L = 0$. Bohrs Modell trifft die Energien, nicht die Drehimpulse.'}
+      ex:'$|\\vec L| = \\hbar\\sqrt{l(l+1)} = \\sqrt2\\,\\hbar$. Gleiche Energie heißt nicht gleicher Drehimpuls: Zu $n = 2$ gehört auch $2s$ mit $L = 0$. Bohrs Modell trifft die Energien, nicht die Drehimpulse.'},
+    {aim:0, sketch:{id:'h-fs1', title:'Radiale Aufenthaltsdichte des $2s$-Zustands', kind:'curve', draw:'abs2',
+      text:'Die Radialfunktion des $2s$-Zustands ist $R_{20} = \\frac{1}{\\sqrt2\\,a_0^{3/2}}\\left(1 - \\frac{r}{2a_0}\\right)e^{-r/(2a_0)}$. Skizziere die radiale Aufenthaltsdichte $P(r)$, also die Wahrscheinlichkeit pro Abstandsintervall $dr$. Die Höhe ist frei.',
+      plot:{x:[0, 15], xlab:'r/a_0', ylab:'P(r)', ticks:H_SK.ticks(2, 14)},
+      f:H_SK.P20,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Aufenthaltsdichte negativ sein? Welches Vorzeichen haben $r^2$ und $|R|^2$?'},
+        {id:'null', name:'Wert am Kern', type:'zero', at:[0], msg:'Welchen Wert hat $P(r)$ bei $r = 0$?'},
+        {id:'knoten', name:'Lage der Knoten', type:'zero', at:[2], tol:0.5, msg:'Wo ist $R_{20}$ null?'},
+        {id:'max', name:'höheres Maximum außen', type:'maxat', x:5.5, tol:3, msg:'Welches der beiden Maxima ist höher? Denk an den Faktor $r^2$.'}
+      ],
+      reveal:'$P(r) = r^2|R_{20}|^2 = \\frac{1}{2a_0^3}r^2\\left(1 - \\frac{r}{2a_0}\\right)^2e^{-r/a_0}$. Der Faktor $r^2$ aus dem Maß $r^2dr$ macht $P$ am Kern null. Der Knoten liegt bei $r = 2a_0$. Das innere Maximum bei $r = (3 - \\sqrt5)\\,a_0 \\approx 0{,}76\\,a_0$ ist klein, das äußere bei $r = (3 + \\sqrt5)\\,a_0 \\approx 5{,}2\\,a_0$ etwa 3,7-mal so hoch.',
+      wrong:[
+        {f:r => (1 - r / 2) ** 2 * Math.exp(-r), fails:['null', 'max'], why:'$|R|^2$ statt $r^2|R|^2$: Maß $r^2dr$ vergessen'},
+        {f:r => H_SK.P20(r) * 6 * Math.exp(-r / 2), fails:['max'], why:'inneres Maximum höher („das Elektron ist meist am Kern“)'},
+        {f:H_SK.P21, fails:['knoten'], why:'Knoten vergessen, Form wie beim $2p$-Zustand'}
+      ], points:3}}
   ],
   finalB:[
     {aim:0, task:{id:'h-f4', title:'Mittleres $1/r$ im Zustand 2p', text:'$R_{21}(r) = \\frac{1}{\\sqrt{24}}a_0^{-3/2}\\frac{r}{a_0}e^{-r/(2a_0)}$.',
@@ -389,7 +470,23 @@ topic({
         {name:'Jonas', says:'Der Betrag des Drehimpulses hängt von $l$ ab, nicht von $n$. In $3s$ ist er null, in $3d$ ist er $\\sqrt6\\,\\hbar$.'}
       ],
       q:'Wer hat recht?', opts:['Lena', 'Jonas', 'beide', 'keiner von beiden'], keep:true, a:1,
-      ex:'$|\\vec L| = \\hbar\\sqrt{l(l+1)}$: $0$ für $l = 0$ und $\\sqrt6\\,\\hbar$ für $l = 2$. Gleiche Energie heißt nicht gleicher Drehimpuls. Bohrs Modell trifft die Energien, nicht die Drehimpulse; den Wert $3\\hbar$ hat kein Zustand mit $n = 3$.'}
+      ex:'$|\\vec L| = \\hbar\\sqrt{l(l+1)}$: $0$ für $l = 0$ und $\\sqrt6\\,\\hbar$ für $l = 2$. Gleiche Energie heißt nicht gleicher Drehimpuls. Bohrs Modell trifft die Energien, nicht die Drehimpulse; den Wert $3\\hbar$ hat kein Zustand mit $n = 3$.'},
+    {aim:0, sketch:{id:'h-fs2', title:'Radiale Aufenthaltsdichte des $3s$-Zustands', kind:'curve', draw:'abs2',
+      text:'Die Radialfunktion des $3s$-Zustands ist $R_{30} = \\frac{2}{3\\sqrt3\\,a_0^{3/2}}\\left(1 - \\frac{2r}{3a_0} + \\frac{2r^2}{27a_0^2}\\right)e^{-r/(3a_0)}$. Skizziere die radiale Aufenthaltsdichte $P(r)$, also die Wahrscheinlichkeit pro Abstandsintervall $dr$. Die Höhe ist frei.',
+      plot:{x:[0, 30], xlab:'r/a_0', ylab:'P(r)', ticks:H_SK.ticks(5, 30)},
+      f:H_SK.P30,
+      checks:[
+        {id:'pos', type:'nonneg', msg:'Kann eine Aufenthaltsdichte negativ sein? Welches Vorzeichen haben $r^2$ und $|R|^2$?'},
+        {id:'null', name:'Wert am Kern', type:'zero', at:[0], msg:'Welchen Wert hat $P(r)$ bei $r = 0$?'},
+        {id:'knoten', name:'Lage der Knoten', type:'zero', at:[(9 - 3 * Math.sqrt(3)) / 2, (9 + 3 * Math.sqrt(3)) / 2], tol:0.8, msg:'Wo ist $R_{30}$ null? Löse $2r^2 - 18ra_0 + 27a_0^2 = 0$.'},
+        {id:'max', name:'höchstes Maximum außen', type:'maxat', x:13, tol:5, msg:'Welches der Maxima ist am höchsten? Denk an den Faktor $r^2$.'}
+      ],
+      reveal:'$P(r) = r^2|R_{30}|^2$. Der Faktor $r^2$ aus dem Maß $r^2dr$ macht $P$ am Kern null. Die beiden Knoten ($n - l - 1 = 2$) liegen bei $r = \\tfrac{9 \\mp 3\\sqrt3}{2}\\,a_0 \\approx 1{,}9\\,a_0$ und $7{,}1\\,a_0$. Von den drei Maxima ist das äußerste bei $r \\approx 13\\,a_0$ mit Abstand das höchste; das innerste bei $0{,}74\\,a_0$ erreicht nur etwa 15 % davon.',
+      wrong:[
+        {f:r => (27 - 18 * r + 2 * r * r) ** 2 * Math.exp(-2 * r / 3), fails:['null', 'max'], why:'$|R|^2$ statt $r^2|R|^2$: Maß $r^2dr$ vergessen'},
+        {f:r => H_SK.P30(r) * (r < 7.1 ? 6 : 1), fails:['max'], why:'innere Maxima höher („das Elektron ist meist nahe am Kern“)'},
+        {f:r => r ** 6 * Math.exp(-2 * r / 3), fails:['knoten'], why:'Knoten vergessen, Form wie beim $3d$-Zustand'}
+      ], points:3}}
   ],
   errors:[
     {id:'h-e1', title:'Normierung ohne Maß',
