@@ -15,7 +15,8 @@ function mcBox(q, opts){
   const fb = h('div', {class:'fb', 'aria-live':'polite'});
   let locked = false, sel = null;
   const btns = list.map(i => {
-    const b = h('button', {class:'opt' + (i === -1 || last.includes(i) ? ' dk' : ''), type:'button', 'data-i':String(i), html:i === -1 ? 'Weiß ich noch nicht' : last.includes(i) ? inl(String(q.opts[i]).replace(/^\s*w/, 'W')) : inl(q.opts[i])});
+    /* Inhalt in .optx: breite Formeln scrollen in der Option, nicht die Seite */
+    const b = h('button', {class:'opt' + (i === -1 || last.includes(i) ? ' dk' : ''), type:'button', 'data-i':String(i), html:'<span class="optx">' + (i === -1 ? 'Weiß ich noch nicht' : last.includes(i) ? inl(String(q.opts[i]).replace(/^\s*w/, 'W')) : inl(q.opts[i])) + '</span>'});
     if (opts.exam || opts.hold) b.setAttribute('aria-pressed', 'false');
     b.addEventListener('click', () => pick(i));
     box.append(b); return b;
@@ -98,13 +99,20 @@ function segDlg(t, segId, opt){
   if (!sg){ if (t) go('learn/' + t.id + '/3'); return; }
   const wrap = h('div', {class:'stack'});
   wrap.append(h('div', {class:'small muted'}, tname(t) + ': ' + t.title));
+  /* Abschnitt mit steps (UMBAU2.md): alle Schritte untereinander, bei opt.fresh mit den Kontrollfragen (ohne Speichern) */
+  if (Array.isArray(sg.steps)){
+    wrap.append(stepsDlgBody(t, sg, !!(opt && opt.fresh)));
+    wrap.append(h('p', {class:'small', html:'<a href="#/learn/' + t.id + '/3/' + encodeURIComponent(sg.id) + '">Im Lernweg öffnen</a>'}));
+    showDlg((opt && opt.fresh ? 'Kurz auffrischen: ' : '') + sg.title, wrap, {cls:'dlg-wide'});
+    return;
+  }
   const body = h('div', {class:'stack', html:md(sg.text)});
   wrap.append(body);
-  if (sg.fig){ const fig = h('figure', {class:'segfig'}); const lab = h('div'); fig.append(lab); labRun(lab, sg.fig.lab, sg.fig, {display:true, init:sg.fig.init, keep:sg.fig.keep}); if (sg.fig.caption) fig.append(h('figcaption', {class:'small muted', html:inl(sg.fig.caption)})); wrap.append(fig); }
+  if (sg.fig){ const fig = h('figure', {class:'segfig'}); const lab = h('div'); fig.append(lab); labRun(lab, sg.fig.lab, sg.fig, {display:true, init:sg.fig.init, keep:sg.fig.keep, topic:t.id}); if (sg.fig.caption) fig.append(h('figcaption', {class:'small muted', html:inl(sg.fig.caption)})); wrap.append(fig); }
   if (sg.derive && sg.derive.lines){
     const ctx = ctxOf(sg.derive.ctx);
     wrap.append(h('h4', {html:sg.derive.title ? inl(sg.derive.title) : 'Herleitung'}));
-    wrap.append(h('ol', {class:'model', html:sg.derive.lines.map(L => '<li>' + lineHTML(L.l, ctx) + (L.w ? ' <span class="muted small">' + inl(L.w) + '</span>' : '') + '</li>').join('')}));
+    wrap.append(h('ol', {class:'model', html:sg.derive.lines.map(L => '<li>' + drlHTML(L.l, ctx) + (L.w ? ' <span class="muted small">' + inl(L.w) + '</span>' : '') + '</li>').join('')}));
   }
   if (opt && opt.fresh && sg.q && sg.q.length){
     wrap.append(h('h4', {}, 'Kurz geprüft'));
@@ -523,7 +531,7 @@ function gapHTML(ml, ctx){
 }
 function modelBox(goal, ctx){
   const box = h('div', {class:'solution'});
-  box.innerHTML = '<b>Musterlösung</b><ol class="model">' + (goal.model || []).map(m => { const ml = typeof m === 'string' ? {l:m} : m; return '<li>' + lineHTML(ml.l, ctx) + (ml.w ? '<span class="why">' + inl(ml.w) + '</span>' : '') + '</li>'; }).join('') + '</ol>' + (goal.note ? '<p class="small">' + inl(goal.note) + '</p>' : '');
+  box.innerHTML = '<b>Musterlösung</b><ol class="model">' + (goal.model || []).map(m => { const ml = typeof m === 'string' ? {l:m} : m; return '<li>' + drlHTML(ml.l, ctx) + (ml.w ? '<span class="why">' + inl(ml.w) + '</span>' : '') + '</li>'; }).join('') + '</ol>' + (goal.note ? '<p class="small">' + inl(goal.note) + '</p>' : '');
   return box;
 }
 /* Aufgabe mit allen Zielen */

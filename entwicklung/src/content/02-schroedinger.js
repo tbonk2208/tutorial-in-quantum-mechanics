@@ -1,8 +1,26 @@
 /* ===== Thema 2: Schrödingergleichung und stationäre Zustände ===== */
 (function(){
+const R = String.raw;
 const BOX2 = (extra) => Object.assign({coords:['x', 't'], domain:{x:['0', 'L']}, params:{L:'pos', m:'pos'},
   defs:{'ψ_n(x)':'sqrt(2/L) sin(nπx/L)', 'E_n':'n^2 π^2 ħ^2/(2m L^2)'}}, extra || {});
 const DYN = (extra) => Object.assign({coords:['x', 't'], params:{m:'pos'}, abstract:{Ψ:{args:['x', 't']}, V:{args:['x'], real:true}}, dyn:{fn:'Ψ'}}, extra || {});
+/* Erklärteil sg-t4d: Schießverfahren im Tal V = x² (Einheiten 2m/ħ² = 1, also ψ'' = (x² − E)ψ, Eigenwerte E = 1, 3, 5, …).
+   Start links bei x = −5 mit der abfallenden Lösung e^{−x²/2}, Runge-Kutta 4. Ordnung bis x = 3,5.
+   Nachgerechnet (scipy): ψ(3) ≈ +3,45 für E = 0,9 und ψ(3) ≈ −2,33 für E = 1,1. */
+const SG_SHOOT = (() => {
+  const run = E => {
+    const x0 = -5, x1 = 3.5, n = 1700, hh = (x1 - x0) / n, F = (x, y) => (x * x - E) * y;
+    let y = Math.exp(-x0 * x0 / 2), d = -x0 * Math.exp(-x0 * x0 / 2); const ys = [y];
+    for (let i = 0; i < n; i++){
+      const x = x0 + i * hh;
+      const k1y = d, k1d = F(x, y), k2y = d + hh / 2 * k1d, k2d = F(x + hh / 2, y + hh / 2 * k1y);
+      const k3y = d + hh / 2 * k2d, k3d = F(x + hh / 2, y + hh / 2 * k2y), k4y = d + hh * k3d, k4d = F(x + hh, y + hh * k3y);
+      y += hh / 6 * (k1y + 2 * k2y + 2 * k3y + k4y); d += hh / 6 * (k1d + 2 * k2d + 2 * k3d + k4d); ys.push(y);
+    }
+    return x => { const t = (x - x0) / hh, i = Math.max(0, Math.min(n - 1, Math.floor(t))), f = t - i; return ys[i] * (1 - f) + ys[i + 1] * f; };
+  };
+  return {lo:run(0.9), hi:run(1.1)};
+})();
 /* ---- Skizzenaufgaben (didaktik/SKIZZE.md): Musterfunktionen aus den exakten Lösungen, dimensionslos ---- */
 const SK = (() => {
   const PI = Math.PI;
@@ -141,58 +159,615 @@ topic({
     reveal:'Jeder Anteil bekommt seinen eigenen Phasenfaktor: $\\Psi(x,t) = \\frac{1}{\\sqrt2}\\left(\\psi_1e^{-iE_1t/\\hbar} + \\psi_2e^{-iE_2t/\\hbar}\\right)$. Beim Betragsquadrat fallen die Phasen in den Einzeltermen weg, im Mischterm aber nicht:\n\n$$|\\Psi|^2 = \\tfrac12\\left(\\psi_1^2 + \\psi_2^2\\right) + \\psi_1\\psi_2\\cos\\!\\left(\\frac{(E_2 - E_1)t}{\\hbar}\\right).$$\n\nDie Dichte schwappt mit der Periode $T = 2\\pi\\hbar/(E_2 - E_1)$ hin und her. Eine Überlagerung stationärer Zustände mit verschiedenen Energien ist selbst nicht stationär. Ein häufiger Irrtum lautet: „Jeder Zustand ist ein Energie-Eigenzustand.“ Dieses Thema zeigt, woher die Phasenfaktoren kommen und warum.'
   },
   teach:[
-    {id:'sg-t1', title:'Woher kommt die Schrödingergleichung?',
-      text:'Die Schrödingergleichung lässt sich nicht aus der klassischen Physik herleiten. Sie ist ein Grundgesetz wie die Newtonschen Gleichungen; ob sie stimmt, entscheiden Experimente. Man kann sie aber plausibel machen. Drei Forderungen grenzen sie stark ein.\n\n1. **Linear.** Mit zwei Lösungen $\\psi_1$ und $\\psi_2$ soll auch $\\psi_1 + \\psi_2$ eine Lösung sein. Sonst gäbe es keine Interferenz wie am Doppelspalt (Thema 1).\n2. **Erste Ordnung in der Zeit.** $\\Psi$ zur Zeit $t = 0$ soll den Zustand vollständig festlegen. Eine Gleichung zweiter Ordnung bräuchte zusätzlich $\\partial_t\\Psi(x,0)$.\n3. **Richtige Physik für freie Teilchen.** Eine ebene Welle $\\Psi = A\\,e^{i(kx - \\omega t)}$ beschreibt ein freies Teilchen mit Impuls $p = \\hbar k$ ([[lex:de-broglie|de Broglie]]) und Energie $E = \\hbar\\omega$ (Planck–Einstein). Klassisch gilt $E = p^2/2m$.\n\nDie Herleitung zeigt, welche Ableitungen diese Größen aus der ebenen Welle holen: $i\\hbar\\,\\partial_t$ liefert $\\hbar\\omega$, also die Energie, und $-i\\hbar\\,\\partial_x$ liefert $\\hbar k$, also den Impuls – der [[lex:impulsoperator|Impulsoperator]] aus Thema 1. Schreibt man $E = p^2/2m$ mit diesen Ableitungen, entsteht die freie Schrödingergleichung. Mit einer potentiellen Energie wird aus $E = p^2/2m + V(x)$ die allgemeine [[lex:schroedinger|Schrödingergleichung]]\n\n$$i\\hbar\\frac{\\partial\\Psi}{\\partial t} = \\hat H\\Psi,\\qquad \\hat H = -\\frac{\\hbar^2}{2m}\\frac{\\partial^2}{\\partial x^2} + V(x).$$\n\n$\\hat H$ heißt [[lex:hamilton|Hamilton-Operator]]; er steht für die Gesamtenergie.\n\n**Warum nicht die gewohnte Wellengleichung?** $\\partial_t^2u = c^2\\partial_x^2u$ ergibt $\\omega = ck$, also $E = pc$. Das stimmt für Licht, nicht für Teilchen mit Masse, bei denen $\\omega \\propto k^2$ ist. Außerdem ist sie zweiter Ordnung in der Zeit.\n\n**Warum das $i$?** Ohne $i$ hätte man $\\partial_t\\Psi = D\\,\\partial_x^2\\Psi$, die Wärmeleitungsgleichung. Ihre Lösungen zerfließen, $\\int|\\Psi|^2dx$ nimmt ab, und statt $e^{i(kx - \\omega t)}$ gibt es nur abklingende Lösungen $e^{ikx}e^{-Dk^2t}$. Mit dem $i$ bleibt die Normierung erhalten (Thema 1), und Wellen mit fester Frequenz sind Lösungen. Deshalb ist $\\Psi$ zwangsläufig komplex.\n\nDie Bestätigung kommt aus den Folgerungen: Die Gleichung liefert die Spektren von Atomen, den Tunneleffekt und die Bänder in Festkörpern.',
-      derive:{ctx:{coords:['x', 't'], params:{A:'pos', k:'pos', m:'pos'}, defs:{'ω':'ħ k^2/(2m)', 'Ψ(x,t)':'A e^(i(k x - ω t))'}},
-        lines:[
-          {l:'iħ ∂Ψ/∂t = ħω Ψ', w:'Zeitableitung liefert −iω', why:{q:'Warum liefert $i\\hbar\\,\\partial_t$ gerade $\\hbar\\omega$?', opts:['$\\partial_t e^{-i\\omega t} = -i\\omega\\,e^{-i\\omega t}$ und $i\\cdot(-i) = 1$', '$\\partial_t e^{-i\\omega t} = i\\omega\\,e^{-i\\omega t}$ und $i\\cdot i = 1$', 'Weil $\\Psi$ normiert ist und $|e^{-i\\omega t}| = 1$'], a:0, ex:'$i\\hbar\\cdot(-i\\omega) = \\hbar\\omega$. Das Minuszeichen im Exponenten passt zum $+i$ vor der Zeitableitung.'}},
-          {l:'-iħ ∂Ψ/∂x = ħk Ψ', w:'p = ħk', why:{q:'Welche physikalische Größe ist $\\hbar k$?', opts:['der Impuls nach de Broglie, $p = \\hbar k = h/\\lambda$', 'die Energie nach Planck, $E = \\hbar k$', 'die Geschwindigkeit $v = \\hbar k$ des Teilchens'], a:0, ex:'$k = 2\\pi/\\lambda$, also $\\hbar k = h/\\lambda = p$.'}},
-          {l:'-ħ^2/(2m) ∂^2Ψ/∂x^2 = (ħk)^2/(2m) Ψ', w:'zweimal abgeleitet: p²/2m'},
-          {l:'iħ ∂Ψ/∂t = -ħ^2/(2m) ∂^2Ψ/∂x^2', w:'E = p²/2m mit E = ħω', why:{q:'Warum sind die rechten Seiten der ersten und dritten Zeile gleich?', opts:['Hier ist $\\omega = \\hbar k^2/2m$, also $\\hbar\\omega = (\\hbar k)^2/2m$: $E = p^2/2m$.', 'Weil Zeit- und Ortsableitung immer gleich sind', 'Weil $\\omega = k$ für jede ebene Welle gilt'], a:0, ex:'Die Gleichung ist genau so gebaut, dass für eine ebene Welle die klassische Beziehung $E = p^2/2m$ herauskommt.'}}
-        ]},
-      q:[{q:'Welche Beziehung steckt in der freien Schrödingergleichung, wenn man eine ebene Welle einsetzt?', opts:['$E = p^2/2m$ mit $E = \\hbar\\omega$ und $p = \\hbar k$', '$E = pc$ mit $E = \\hbar\\omega$ und $p = \\hbar k$', '$E = p^2/2m$ mit $E = \\hbar k$ und $p = \\hbar\\omega$'], a:0, ex:'Die Dispersionsrelation $\\omega = \\hbar k^2/2m$ ist die klassische kinetische Energie, übersetzt mit Planck–Einstein und de Broglie.'}]},
-    {id:'sg-t2', title:'Separation: die stationäre Schrödingergleichung',
-      text:'Hängt $V$ nicht von der Zeit ab, gibt es besonders einfache Lösungen. Man macht den [[lex:separation|Separationsansatz]] $\\Psi(x,t) = \\psi(x)\\,f(t)$ und setzt ein:\n\n$$i\\hbar\\,\\psi\\,\\frac{df}{dt} = f\\left(-\\frac{\\hbar^2}{2m}\\psi\'\' + V\\psi\\right).$$\n\nTeilen durch $\\psi f$ ergibt\n\n$$i\\hbar\\,\\frac{1}{f}\\frac{df}{dt} = \\frac{1}{\\psi}\\left(-\\frac{\\hbar^2}{2m}\\psi\'\' + V\\psi\\right).$$\n\nLinks steht nur $t$, rechts nur $x$. Hält man $x$ fest und ändert $t$, bleibt die rechte Seite gleich; also darf sich auch die linke nicht ändern. Beide Seiten sind dieselbe Konstante. Man nennt sie $E$. Es bleiben zwei gewöhnliche Differentialgleichungen:\n\n$$i\\hbar\\frac{df}{dt} = E\\,f,\\qquad -\\frac{\\hbar^2}{2m}\\psi\'\' + V\\psi = E\\psi.$$\n\n**Schreibweise.** Ab hier steht $\\Psi(x,t)$ für die zeitabhängige Wellenfunktion (in Thema 1 hieß sie $\\psi(x,t)$) und $\\psi(x)$ für eine Funktion nur des Orts.\n\nDie erste löst die Herleitung: $f(t) = f(0)\\,e^{-iEt/\\hbar}$; die Konstante $f(0)$ steckt man in $\\psi$. Die zweite ist die **stationäre Schrödingergleichung** $\\hat H\\psi = E\\psi$. Sie ist eine Eigenwertgleichung ([[lex:eigenwertproblem|Eigenwerte und Eigenvektoren]]): Gesucht sind Funktionen, die $\\hat H$ bis auf einen Zahlenfaktor unverändert lässt, und diese Faktoren $E$.\n\nDrei Punkte sind wichtig:\n\n- $E$ muss reell sein. Mit $E = E_0 + i\\Gamma$ wäre $|f|^2 = e^{2\\Gamma t/\\hbar}$, und die Normierung bliebe nicht erhalten.\n- Nicht jedes $E$ ist erlaubt. Bei gebundenen Teilchen hat $\\hat H\\psi = E\\psi$ nur für bestimmte $E$ normierbare Lösungen, die die Randbedingungen erfüllen. Das ist die Quantisierung; Thema 3 rechnet sie im Kasten vor.\n- $E$ ist die Energie des Zustands. Das zeigt der nächste Abschnitt.\n\n**Achtung, häufiger Irrtum:** $\\hat H\\psi = E\\psi$ ist keine Gleichung, die jeder Zustand erfüllt. Sie wählt besondere Funktionen aus, die Energie-Eigenfunktionen. Die zeitabhängige Gleichung $i\\hbar\\,\\partial_t\\Psi = \\hat H\\Psi$ gilt dagegen für jeden Zustand. Den Faktor $e^{-iEt/\\hbar}$ darf man nur an Eigenfunktionen hängen.',
-      derive:{ctx:{coords:['t'], params:{E:'real', C:'complex'}, defs:{'f(t)':'C e^(-i E t/ħ)'}},
-        lines:[
-          {l:'iħ df/dt = E f(t)', w:'Zeitteil der Separation'},
-          {l:'df/dt = -iE/ħ f(t)', w:'durch iħ geteilt', why:{q:'Woher kommt das Minuszeichen?', opts:['$1/i = -i$', '$i^2 = 1$', 'aus der Normierung von $f$'], a:0, ex:'$\\frac{E}{i\\hbar} = -\\frac{iE}{\\hbar}$, weil $\\frac1i = \\frac{i}{i^2} = -i$.'}},
-          {l:'f(t) = f(0) e^(-iEt/ħ)', w:'Lösung von f′ = c f', why:{q:'Warum ist das die Lösung?', opts:['$f\' = cf$ hat die Lösung $f(0)e^{ct}$, hier mit $c = -iE/\\hbar$.', 'Weil jede Funktion von $t$ eine Exponentialfunktion ist.', 'Weil $f$ periodisch sein muss und $\\sin$ zu reell ist.'], a:0, ex:'Lineare Differentialgleichung erster Ordnung mit konstantem Koeffizienten (M7).'}},
-          {l:'|f(t)|^2 = |f(0)|^2', w:'E reell', why:{q:'Wann hängt $|f(t)|^2$ nicht von $t$ ab?', opts:['wenn $E$ reell ist, denn dann ist $|e^{-iEt/\\hbar}| = 1$', 'wenn man die Konstante $f(0) = 1$ wählt', 'immer, ganz gleich welchen Wert $E$ hat'], a:0, ex:'Für $E = E_0 + i\\Gamma$ wäre $|e^{-iEt/\\hbar}|^2 = e^{2\\Gamma t/\\hbar}$.'}}
-        ]},
-      q:[{q:'Warum müssen beide Seiten der separierten Gleichung konstant sein?', opts:['Links hängt nur von $t$ ab, rechts nur von $x$; gleich für alle $x$, $t$.', 'Weil die Energie eines abgeschlossenen Systems immer erhalten ist.', 'Weil $\\psi$ normiert ist und $f$ den Betrag 1 hat.'], a:0, ex:'Eine Funktion nur von $t$, die für alle $t$ gleich einer Funktion nur von $x$ ist, kann sich weder mit $t$ noch mit $x$ ändern.'}]},
-    {id:'sg-t3', title:'Stationäre Zustände',
-      text:'Eine Lösung $\\Psi(x,t) = \\psi(x)\\,e^{-iEt/\\hbar}$ mit $\\hat H\\psi = E\\psi$ heißt [[lex:stationaer|stationärer Zustand]]. Die Herleitung zeigt, was daran zeitunabhängig ist:\n\n- Die Dichte: $|\\Psi|^2 = \\psi^*e^{+iEt/\\hbar}\\,\\psi\\,e^{-iEt/\\hbar} = |\\psi|^2$.\n- Jeder Erwartungswert. Im Integral $\\int\\Psi^*\\hat Q\\Psi\\,dx$ wirkt ein Operator $\\hat Q$ aus $x$ und $\\partial_x$ nicht auf den Zeitfaktor, und $e^{+iEt/\\hbar}e^{-iEt/\\hbar} = 1$.\n- Insbesondere $\\langle x\\rangle$. Daher ist $\\langle p\\rangle = m\\,d\\langle x\\rangle/dt = 0$ (Thema 1).\n- Die Energie ist scharf. Aus $\\hat H\\psi = E\\psi$ folgt $\\hat H^2\\psi = E^2\\psi$, also $\\langle H\\rangle = E$, $\\langle H^2\\rangle = E^2$ und $\\Delta H = 0$. Jede Energiemessung liefert $E$.\n\n**Stationär heißt nicht „in Ruhe“.** Im Grundzustand des Kastens ist $\\langle p\\rangle = 0$, aber $\\langle p^2\\rangle = (\\pi\\hbar/L)^2 > 0$: Die kinetische Energie ist nicht null. Stationär ist die Wahrscheinlichkeitsverteilung, nicht das Teilchen.\n\n**Nicht jeder Zustand ist stationär.** Das ist eine der häufigsten Fehlvorstellungen der Quantenmechanik (Styer 1996; Singh & Marshman 2015). Prüfe $\\psi(x) = A\\,x(L - x)$ im Kasten:\n\n$$\\hat H\\psi = -\\frac{\\hbar^2}{2m}\\psi\'\' = \\frac{\\hbar^2A}{m}.$$\n\nDas ist eine Konstante, kein Vielfaches von $\\psi$. Es gibt also kein $E$ mit $\\hat H\\psi = E\\psi$. Darum ist $A\\,x(L-x)\\,e^{-iEt/\\hbar}$ für kein $E$ eine Lösung, und die Dichte dieses Zustands ändert sich mit der Zeit. Thema 3 zeigt, wie: Man zerlegt ihn in stationäre Zustände.\n\n**Test.** Wende $\\hat H$ auf $\\psi$ an. Kommt ein konstantes Vielfaches von $\\psi$ heraus *und* erfüllt $\\psi$ die Randbedingungen, ist $\\psi$ eine Energie-Eigenfunktion zum Eigenwert $E$; sonst nicht. Beispiel: $\\sin(3\\pi x/2L)$ erfüllt im Inneren des Kastens $\\hat H\\psi = E\\psi$, aber wegen $\\psi(L) \\ne 0$ ist es keine Eigenfunktion des Kastens. Normierung und Realität von $\\psi$ entscheiden die Frage nicht.\n\nEin Mini-Beispiel: $\\psi_2 = \\sqrt{2/L}\\sin(2\\pi x/L)$ im Kasten. $\\psi_2\'\' = -(2\\pi/L)^2\\psi_2$, also $\\hat H\\psi_2 = \\frac{4\\pi^2\\hbar^2}{2mL^2}\\psi_2 = E_2\\psi_2$. Stationär, mit scharfer Energie $E_2$.',
-      derive:{ctx:{coords:['x', 't'], params:{E:'real', m:'pos'}, abstract:{ψ:{args:['x']}}, defs:{'Ψ(x,t)':'ψ(x) e^(-i E t/ħ)'}},
-        lines:[
-          {l:'|Ψ(x,t)|^2 = ψ(x)^* e^(iEt/ħ) ψ(x) e^(-iEt/ħ)', w:'Ψ* = ψ* e^(+iEt/ħ)', why:{q:'Warum steht bei $\\Psi^*$ der Exponent $+iEt/\\hbar$?', opts:['Konjugieren macht aus $i$ ein $-i$; $E$ und $t$ sind reell.', 'Weil $\\Psi^*$ rückwärts in der Zeit läuft.', 'Das ist eine Konvention ohne Bedeutung.'], a:0, ex:'$(e^{-iEt/\\hbar})^* = e^{+iEt/\\hbar}$ für reelles $E$.'}},
-          {l:'= |ψ(x)|^2', w:'Phasen heben sich weg'},
-          {l:'∫_-∞^∞ Ψ^* x Ψ dx = ∫_-∞^∞ x |ψ(x)|^2 dx', w:'⟨x⟩ zeitunabhängig'},
-          {l:'∫_-∞^∞ Ψ^* (-iħ ∂Ψ/∂x) dx = ∫_-∞^∞ ψ^* (-iħ dψ/dx) dx', w:'∂x wirkt nicht auf den Zeitfaktor', why:{q:'Warum hängt auch $\\langle p\\rangle$ nicht von $t$ ab?', opts:['$\\partial_x$ lässt $e^{-iEt/\\hbar}$ unverändert; die Phasen heben sich weg.', 'Weil $\\hat p$ ein hermitescher Operator ist.', 'Weil der Impuls eines Teilchens immer erhalten ist.'], a:0, ex:'Der Zeitfaktor ist für $\\partial_x$ eine Konstante. Im Produkt $\\Psi^*\\ldots\\Psi$ ergibt er $e^{+iEt/\\hbar}e^{-iEt/\\hbar} = 1$.'}}
-        ]},
-      q:[{q:'$\\Psi = \\psi_2(x)\\,e^{-iE_2t/\\hbar}$ im Kasten. Was liefert eine Energiemessung?', opts:['sicher den Wert $E_2$', 'je nach Zeitpunkt $E_1$ oder $E_2$', 'im Mittel $E_2$, einzeln andere Werte'], a:0, ex:'$\\hat H\\psi_2 = E_2\\psi_2$, also $\\Delta H = 0$: Die Energie ist scharf.'}]},
-    {id:'sg-t4', title:'Welche Lösungen sind zulässig?',
-      text:'Für jedes $E$ ist $-\\frac{\\hbar^2}{2m}\\psi\'\' + V\\psi = E\\psi$ eine lineare Differentialgleichung zweiter Ordnung mit zwei unabhängigen Lösungen. Physikalisch zulässig sind aber nur Lösungen mit drei Eigenschaften ([[lex:anschluss|Anschlussbedingungen]]):\n\n- $\\psi$ ist überall **stetig**. Ein Sprung in $\\psi$ ergäbe in $\\psi\'\'$ die Ableitung einer δ-Funktion, und die kann kein Term der Gleichung ausgleichen.\n- $\\psi\'$ ist stetig, **wo $V$ endlich ist**. Integriert man die Gleichung über ein kleines Intervall $[x_0 - \\varepsilon, x_0 + \\varepsilon]$, folgt $\\psi\'(x_0 + \\varepsilon) - \\psi\'(x_0 - \\varepsilon) = \\frac{2m}{\\hbar^2}\\int(V - E)\\,\\psi\\,dx$, und das geht für $\\varepsilon \\to 0$ gegen null. Nur an unendlich hohen Wänden (Thema 3) oder bei einem δ-Potential darf $\\psi\'$ springen.\n- Für gebundene Zustände ist $\\psi$ **normierbar**.\n\n**Krümmung.** Die Gleichung lässt sich als $\\psi\'\' = \\frac{2m}{\\hbar^2}(V - E)\\,\\psi$ lesen. Wo $E > V$ ist (klassisch erlaubt), hat $\\psi\'\'$ das Vorzeichen von $-\\psi$: $\\psi$ krümmt sich zur Achse hin und schwingt, umso schneller, je größer $E - V$. Wo $E < V$ ist (klassisch verboten), hat $\\psi\'\'$ das Vorzeichen von $\\psi$: $\\psi$ krümmt sich von der Achse weg und wächst oder fällt exponentiell.\n\n**Quantisierung ohne Zusatzannahme.** Ein gebundenes Teilchen hat links und rechts verbotene Bereiche, und dort muss $\\psi$ abfallen. Startet man links mit einer abfallenden Lösung und integriert nach rechts, läuft $\\psi$ für fast jedes $E$ rechts gegen $+\\infty$ oder $-\\infty$. Nur für einzelne Energien fällt es auch rechts ab. Diese $E_n$ sind die erlaubten Energien. Die Quantisierung folgt also allein aus der Gleichung und der Normierbarkeit. Im Kasten (Thema 3) lässt sich das exakt ausrechnen, beim Oszillator (Thema 7) und beim Wasserstoffatom (Thema 9) ebenfalls.\n\n**Folgerung.** $E$ muss größer sein als das Minimum von $V$. Sonst wäre überall $E < V$, $\\psi$ würde sich überall von der Achse wegkrümmen und könnte nicht auf beiden Seiten abfallen. Das ist ein erster Grund für die Nullpunktsenergie: Ein gebundenes Teilchen kann nicht auf dem Boden des Potentials liegen.',
-      q:[{q:'In einem Bereich ist $E < V$. Wie verhält sich eine Lösung $\\psi$ dort?', opts:['Sie krümmt sich von der Achse weg und wächst oder fällt exponentiell.', 'Sie krümmt sich zur Achse hin und schwingt mit kleiner Wellenlänge.', 'Sie muss dort überall exakt null sein, weil das Teilchen nicht hinkann.'], a:0, ex:'$\\psi\'\' = \\frac{2m}{\\hbar^2}(V - E)\\psi$ mit $V - E > 0$: gleiches Vorzeichen wie $\\psi$. Null ist $\\psi$ nur bei unendlich hohem $V$ – bei endlichem $V$ dringt $\\psi$ ein (Thema 5).'},
-        {q:'An welcher Stelle darf $\\psi\'$ springen?', opts:['an einer unendlich hohen Wand', 'an jeder Stufe des Potentials', 'nirgends, auch nicht an einer Wand'], a:0, ex:'Bei endlichem $V$ verschwindet $\\int(V - E)\\psi\\,dx$ über ein schrumpfendes Intervall, also ist $\\psi\'$ stetig. An einer unendlich hohen Wand gilt das Argument nicht.'}]},
-    {id:'sg-t5', title:'Überlagerung und Zeitentwicklung',
-      text:'Die Schrödingergleichung ist linear. Erfüllen $\\psi_1, \\psi_2, \\dots$ die Gleichungen $\\hat H\\psi_n = E_n\\psi_n$, dann löst jede Summe\n\n$$\\Psi(x,t) = \\sum_n c_n\\,\\psi_n(x)\\,e^{-iE_nt/\\hbar}$$\n\ndie zeitabhängige Gleichung ([[lex:superposition|Superpositionsprinzip]]). Jeder Summand behält **seinen eigenen** Phasenfaktor. Die Koeffizienten $c_n$ legt der Anfangszustand fest: $\\Psi(x,0) = \\sum_nc_n\\psi_n(x)$. Im Kasten lässt sich jeder Anfangszustand so schreiben (Thema 3). Damit hast du ein Rezept für die [[lex:zeitentwicklung|Zeitentwicklung]]: Anfangszustand zerlegen, an jeden Anteil $e^{-iE_nt/\\hbar}$ hängen, fertig.\n\n**Zwei Zustände.** Für $\\Psi = \\frac{1}{\\sqrt2}\\left(\\psi_1e^{-iE_1t/\\hbar} + \\psi_2e^{-iE_2t/\\hbar}\\right)$ mit reellen $\\psi_n$ rechnet die Herleitung die Dichte aus. Die Einzelterme verlieren ihre Phase, der Mischterm nicht:\n\n$$|\\Psi|^2 = \\tfrac12\\left(\\psi_1^2 + \\psi_2^2\\right) + \\psi_1\\psi_2\\cos\\frac{(E_2 - E_1)t}{\\hbar}.$$\n\nDie Dichte schwingt mit der Kreisfrequenz $\\omega_{21} = (E_2 - E_1)/\\hbar$ und der Periode $T = 2\\pi\\hbar/(E_2 - E_1)$. Mit derselben Frequenz strahlt ein Atom beim Übergang zwischen zwei Niveaus. Zahlen für ein Elektron im Kasten der Breite $1\\,\\mathrm{nm}$: $E_1 \\approx 0{,}38\\,\\mathrm{eV}$, $E_2 - E_1 = 3E_1 \\approx 1{,}1\\,\\mathrm{eV}$, also $T = h/(E_2 - E_1) \\approx 3{,}7\\,\\mathrm{fs}$. Licht mit dieser Energie hat $\\lambda = hc/(E_2 - E_1) \\approx 1{,}1\\,\\mu\\mathrm{m}$.\n\n**Globale und relative Phase.** Ein gemeinsamer Faktor $e^{i\\alpha}$ vor der ganzen Summe ist unbeobachtbar ([[lex:globale-phase|globale Phase]]). Die Phasendifferenz zwischen den Anteilen bestimmt dagegen, wohin die Dichte gerade geschwappt ist: $\\psi_1 + \\psi_2$ hat mehr Gewicht links, $\\psi_1 - \\psi_2$ mehr rechts. Deshalb ist es falsch, eine Überlagerung verschiedener Energien mit einem gemeinsamen Faktor $e^{-iEt/\\hbar}$ zu versehen.\n\n**Was bleibt konstant?** Die Gewichte $|c_ne^{-iE_nt/\\hbar}|^2 = |c_n|^2$ ändern sich nicht. Damit ist auch $\\langle H\\rangle = \\sum_n|c_n|^2E_n$ konstant – Energieerhaltung –, obwohl $\\langle x\\rangle$ schwingt. (In $\\langle H\\rangle = \\int\\Psi^*\\hat H\\Psi\\,dx$ fallen die Mischterme weg, weil $\\int\\psi_1\\psi_2\\,dx = 0$ ist; diese Orthogonalität zeigt Thema 3.) Ausblick: Thema 3 zeigt auch, dass $|c_n|^2$ die Wahrscheinlichkeit ist, bei einer Energiemessung $E_n$ zu finden.\n\n**Die Fehlvorstellung.** „$\\psi_1$ und $\\psi_2$ sind stationär, also auch ihre Summe“ ist falsch. Stationär ist eine Überlagerung nur, wenn alle beteiligten Energien gleich sind.',
-      fig:{lab:'twostate', caption:'$|\\Psi(x,t)|^2$ für $c_1\\psi_1e^{-iE_1t/\\hbar} + c_2\\psi_2e^{-iE_2t/\\hbar}$. Nur bei $|c_1|^2 = 0$ oder $1$ steht die Dichte still.'},
-      derive:{ctx:BOX2({defs:{'ψ_n(x)':'sqrt(2/L) sin(nπx/L)', 'E_n':'n^2 π^2 ħ^2/(2m L^2)', 'Ψ(x,t)':'1/sqrt(2) (ψ_1(x) e^(-i E_1 t/ħ) + ψ_2(x) e^(-i E_2 t/ħ))'}}),
-        lines:[
-          {l:'|Ψ(x,t)|^2 = 1/2 (ψ_1(x)^2 + ψ_2(x)^2) + 1/2 ψ_1(x) ψ_2(x) (e^(i(E_2 - E_1)t/ħ) + e^(-i(E_2 - E_1)t/ħ))', w:'ausmultipliziert, ψ_n reell', why:{q:'Warum bleibt nur im Mischterm eine Zeitabhängigkeit?', opts:['Dort treffen $e^{+iE_1t/\\hbar}$ und $e^{-iE_2t/\\hbar}$ zusammen, und $E_1 \\ne E_2$.', 'Weil die Einzelterme $\\psi_n^2$ zeitlich gemittelt werden.', 'Weil der Mischterm als einziger komplexe Zahlen enthält.'], a:0, ex:'In $|\\psi_1e^{-iE_1t/\\hbar}|^2$ heben sich die Phasen auf. Im Produkt $\\psi_1e^{+iE_1t/\\hbar}\\cdot\\psi_2e^{-iE_2t/\\hbar}$ bleibt $e^{-i(E_2-E_1)t/\\hbar}$ stehen.'}},
-          {l:'= 1/2 (ψ_1(x)^2 + ψ_2(x)^2) + ψ_1(x) ψ_2(x) cos((E_2 - E_1) t/ħ)', w:'e^(iu) + e^(-iu) = 2 cos u'}
-        ]},
-      q:[{q:'$(\\psi_1 + \\psi_2)/\\sqrt2$ im Kasten, mit $E_n = n^2E_1$: Nach welcher Zeit sieht die Dichte zum ersten Mal wieder aus wie bei $t = 0$?', opts:['$T = 2\\pi\\hbar/(3E_1)$', '$T = 2\\pi\\hbar/E_1$', '$T = 2\\pi\\hbar/(5E_1)$'], a:0, ex:'$E_2 - E_1 = 4E_1 - E_1 = 3E_1$, also $T = 2\\pi\\hbar/(3E_1)$. Die Summe $E_1 + E_2 = 5E_1$ spielt keine Rolle.'}]},
-    {id:'sg-t6', title:'Wahrscheinlichkeitsstrom und Kontinuitätsgleichung',
-      text:'In Thema 1 hast du gezeigt, dass $\\int|\\Psi|^2dx$ über die ganze Achse erhalten bleibt. Was passiert in einem endlichen Stück $[a, b]$? Die Herleitung geht dieselben Schritte, nur mit endlichen Grenzen. Jetzt verschwindet der Randterm nicht:\n\n$$\\frac{d}{dt}\\int_a^b|\\Psi|^2dx = j(a,t) - j(b,t),\\qquad j = \\frac{\\hbar}{2mi}\\left(\\Psi^*\\frac{\\partial\\Psi}{\\partial x} - \\Psi\\frac{\\partial\\Psi^*}{\\partial x}\\right).$$\n\n$j$ heißt [[lex:stromdichte|Wahrscheinlichkeitsstromdichte]]. Die Wahrscheinlichkeit im Intervall ändert sich nur, weil bei $a$ etwas hinein- und bei $b$ etwas hinausfließt. Sie verschwindet nicht an einer Stelle, um woanders aufzutauchen. Weil $a$ und $b$ beliebig sind, folgt die lokale Form, die [[lex:kontinuitaet|Kontinuitätsgleichung]]:\n\n$$\\frac{\\partial|\\Psi|^2}{\\partial t} + \\frac{\\partial j}{\\partial x} = 0.$$\n\nDazu setzt man $b = a + \\Delta x$, teilt durch $\\Delta x$ und lässt $\\Delta x \\to 0$. Die Gleichung hat dieselbe Form wie die Ladungserhaltung in der Elektrodynamik.\n\n**Eigenschaften von $j$:**\n\n- $j$ ist reell. Die Klammer ist $2i\\,\\mathrm{Im}(\\Psi^*\\partial_x\\Psi)$, also $j = \\frac{\\hbar}{m}\\mathrm{Im}(\\Psi^*\\partial_x\\Psi) = \\frac1m\\mathrm{Re}(\\Psi^*\\hat p\\Psi)$.\n- In einer Dimension hat $j$ die Einheit $1/\\mathrm{s}$: Wahrscheinlichkeit pro Zeit, die an einer Stelle vorbeifließt.\n- Für $A\\,e^{i(kx-\\omega t)}$ ist $j = |A|^2\\hbar k/m$: Dichte $|A|^2$ mal Geschwindigkeit $v = \\hbar k/m$. Für $e^{-ikx}$ ist $j$ negativ; der Strom fließt nach links.\n- Ist $\\psi(x)$ reell, trägt $\\psi(x)e^{-iEt/\\hbar}$ keinen Strom. Gebundene stationäre Zustände wie im Kasten haben $j = 0$.\n\n**Stationär heißt nicht stromlos.** In einem stationären Zustand ist $\\partial_t|\\Psi|^2 = 0$, also $\\partial_xj = 0$: $j$ ist überall gleich, aber nicht unbedingt null. $A\\,e^{ikx}e^{-iEt/\\hbar}$ ist stationär und trägt den konstanten Strom $\\hbar k|A|^2/m$. Mit genau diesem Gedanken berechnet Thema 5 Reflexion und Transmission: Im stationären Zustand ist der Strom links und rechts einer Barriere gleich.',
-      derive:{ctx:DYN({params:{m:'pos', a:'pos', b:'pos'}}),
-        lines:[
-          {l:'d/dt ∫_a^b |Ψ|^2 dx = iħ/(2m) ∫_a^b (Ψ^* ∂^2Ψ/∂x^2 - Ψ ∂^2Ψ^*/∂x^2) dx', w:'Produktregel, Schrödingergleichung, V reell'},
-          {l:'= iħ/(2m) [Ψ^* ∂Ψ/∂x - Ψ ∂Ψ^*/∂x]_a^b', w:'Integrand ist eine Ableitung nach x', why:{q:'Warum ist $\\Psi^*\\Psi\'\' - \\Psi\\Psi^{*\\prime\\prime}$ eine Ableitung?', opts:['$\\partial_x(\\Psi^*\\Psi\' - \\Psi\\Psi^{*\\prime})$ ergibt es, weil sich $\\Psi^{*\\prime}\\Psi\'$ weghebt.', 'Weil jede Funktion eine Stammfunktion hat.', 'Weil $\\Psi^*\\Psi\'\'$ und $\\Psi\\Psi^{*\\prime\\prime}$ gleich sind.'], a:0, ex:'Produktregel: $\\partial_x(\\Psi^*\\Psi\') = \\Psi^{*\\prime}\\Psi\' + \\Psi^*\\Psi\'\'$, ebenso für den zweiten Term. Die gemischten Produkte heben sich in der Differenz weg.'}},
-          {l:'= -[ħ/(2m i) (Ψ^* ∂Ψ/∂x - Ψ ∂Ψ^*/∂x)]_a^b', w:'= j(a) − j(b)', why:{q:'Wie liest man das Ergebnis?', opts:['Was bei $a$ hineinfließt, minus was bei $b$ hinausfließt.', 'Die Wahrscheinlichkeit im Intervall ist immer konstant.', 'Der Strom ist an beiden Rändern immer gleich groß.'], a:0, ex:'$-[j]_a^b = j(a) - j(b)$. Nur wenn $j(a) = j(b)$, bleibt die Wahrscheinlichkeit im Intervall konstant.'}}
-        ]},
-      q:[{q:'In einem Intervall $[a, b]$ nimmt die Wahrscheinlichkeit gerade ab. Was folgt?', opts:['$j(b) > j(a)$: rechts fließt mehr hinaus als links hinein.', '$j(a) > j(b)$: links fließt mehr hinein als rechts hinaus.', '$j$ ist im ganzen Intervall negativ.'], a:0, ex:'$\\frac{d}{dt}P_{ab} = j(a) - j(b) < 0$ heißt $j(b) > j(a)$. Das Vorzeichen von $j$ allein entscheidet nichts.'}]}
+    /* ===== Abschnitt 1: Plausibilität der Schrödingergleichung ===== */
+    {id:'sg-t1', title:'Woher kommt die Schrödingergleichung?', steps:[
+      {id:'sg-t1a', title:'Drei Forderungen an die Gleichung',
+        text:R`Die Schrödingergleichung lässt sich nicht aus der klassischen Physik herleiten. Sie ist ein Grundgesetz wie die Newtonschen Gleichungen; ob sie stimmt, entscheiden Experimente. Man kann sie aber plausibel machen. Drei Forderungen grenzen sie stark ein.
+
+1. **Linear.** Mit zwei Lösungen $\Psi_1$ und $\Psi_2$ soll auch $\Psi_1 + \Psi_2$ eine Lösung sein. Sonst gäbe es keine Interferenz wie am Doppelspalt (Thema 1).
+2. **Erste Ordnung in der Zeit.** $\Psi$ zur Zeit $t = 0$ soll den Zustand vollständig festlegen. Eine Gleichung zweiter Ordnung bräuchte zusätzlich $\partial_t\Psi(x,0)$.
+3. **Richtige Physik für freie Teilchen.** Eine ebene Welle soll ein freies Teilchen beschreiben, mit $E = p^2/2m$.
+
+**Schreibweise.** In diesem Thema heißt die zeitabhängige Wellenfunktion $\Psi(x,t)$, mit großem Psi; in Thema 1 hieß sie $\psi(x,t)$. Das kleine $\psi(x)$ brauchst du ab Abschnitt 2 für eine Funktion nur des Orts.`,
+        q:{q:R`Warum soll die Gleichung nur die erste Zeitableitung enthalten?`,
+          opts:[R`Damit Wellen mit fester Frequenz $\omega$ überhaupt Lösungen sind.`, R`Damit $\Psi$ zur Zeit $t = 0$ allein die ganze Zukunft festlegt.`, R`Damit die Gleichung für jedes Potential linear bleibt.`], a:1,
+          ex:R`Bei einer Gleichung erster Ordnung in $t$ reicht der Anfangswert $\Psi(x,0)$. Bei zweiter Ordnung bräuchte man zusätzlich $\partial_t\Psi(x,0)$, und der Zustand wäre nicht allein durch $\Psi$ beschrieben.`,
+          fb:[R`Auch die gewohnte Wellengleichung, die zweiter Ordnung ist, hat Lösungen mit fester Frequenz. Es geht um die Anfangswerte.`,
+            '',
+            R`Linearität und Ordnung sind zwei verschiedene Eigenschaften. Auch eine Gleichung zweiter Ordnung kann linear sein.`]}},
+      {id:'sg-t1b', title:'Was die Ableitungen aus einer ebenen Welle holen',
+        pre:{from:'m-komplex', seg:'mk-t4', title:'Ableiten von Exponentialfunktionen', text:R`Die Regel $\frac{d}{dx}e^{ax} = a\,e^{ax}$ gilt auch für komplexes $a$. Also ist $\partial_xe^{ikx} = ik\,e^{ikx}$ und $\partial_te^{-i\omega t} = -i\omega\,e^{-i\omega t}$. Mini-Beispiel: $\partial_t e^{-2it} = -2i\,e^{-2it}$.`},
+        num:{title:R`Ein Elektron mit $\lambda = 0{,}5\,\mathrm{nm}$`, text:R`Die Wellenzahl ist $k = 2\pi/\lambda \approx 12{,}6\,\mathrm{nm}^{-1}$, der Impuls $p = \hbar k \approx 1{,}33\cdot10^{-24}\,\mathrm{kg\,m/s}$. Die kinetische Energie ist
+
+$$E = \frac{p^2}{2m_e} \approx 6{,}0\,\mathrm{eV},$$
+
+also gehört zur Welle die Kreisfrequenz $\omega = E/\hbar \approx 9{,}1\cdot10^{15}\,\mathrm{s}^{-1}$.`},
+        text:R`Eine ebene Welle $\Psi = A\,e^{i(kx - \omega t)}$ beschreibt ein freies Teilchen mit dem Impuls $p = \hbar k$ ([[lex:de-broglie|de Broglie]]) und der Energie $E = \hbar\omega$ (Planck–Einstein). Welche Ableitung holt welche Größe heraus?
+
+Die Herleitung zeigt es. $i\hbar\,\partial_t$ liefert den Faktor $\hbar\omega$, also die Energie. $-i\hbar\,\partial_x$ liefert $\hbar k$, also den Impuls; das ist der [[lex:impulsoperator|Impulsoperator]] aus Thema 1. In beiden Fällen kommt die Welle unverändert zurück, nur mit einer Zahl davor. Im Beispiel wäre das $6{,}0\,\mathrm{eV}$ bei der Zeitableitung und $1{,}33\cdot10^{-24}\,\mathrm{kg\,m/s}$ bei der Ortsableitung.`,
+        derive:{ctx:{coords:['x', 't'], params:{A:'pos', k:'pos', m:'pos'}, defs:{'ω':'ħ k^2/(2m)', 'Ψ(x,t)':'A e^(i(k x - ω t))'}},
+          lines:[
+            {l:'iħ ∂Ψ/∂t = ħω Ψ', w:'Zeitableitung liefert −iω', why:{q:'Warum liefert $i\\hbar\\,\\partial_t$ gerade $\\hbar\\omega$?', opts:['$\\partial_t e^{-i\\omega t} = -i\\omega\\,e^{-i\\omega t}$ und $i\\cdot(-i) = 1$', '$\\partial_t e^{-i\\omega t} = i\\omega\\,e^{-i\\omega t}$ und $i\\cdot i = 1$', 'Weil $\\Psi$ normiert ist und $|e^{-i\\omega t}| = 1$'], a:0, ex:'$i\\hbar\\cdot(-i\\omega) = \\hbar\\omega$. Das Minuszeichen im Exponenten passt zum $+i$ vor der Zeitableitung.'}},
+            {l:'-iħ ∂Ψ/∂x = ħk Ψ', w:'p = ħk', why:{q:'Welche physikalische Größe ist $\\hbar k$?', opts:['der Impuls nach de Broglie, $p = \\hbar k = h/\\lambda$', 'die Energie nach Planck, $E = \\hbar k$', 'die Geschwindigkeit $v = \\hbar k$ des Teilchens'], a:0, ex:'$k = 2\\pi/\\lambda$, also $\\hbar k = h/\\lambda = p$.'}}
+          ]},
+        q:{q:R`Was ergibt $i\hbar\,\partial_t$ angewandt auf $A\,e^{i(kx - \omega t)}$?`,
+          opts:[R`$-\hbar\omega\,A\,e^{i(kx - \omega t)}$`, R`$\hbar\omega\,A\,e^{i(kx - \omega t)}$`, R`$i\hbar\omega\,A\,e^{i(kx - \omega t)}$`], a:1,
+          ex:R`$\partial_t$ holt den Faktor $-i\omega$ heraus, und $i\hbar\cdot(-i\omega) = \hbar\omega$: die Energie.`,
+          fb:[R`Das Vorzeichen stimmt nicht: $i\cdot(-i) = -i^2 = +1$.`,
+            '',
+            R`Das $i$ vor der Ableitung hebt das $-i$ aus dem Exponenten auf. Übrig bleibt eine reelle Energie.`]}},
+      {id:'sg-t1c', title:'Aus E = p²/2m wird eine Gleichung',
+        num:{title:'Dasselbe Elektron', text:R`Zweimal $-i\hbar\,\partial_x$ ergibt den Faktor $(\hbar k)^2$. Geteilt durch $2m_e$ ist das
+
+$$\frac{(\hbar k)^2}{2m_e} \approx \frac{(1{,}33\cdot10^{-24}\,\mathrm{kg\,m/s})^2}{2\cdot9{,}11\cdot10^{-31}\,\mathrm{kg}} \approx 6{,}0\,\mathrm{eV},$$
+
+genau der Faktor $\hbar\omega$, den $i\hbar\,\partial_t$ liefert. Beide Seiten stimmen überein.`},
+        text:R`Schreibt man $E = p^2/2m$ mit den Ableitungen aus dem letzten Schritt, entsteht die freie Schrödingergleichung. Die Herleitung prüft, dass die ebene Welle sie löst, wenn $\omega = \hbar k^2/2m$ ist. Mit einer potentiellen Energie wird aus $E = p^2/2m + V(x)$ die allgemeine [[lex:schroedinger|Schrödingergleichung]]
+
+$$i\hbar\frac{\partial\Psi}{\partial t} = \hat H\Psi,\qquad \hat H = -\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2} + V(x).$$
+
+$\hat H$, gelesen „H Dach“, heißt [[lex:hamilton|Hamilton-Operator]]; er steht für die Gesamtenergie. Die Bestätigung kommt aus den Folgerungen: Die Gleichung liefert die Spektren von Atomen, den Tunneleffekt und die Bänder in Festkörpern.`,
+        derive:{ctx:{coords:['x', 't'], params:{A:'pos', k:'pos', m:'pos'}, defs:{'ω':'ħ k^2/(2m)', 'Ψ(x,t)':'A e^(i(k x - ω t))'}},
+          lines:[
+            {l:'-ħ^2/(2m) ∂^2Ψ/∂x^2 = (ħk)^2/(2m) Ψ', w:'zweimal abgeleitet: p²/2m', why:{q:R`Warum steht rechts $+(\hbar k)^2/2m$, obwohl $(ik)^2 = -k^2$ ist?`, opts:['Weil das Minus von $(ik)^2$ das Minus vor $\\hbar^2/2m$ aufhebt.', 'Weil man beim zweiten Ableiten das Vorzeichen weglassen darf.', 'Weil $k$ hier negativ gewählt ist.'], a:0, ex:R`$-\frac{\hbar^2}{2m}(ik)^2 = -\frac{\hbar^2}{2m}(-k^2) = +\frac{\hbar^2k^2}{2m}$: die kinetische Energie ist positiv.`}},
+            {l:'iħ ∂Ψ/∂t = -ħ^2/(2m) ∂^2Ψ/∂x^2', w:'E = p²/2m mit E = ħω', why:{q:'Warum folgt aus den Faktoren $\\hbar\\omega$ (Zeitableitung) und $(\\hbar k)^2/2m$ (Ortsableitung) diese Gleichung?', opts:['Weil hier $\\omega = \\hbar k^2/2m$ ist, also $\\hbar\\omega = (\\hbar k)^2/2m$: $E = p^2/2m$.', 'Weil Zeit- und Ortsableitung immer gleich sind', 'Weil $\\omega = k$ für jede ebene Welle gilt'], a:0, ex:'Die Gleichung ist genau so gebaut, dass für eine ebene Welle die klassische Beziehung $E = p^2/2m$ herauskommt.'}}
+          ]},
+        q:{q:R`Welche Beziehung steckt in der freien Schrödingergleichung, wenn man eine ebene Welle einsetzt?`,
+          opts:[R`$E = pc$ mit $E = \hbar\omega$ und $p = \hbar k$`, R`$E = p^2/2m$ mit $E = \hbar k$ und $p = \hbar\omega$`, R`$E = p^2/2m$ mit $E = \hbar\omega$ und $p = \hbar k$`], a:2,
+          ex:R`Die Dispersionsrelation $\omega = \hbar k^2/2m$ ist die klassische kinetische Energie, übersetzt mit Planck–Einstein und de Broglie.`,
+          fb:[R`$E = pc$ gilt für Licht. Dazu gehört die gewohnte Wellengleichung, nicht die Schrödingergleichung.`,
+            R`Die Zuordnung ist vertauscht: Die Frequenz gehört zur Energie, die Wellenzahl zum Impuls.`,
+            '']}},
+      {id:'sg-t1d', title:'Die Schrödingergleichung, gelesen',
+        num:{title:'Zwei Wellen, eine Summe', text:R`Die Wellen $e^{i(kx - \omega t)}$ und $e^{i(-kx - \omega t)}$ lösen beide die freie Gleichung, mit demselben $\omega = \hbar k^2/2m$. Ihre Summe ist
+
+$$e^{-i\omega t}\left(e^{ikx} + e^{-ikx}\right) = 2\cos(kx)\,e^{-i\omega t},$$
+
+eine stehende Welle. Weil die Gleichung linear ist, löst sie auch diese Summe.`},
+        text:R`Eine Gleichung kann man auf mehrere Arten lesen. Die Tafel zeigt vier. Physikalisch ist sie eine Energiebilanz: Energie gleich kinetische plus potentielle Energie, jede Größe ersetzt durch eine Ableitung. In Worten sagt sie: Wie schnell sich $\Psi$ an einer Stelle ändert, hängt davon ab, wie stark $\Psi$ dort gekrümmt ist und wie hoch das Potential ist.
+
+Mathematisch ist sie eine lineare partielle Differentialgleichung, erster Ordnung in $t$ und zweiter in $x$ (M7). Linear heißt: Summen von Lösungen sind wieder Lösungen, wie die stehende Welle im Beispiel.`,
+        reps:{obj:'Die Schrödingergleichung in vier Lesarten',
+          rows:[
+            {k:'physik', tex:R`E = \frac{p^2}{2m} + V(x)`},
+            {k:'formel', tex:R`i\hbar\frac{\partial\Psi}{\partial t} = -\frac{\hbar^2}{2m}\frac{\partial^2\Psi}{\partial x^2} + V(x)\,\Psi`},
+            {k:'worte', text:R`Die zeitliche Änderung von $\Psi$ an einer Stelle hängt von der Krümmung von $\Psi$ dort und von der Höhe des Potentials ab.`},
+            {k:'mathe', text:R`Lineare partielle Differentialgleichung, erster Ordnung in $t$, zweiter Ordnung in $x$ (M7). Mit $\Psi_1$ und $\Psi_2$ ist auch $c_1\Psi_1 + c_2\Psi_2$ eine Lösung.`}
+          ],
+          links:[
+            {from:'physik', to:'formel', rule:R`$E$ durch $i\hbar\,\partial_t$ ersetzen, $p$ durch $-i\hbar\,\partial_x$, $V(x)$ stehen lassen und alles auf $\Psi$ wirken lassen.`},
+            {from:'formel', to:'worte', rule:R`Links die zeitliche Änderung lesen, rechts erst die Krümmung $\partial_x^2\Psi$ und dann das Potential mal $\Psi$.`},
+            {from:'worte', to:'mathe', rule:R`Zählen, wie oft nach $t$ und nach $x$ abgeleitet wird, und prüfen, ob $\Psi$ nur linear vorkommt.`}
+          ]},
+        q:{q:R`Ein Teilchen im Schwerefeld hat $E = p^2/2m + mgx$. Wie lautet seine Schrödingergleichung?`, tr:{from:'physik', to:'formel'},
+          opts:[R`$i\hbar\,\partial_t\Psi = -\frac{\hbar^2}{2m}\partial_x^2\Psi + mgx$`, R`$i\hbar\,\partial_t\Psi = -\frac{\hbar^2}{2m}\partial_x^2\Psi + mgx\,\Psi$`, R`$i\hbar\,\partial_t\Psi = \frac{\hbar^2}{2m}\partial_x^2\Psi + mgx\,\Psi$`], a:1,
+          ex:R`Jeder Energieterm wird zu einem Operator, der auf $\Psi$ wirkt: $p^2/2m \to -\frac{\hbar^2}{2m}\partial_x^2$, und $V = mgx$ multipliziert $\Psi$.`,
+          fb:[R`Auch das Potential muss mit $\Psi$ multipliziert werden. Sonst wäre die Gleichung nicht linear in $\Psi$.`,
+            '',
+            R`Das Vorzeichen stimmt nicht: $(-i\hbar\,\partial_x)^2 = -\hbar^2\partial_x^2$.`]}},
+      {id:'sg-t1e', title:'Typischer Fehler: die gewohnte Wellengleichung',
+        num:{title:'Falsche Energie', text:R`Die Wellengleichung $\partial_t^2u = c^2\partial_x^2u$ verlangt $\omega = ck$, also $E = \hbar ck = pc$. Für das Elektron mit $\lambda = 0{,}5\,\mathrm{nm}$ gäbe das
+
+$$E = \hbar ck \approx 2{,}5\,\mathrm{keV}$$
+
+statt der richtigen $6{,}0\,\mathrm{eV}$. Bei Teilchen mit Masse ist $\omega \propto k^2$, nicht $\omega \propto k$.`},
+        text:R`Warum nicht die gewohnte Wellengleichung? Sie ergibt $\omega = ck$, also $E = pc$. Das stimmt für Licht, nicht für Teilchen mit Masse. Außerdem ist sie zweiter Ordnung in der Zeit.
+
+Warum das $i$? Ohne $i$ hätte man $\partial_t\Psi = D\,\partial_x^2\Psi$, die Wärmeleitungsgleichung. Ihre Lösungen zerfließen, $\int|\Psi|^2dx$ nimmt ab, und statt $e^{i(kx - \omega t)}$ gibt es nur abklingende Lösungen $e^{ikx}e^{-Dk^2t}$. Mit dem $i$ bleibt die Normierung erhalten (Thema 1), und Wellen mit fester Frequenz sind Lösungen. Deshalb ist $\Psi$ zwangsläufig komplex.`,
+        q:{q:R`Was ginge verloren, wenn man das $i$ aus der Schrödingergleichung striche?`,
+          opts:[R`die Linearität der Gleichung`, R`die Erhaltung der Normierung`, R`die Abhängigkeit vom Potential $V$`], a:1,
+          ex:R`Ohne $i$ entsteht eine Gleichung wie die Wärmeleitung. Ihre Lösungen klingen ab, und $\int|\Psi|^2dx$ nimmt mit der Zeit ab.`,
+          fb:[R`Auch die Wärmeleitungsgleichung ist linear. Das $i$ entscheidet über etwas anderes.`,
+            '',
+            R`Das Potential bliebe in der Gleichung stehen. Verloren ginge, dass die Gesamtwahrscheinlichkeit $1$ bleibt.`]}}
+    ]},
+
+    /* ===== Abschnitt 2: Separation, Zeitfaktor, Eigenwertgleichung ===== */
+    {id:'sg-t2', title:'Separation: die stationäre Schrödingergleichung', steps:[
+      {id:'sg-t2a', title:'Der Produktansatz',
+        pre:{from:'m-dgl', seg:'md-t5', title:'Separationsansatz', text:R`Hängt die gesuchte Funktion von zwei Variablen ab, versucht man ein Produkt: $\Psi(x,t) = \varphi(x)\,f(t)$. Dann wird $\partial_t\Psi = \varphi\,f'$ und $\partial_x^2\Psi = \varphi''f$. Nach dem Teilen durch $\varphi f$ steht links nur $t$, rechts nur $x$.`},
+        num:{title:'Ein Produkt im Kasten', text:R`Für $\Psi(x,t) = \sin(\pi x/L)\,e^{-i\omega t}$ ist
+
+$$\partial_t\Psi = -i\omega\,\Psi,\qquad \partial_x^2\Psi = -\left(\frac{\pi}{L}\right)^2\Psi.$$
+
+Beide Ableitungen geben $\Psi$ mal eine Zahl zurück. Teilst du durch $\Psi$, bleiben nur Konstanten: $-i\omega$ und $-(\pi/L)^2$.`},
+        text:R`Hängt $V$ nicht von der Zeit ab, gibt es besonders einfache Lösungen. Man macht den [[lex:separation|Separationsansatz]] $\Psi(x,t) = \psi(x)\,f(t)$ und setzt ein:
+
+$$i\hbar\,\psi\,\frac{df}{dt} = f\left(-\frac{\hbar^2}{2m}\psi'' + V\psi\right).$$
+
+Teilen durch $\psi f$ ergibt
+
+$$i\hbar\,\frac{1}{f}\frac{df}{dt} = \frac{1}{\psi}\left(-\frac{\hbar^2}{2m}\psi'' + V\psi\right).$$
+
+Links steht jetzt nur noch $t$, rechts nur noch $x$: Die Variablen sind getrennt. Wie in Abschnitt 1 angekündigt, ist $\Psi(x,t)$ die zeitabhängige Wellenfunktion und $\psi(x)$ eine Funktion nur des Orts.`,
+        q:{q:R`Warum verlangt der Ansatz ein Potential $V$, das nicht von der Zeit abhängt?`,
+          opts:[R`Sonst hinge auch die rechte Seite von $t$ ab.`, R`Sonst wäre die Gleichung nicht mehr linear in $\Psi$.`, R`Sonst bliebe die Normierung nicht erhalten.`], a:0,
+          ex:R`Mit $V(x,t)$ hinge $\frac1\psi\left(-\frac{\hbar^2}{2m}\psi'' + V\psi\right)$ auch von $t$ ab. Dann stünde nicht mehr links nur $t$ und rechts nur $x$, und die Trennung der Variablen misslingt.`,
+          fb:['',
+            R`Auch mit $V(x,t)$ kommt $\Psi$ nur linear vor. Das Problem ist die Trennung: Rechts stünde dann auch $t$.`,
+            R`Ein reelles $V(x,t)$ erhält die Normierung ebenfalls (Thema 1). Das Problem ist die Trennung der Variablen.`]}},
+      {id:'sg-t2b', title:'Beide Seiten sind dieselbe Konstante',
+        num:{title:'Zwei Funktionen, die immer gleich sind', text:R`Angenommen, $g(t) = h(x)$ für alle $x$ und $t$. Halte $x = 1$ fest: Dann ist $g(t) = h(1)$ für jedes $t$, also ist $g$ konstant. Mit $g(t) = 3$ muss auch $h(x) = 3$ für jedes $x$ sein. Im Beispiel des letzten Schritts ist die Konstante $i\hbar\cdot(-i\omega) = \hbar\omega$.`},
+        text:R`Links steht nur $t$, rechts nur $x$. Hält man $x$ fest und ändert $t$, bleibt die rechte Seite gleich; also darf sich auch die linke nicht ändern. Beide Seiten sind dieselbe Konstante. Man nennt sie $E$. Es bleiben zwei gewöhnliche Differentialgleichungen:
+
+$$i\hbar\frac{df}{dt} = E\,f,\qquad -\frac{\hbar^2}{2m}\psi'' + V\psi = E\psi.$$
+
+Aus einer partiellen Gleichung in zwei Variablen sind zwei Gleichungen in je einer Variablen geworden. Die erste regelt die Zeit, die zweite den Ort. Die Konstante $E$ verbindet beide. Dass sie die Energie ist, zeigt Abschnitt 3.`,
+        q:{q:R`Warum müssen beide Seiten der separierten Gleichung konstant sein?`,
+          opts:['Weil die Energie eines abgeschlossenen Systems immer erhalten ist.', 'Weil links nur $t$, rechts nur $x$ vorkommt und beide für alle $x$, $t$ gleich sind.', 'Weil $\\psi$ normiert ist und $f$ den Betrag 1 hat.'], a:1,
+          ex:R`Eine Funktion nur von $t$, die für alle $t$ gleich einer Funktion nur von $x$ ist, kann sich weder mit $t$ noch mit $x$ ändern.`,
+          fb:[R`Die Energieerhaltung ist hier nicht das Argument. Es geht allein um die Trennung der Variablen.`,
+            '',
+            R`Die Normierung legt nur einen Vorfaktor fest. Das Argument ist die Trennung der Variablen.`]}},
+      {id:'sg-t2c', title:'Der Zeitfaktor',
+        pre:{from:'m-komplex', seg:'mk-t2', title:'Euler-Formel und Betrag', text:R`$e^{i\varphi} = \cos\varphi + i\sin\varphi$ liegt auf dem Einheitskreis: $|e^{i\varphi}| = 1$ für jedes reelle $\varphi$. Nach $\varphi = 2\pi$ ist der Punkt wieder am Anfang. Mini-Beispiel: $e^{-i\pi/2} = -i$.`},
+        num:{title:R`Grundzustand eines $1\,\mathrm{nm}$-Kastens`, text:R`Mit $E = 0{,}376\,\mathrm{eV}$ dreht sich der Zeitfaktor mit $\omega = E/\hbar \approx 5{,}7\cdot10^{14}\,\mathrm{s}^{-1}$. Einmal ganz herum ist er nach
+
+$$T = \frac{2\pi\hbar}{E} = \frac{h}{E} \approx 11\,\mathrm{fs}.$$
+
+Nach $T/4$ ist $e^{-iET/(4\hbar)} = e^{-i\pi/2} = -i$, nach $T/2$ ist er $-1$.`},
+        text:R`Die Zeitgleichung $i\hbar f' = Ef$ hat die Lösung $f(t) = f(0)\,e^{-iEt/\hbar}$, wie die Herleitung zeigt. Die Konstante $f(0)$ steckt man in $\psi$. Der Zeitfaktor $e^{-iEt/\hbar}$ ist eine reine Phase, die sich mit der Kreisfrequenz $E/\hbar$ dreht.
+
+$E$ muss reell sein. Mit $E = E_0 + i\Gamma$ wäre $|f|^2 = e^{2\Gamma t/\hbar}$, und die Normierung bliebe nicht erhalten. Für reelles $E$ ist dagegen $|f(t)|^2 = |f(0)|^2$ zu jeder Zeit.`,
+        derive:{ctx:{coords:['t'], params:{E:'real', C:'complex'}, defs:{'f(t)':'C e^(-i E t/ħ)'}},
+          lines:[
+            {l:'iħ df/dt = E f(t)', w:'Zeitteil der Separation'},
+            {l:'df/dt = -iE/ħ f(t)', w:'durch iħ geteilt', why:{q:'Woher kommt das Minuszeichen?', opts:['$1/i = -i$', '$i^2 = 1$', 'aus der Normierung von $f$'], a:0, ex:'$\\frac{E}{i\\hbar} = -\\frac{iE}{\\hbar}$, weil $\\frac1i = \\frac{i}{i^2} = -i$.'}},
+            {l:'f(t) = f(0) e^(-iEt/ħ)', w:'Lösung von f′ = c f', why:{q:'Warum ist das die Lösung?', opts:['Weil $f\' = cf$ die Lösung $f(0)e^{ct}$ hat, hier mit $c = -iE/\\hbar$.', 'Weil jede Funktion von $t$ eine Exponentialfunktion ist.', 'Weil $f$ periodisch sein muss und $\\sin$ zu reell ist.'], a:0, ex:'Lineare Differentialgleichung erster Ordnung mit konstantem Koeffizienten (M7).'}},
+            {l:'|f(t)|^2 = |f(0)|^2', w:'E reell', why:{q:'Wann hängt $|f(t)|^2$ nicht von $t$ ab?', opts:['wenn $E$ reell ist, denn dann ist $|e^{-iEt/\\hbar}| = 1$', 'wenn $f(0) = 1$ ist, denn dann ist $|f(0)|^2 = 1$', 'immer, denn $e^{-iEt/\\hbar}$ ist stets eine reine Phase'], a:0, ex:'Für $E = E_0 + i\\Gamma$ wäre $|e^{-iEt/\\hbar}|^2 = e^{2\\Gamma t/\\hbar}$.'}}
+          ]},
+        q:{q:R`Nach welcher Zeit hat sich der Zeitfaktor $e^{-iEt/\hbar}$ einmal ganz gedreht?`,
+          opts:[R`nach $\hbar/E$`, R`nach $E/h$`, R`nach $h/E$`], a:2,
+          ex:R`Einmal herum heißt $Et/\hbar = 2\pi$, also $t = 2\pi\hbar/E = h/E$. Im Beispiel sind das $11\,\mathrm{fs}$.`,
+          fb:[R`Nach $\hbar/E$ ist die Phase erst $1$ Radiant, nicht $2\pi$.`,
+            R`$E/h$ ist eine Frequenz, keine Zeit. Die Periode ist ihr Kehrwert.`,
+            '']}},
+      {id:'sg-t2d', title:'Die stationäre Gleichung ist eine Eigenwertgleichung',
+        pre:{from:'m-eigen', seg:'me-t3', title:'Eigenwerte und Eigenvektoren', text:R`Eine Matrix dreht und streckt die meisten Vektoren. Manche Richtungen werden nur gestreckt: $Av = \lambda v$ mit $v \ne 0$. Dann ist $v$ ein Eigenvektor und $\lambda$ sein Eigenwert. Mini-Beispiel: $\begin{pmatrix}2 & 0\\ 0 & 3\end{pmatrix}\begin{pmatrix}1\\ 0\end{pmatrix} = 2\begin{pmatrix}1\\ 0\end{pmatrix}$.`},
+        num:{title:'Eine Sinusfunktion im Kasten', text:R`Im Kasten ist innen $V = 0$. Für $\psi = \sin(2\pi x/L)$ ist $\psi'' = -(2\pi/L)^2\psi$, also
+
+$$\hat H\psi = -\frac{\hbar^2}{2m}\psi'' = \frac{4\pi^2\hbar^2}{2mL^2}\,\psi.$$
+
+$\hat H$ gibt $\psi$ mal einer Zahl zurück. Für $L = 1\,\mathrm{nm}$ und ein Elektron ist diese Zahl $1{,}50\,\mathrm{eV}$.`},
+        text:R`Die Ortsgleichung ist die **stationäre Schrödingergleichung** $\hat H\psi = E\psi$. Sie ist eine Eigenwertgleichung ([[lex:eigenwertproblem|Eigenwerte und Eigenvektoren]]). Gesucht sind Funktionen, die $\hat H$ bis auf einen Zahlenfaktor unverändert lässt, und diese Faktoren $E$.
+
+Die Tafel übersetzt zwischen Matrix und Operator. Die Funktion $\psi$ spielt die Rolle des Vektors, der Operator $\hat H$ die der Matrix, die Energie $E$ die des Eigenwerts. Nicht jedes $E$ ist erlaubt. Bei gebundenen Teilchen hat $\hat H\psi = E\psi$ nur für bestimmte $E$ normierbare Lösungen, die die Randbedingungen erfüllen. Das ist die Quantisierung; Thema 3 rechnet sie im Kasten vor.`,
+        reps:{obj:'Die stationäre Schrödingergleichung',
+          rows:[
+            {k:'worte', text:R`$\hat H$ ändert $\psi$ nur um einen Zahlenfaktor; dieser Faktor ist die Energie.`},
+            {k:'formel', tex:R`\hat H\psi = E\psi\quad\Longleftrightarrow\quad -\frac{\hbar^2}{2m}\psi''(x) + V(x)\,\psi(x) = E\,\psi(x)`},
+            {k:'mathe', text:R`$Av = \lambda v$ (M4): Die Matrix $A$ streckt den Eigenvektor $v$ nur um den Eigenwert $\lambda$.`},
+            {k:'physik', text:R`Die Eigenwerte $E$ sind die möglichen Energien. Bei gebundenen Teilchen sind es nur einzelne Werte, zum Beispiel im Kasten $E_2 = 1{,}50\,\mathrm{eV}$ für $L = 1\,\mathrm{nm}$.`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`„Nur ein Zahlenfaktor“ heißt: Rechts steht dieselbe Funktion $\psi$, mit einer Konstanten $E$ multipliziert.`},
+            {from:'formel', to:'mathe', rule:R`Die Funktion $\psi$ als Vektor lesen, den Operator $\hat H$ als Matrix, die Zahl $E$ als Eigenwert $\lambda$.`},
+            {from:'mathe', to:'physik', rule:R`Jeden Eigenwert als mögliche Energie lesen, den zugehörigen Eigenvektor als Zustand mit dieser Energie.`}
+          ]},
+        q:{q:R`In M4 ist $Av = \lambda v$. Was entspricht in $\hat H\psi = E\psi$ dem Eigenvektor $v$?`, tr:{from:'mathe', to:'formel'},
+          opts:[R`die Energie $E$`, R`die Funktion $\psi(x)$`, R`der Operator $\hat H$`, R`der Zeitfaktor $e^{-iEt/\hbar}$`], a:1,
+          ex:R`$\hat H$ wirkt auf $\psi$ wie $A$ auf $v$. $\psi$ ist also der „Vektor“, $E$ der Eigenwert.`,
+          fb:[R`$E$ ist eine Zahl. Sie entspricht dem Eigenwert $\lambda$, nicht dem Vektor.`,
+            '',
+            R`$\hat H$ wirkt auf etwas, wie die Matrix $A$. Er entspricht $A$, nicht $v$.`,
+            R`Der Zeitfaktor kommt in der Ortsgleichung gar nicht vor. Er gehört zur Zeitgleichung.`]}},
+      {id:'sg-t2e', title:'Typischer Fehler: Ĥψ = Eψ gilt für jeden Zustand',
+        num:{title:'Eine Summe zweier Sinusfunktionen', text:R`Im Kasten ist $\hat H\sin(\pi x/L) = E_1\sin(\pi x/L)$ und $\hat H\sin(2\pi x/L) = 4E_1\sin(2\pi x/L)$. Für die Summe $\psi = \sin(\pi x/L) + \sin(2\pi x/L)$ folgt
+
+$$\hat H\psi = E_1\sin\frac{\pi x}{L} + 4E_1\sin\frac{2\pi x}{L}.$$
+
+Das ist kein Vielfaches von $\psi$. Es gibt kein $E$ mit $\hat H\psi = E\psi$.`},
+        text:R`$\hat H\psi = E\psi$ ist keine Gleichung, die jeder Zustand erfüllt. Sie wählt besondere Funktionen aus, die Energie-Eigenfunktionen. Die zeitabhängige Gleichung $i\hbar\,\partial_t\Psi = \hat H\Psi$ gilt dagegen für jeden Zustand.
+
+Daraus folgt eine Regel für den Zeitfaktor. $e^{-iEt/\hbar}$ darfst du nur an eine Eigenfunktion hängen, mit ihrem eigenen $E$. Die Summe im Beispiel ist ein erlaubter Zustand. Aber $\psi(x)\,e^{-iEt/\hbar}$ ist für kein $E$ eine Lösung. Wie sich ein solcher Zustand entwickelt, zeigt Abschnitt 5.`,
+        q:{q:'Im Kasten ist $\\hat H\\sin(n\\pi x/L) = n^2E_1\\sin(n\\pi x/L)$. Für welches Paar ist $\\psi(x)\\,e^{-iEt/\\hbar}$ eine Lösung der zeitabhängigen Gleichung?',
+          opts:['$\\psi = \\sin(\\pi x/L) + \\sin(3\\pi x/L)$ mit $E = 5E_1$', '$\\psi = \\sin(3\\pi x/L)$ mit $E = 3E_1$', '$\\psi = 2\\sin(3\\pi x/L)$ mit $E = 9E_1$'], a:2,
+          ex:'$\\hat H\\big(2\\sin(3\\pi x/L)\\big) = 9E_1\\cdot 2\\sin(3\\pi x/L)$: eine Eigenfunktion, mit ihrem eigenen $E = 9E_1$. Der Faktor 2 ändert daran nichts.',
+          fb:['Die Summe ist keine Eigenfunktion: $\\hat H\\psi = E_1\\sin(\\pi x/L) + 9E_1\\sin(3\\pi x/L)$ ist kein Vielfaches von $\\psi$. Ein Mittelwert der Energien hilft nicht.', 'Der Eigenwert ist $n^2E_1 = 9E_1$, nicht $3E_1$. Mit einem falschen $E$ ist das Produkt keine Lösung.', '']}}
+    ]},
+
+    /* ===== Abschnitt 3: Stationäre Zustände, Zeigerbild ===== */
+    {id:'sg-t3', title:'Stationäre Zustände', steps:[
+      {id:'sg-t3a', title:'Die Dichte steht still',
+        num:{title:R`$\psi_2$ an einer Stelle`, text:R`Die Sinusfunktionen aus Abschnitt 2 heißen normiert $\psi_n = \sqrt{2/L}\,\sin(n\pi x/L)$, mit $\hat H\psi_n = E_n\psi_n$ und $E_n = n^2E_1$; Thema 3 leitet sie her. Mit $L = 1$ ist bei $x = L/4$ der Wert $\psi_2(L/4) = \sqrt2\sin(\pi/2) = \sqrt2$. Also ist $\Psi(L/4, t) = \sqrt2\,e^{-iE_2t/\hbar}$, und
+
+$$|\Psi(L/4, t)|^2 = \sqrt2\,e^{+iE_2t/\hbar}\cdot\sqrt2\,e^{-iE_2t/\hbar} = 2$$
+
+zu jeder Zeit. Der Wert von $\Psi$ dreht sich, sein Betragsquadrat nicht.`},
+        text:R`Eine Lösung $\Psi(x,t) = \psi(x)\,e^{-iEt/\hbar}$ mit $\hat H\psi = E\psi$ heißt [[lex:stationaer|stationärer Zustand]]. Was an ihr ist zeitunabhängig?
+
+Zuerst die Dichte. Die Herleitung zeigt: Beim Betragsquadrat treffen $e^{+iEt/\hbar}$ aus $\Psi^*$ und $e^{-iEt/\hbar}$ aus $\Psi$ zusammen und ergeben $1$. Also ist $|\Psi(x,t)|^2 = |\psi(x)|^2$ an jeder Stelle und zu jeder Zeit. Wo man das Teilchen findet, ändert sich nicht. Das Beispiel zeigt es an einer Stelle mit Zahlen.`,
+        derive:{ctx:{coords:['x', 't'], params:{E:'real', m:'pos'}, abstract:{ψ:{args:['x']}}, defs:{'Ψ(x,t)':'ψ(x) e^(-i E t/ħ)'}},
+          lines:[
+            {l:'|Ψ(x,t)|^2 = ψ(x)^* e^(iEt/ħ) ψ(x) e^(-iEt/ħ)', w:'Ψ* = ψ* e^(+iEt/ħ)', why:{q:'Warum steht bei $\\Psi^*$ der Exponent $+iEt/\\hbar$?', opts:['Konjugieren macht aus $i$ ein $-i$; $E$ und $t$ sind reell.', 'Weil $\\Psi^*$ rückwärts in der Zeit läuft, $t \\to -t$.', 'Das ist eine Konvention ohne Bedeutung für $|\\Psi|^2$.'], a:0, ex:'$(e^{-iEt/\\hbar})^* = e^{+iEt/\\hbar}$ für reelles $E$.'}},
+            {l:'= |ψ(x)|^2', w:'Phasen heben sich weg'}
+          ]},
+        q:{q:R`$\Psi(x,t) = \psi_1(x)\,e^{-iE_1t/\hbar}$. Wie hängt $|\Psi(x,t)|^2$ von der Zeit ab?`,
+          opts:[R`wie $\cos^2(E_1t/\hbar)$`, R`gar nicht`, R`wie $e^{-2iE_1t/\hbar}$`], a:1,
+          ex:R`$|e^{-iE_1t/\hbar}|^2 = 1$. Es bleibt $|\psi_1(x)|^2$.`,
+          fb:[R`$\cos^2$ entstünde, wenn man nur den Realteil quadrierte. Das Betragsquadrat enthält auch den Imaginärteil, und $\cos^2 + \sin^2 = 1$.`,
+            '',
+            R`Das wäre $\Psi^2$ statt $\Psi^*\Psi$. Beim Betragsquadrat heben sich die Phasen auf.`]}},
+      {id:'sg-t3b', title:'Ein Zeiger, der sich dreht',
+        num:{title:'Vier Zeitpunkte', text:R`An einer Stelle mit $\psi(x_0) = 1$ ist $\Psi(x_0, t) = e^{-iEt/\hbar}$. Mit $T = h/E$:
+
+$$t = 0:\ 1,\qquad t = \tfrac T4:\ -i,\qquad t = \tfrac T2:\ -1,\qquad t = \tfrac{3T}{4}:\ i.$$
+
+Der Zeiger läuft im Uhrzeigersinn um den Einheitskreis. Seine Länge bleibt $1$.`},
+        text:R`Für einen festen Ort $x_0$ ist $\Psi(x_0, t)$ eine komplexe Zahl, die sich mit der Zeit dreht. Zeichne sie als Zeiger in der komplexen Ebene (M1). Die Länge des Zeigers ist $|\psi(x_0)|$, sein Winkel $-Et/\hbar$. Er dreht sich im Uhrzeigersinn, einmal in der Zeit $T = h/E$.
+
+Gemessen wird nur die Länge zum Quadrat, $|\Psi|^2$. Die Drehung selbst bleibt unsichtbar. Im Graphen der Tafel siehst du sie als Real- und Imaginärteil, die gegeneinander schwingen. Ihre Quadratsumme bleibt konstant. Darum ist ein stationärer Zustand nicht starr: Seine Phase läuft. Sichtbar wird das erst, wenn zwei Zeiger mit verschiedener Geschwindigkeit zusammenkommen (Abschnitt 5).`,
+        reps:{obj:'Ein stationärer Zustand an einer festen Stelle',
+          rows:[
+            {k:'worte', text:R`Ein Zeiger fester Länge, der sich gleichmäßig im Uhrzeigersinn dreht.`},
+            {k:'formel', tex:R`\Psi(x_0, t) = \psi(x_0)\,e^{-iEt/\hbar}`},
+            {k:'mathe', tex:R`e^{-i\varphi} = \cos\varphi - i\sin\varphi,\qquad \varphi = \frac{Et}{\hbar} = 2\pi\,\frac{t}{T}`},
+            {k:'graph', plot:{x:[0, 1.25], y:[-1.2, 1.2], xlab:'t/T', ylab:R`\Psi(x_0, t)`, ticks:[{x:0.25, lab:'\\tfrac14'}, {x:0.5, lab:'\\tfrac12'}, {x:0.75, lab:'\\tfrac34'}, {x:1, lab:'1'}], yticks:[{y:-1, lab:'-1'}, {y:1, lab:'1'}]}, f:t => Math.cos(2 * Math.PI * t), lab:R`\operatorname{Re}\Psi`, f2:t => -Math.sin(2 * Math.PI * t), lab2:R`\operatorname{Im}\Psi`,
+              cap:R`Für $\psi(x_0) = 1$: Real- und Imaginärteil schwingen um eine Viertelperiode versetzt. An jedem Zeitpunkt ist $(\operatorname{Re}\Psi)^2 + (\operatorname{Im}\Psi)^2 = 1$.`},
+            {k:'physik', text:R`Die Ortsdichte $|\Psi(x_0,t)|^2 = |\psi(x_0)|^2$ und alle Erwartungswerte bleiben gleich. Die Phase selbst misst man nicht.`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`Die Länge des Zeigers ist $|\psi(x_0)|$, die Drehung steckt im Faktor $e^{-iEt/\hbar}$.`},
+            {from:'formel', to:'mathe', rule:R`Den Exponenten als Winkel $\varphi = Et/\hbar$ lesen und mit der Euler-Formel in Real- und Imaginärteil zerlegen.`},
+            {from:'mathe', to:'graph', rule:R`$\cos\varphi$ als erste und $-\sin\varphi$ als zweite Kurve über $t$ zeichnen, mit $\varphi = 2\pi t/T$.`},
+            {from:'graph', to:'physik', rule:R`Beide Kurven an jedem Zeitpunkt quadrieren und addieren: Die Summe ist konstant, also auch die Dichte.`}
+          ]},
+        q:{q:R`Im Graphen ist zu einem Zeitpunkt $\operatorname{Re}\Psi = 0$ und $\operatorname{Im}\Psi = 1$. Welcher Zeitpunkt ist das?`, tr:{from:'graph', to:'formel'},
+          opts:[R`$t = T/4$`, R`$t = T/2$`, R`$t = 3T/4$`], a:2,
+          ex:R`$e^{-iEt/\hbar} = i$ verlangt den Winkel $-Et/\hbar = -3\pi/2$, also $t = 3T/4$.`,
+          fb:[R`Bei $T/4$ ist $e^{-i\pi/2} = -i$: Der Imaginärteil ist $-1$, nicht $+1$. Der Zeiger dreht im Uhrzeigersinn.`,
+            R`Bei $T/2$ ist der Zeiger bei $-1$: Realteil $-1$, Imaginärteil $0$.`,
+            '']}},
+      {id:'sg-t3c', title:'Erwartungswerte stehen still, die Energie ist scharf',
+        num:{title:R`Der Zustand $\psi_2$ im Kasten`, text:R`Für $\Psi = \psi_2\,e^{-iE_2t/\hbar}$ ist $\langle x\rangle = L/2$ zu jeder Zeit, weil $|\psi_2|^2$ symmetrisch zur Mitte ist. Aus $\hat H\psi_2 = E_2\psi_2$ folgt $\hat H^2\psi_2 = E_2^2\psi_2$, also
+
+$$\langle H\rangle = E_2,\qquad \langle H^2\rangle = E_2^2,\qquad \Delta H = \sqrt{E_2^2 - E_2^2} = 0.$$`},
+        text:R`Nicht nur die Dichte, jeder Erwartungswert ist zeitunabhängig. Im Integral $\int\Psi^*\hat Q\Psi\,dx$ wirkt ein Operator $\hat Q$ aus $x$ und $\partial_x$ nicht auf den Zeitfaktor, und $e^{+iEt/\hbar}e^{-iEt/\hbar} = 1$. Die Herleitung zeigt das für $\langle x\rangle$ und $\langle p\rangle$. Weil $\langle x\rangle$ konstant ist, ist $\langle p\rangle = m\,d\langle x\rangle/dt = 0$ (Thema 1).
+
+Außerdem ist die Energie scharf. Aus $\hat H\psi = E\psi$ folgt $\langle H\rangle = E$ und $\Delta H = 0$. Jede Energiemessung liefert $E$. Damit ist auch geklärt, dass die Separationskonstante $E$ die Energie des Zustands ist.`,
+        derive:{ctx:{coords:['x', 't'], params:{E:'real', m:'pos'}, abstract:{ψ:{args:['x']}}, defs:{'Ψ(x,t)':'ψ(x) e^(-i E t/ħ)'}},
+          lines:[
+            {l:'∫_-∞^∞ Ψ^* x Ψ dx = ∫_-∞^∞ x |ψ(x)|^2 dx', w:'⟨x⟩ zeitunabhängig', why:{q:R`Warum fällt der Zeitfaktor aus $\langle x\rangle$ heraus?`, opts:['Weil $x$ nur multipliziert und $e^{+iEt/\\hbar}e^{-iEt/\\hbar} = 1$ übrig bleibt.', 'Weil $\\langle x\\rangle$ in jedem Zustand in der Mitte des Kastens liegt.', 'Weil man bei Erwartungswerten über die Zeit mittelt.'], a:0, ex:R`Der Operator $x$ lässt den Zeitfaktor unverändert. Im Produkt $\Psi^*x\Psi$ heben sich die Phasen auf.`}},
+            {l:'∫_-∞^∞ Ψ^* (-iħ ∂Ψ/∂x) dx = ∫_-∞^∞ ψ^* (-iħ dψ/dx) dx', w:'∂x wirkt nicht auf den Zeitfaktor', why:{q:'Warum hängt auch $\\langle p\\rangle$ nicht von $t$ ab?', opts:['Weil $\\partial_x$ den Zeitfaktor nicht ändert.', 'Weil $\\hat p$ ein hermitescher Operator ist.', 'Weil der Impuls eines Teilchens immer erhalten ist.'], a:0, ex:'Der Zeitfaktor ist für $\\partial_x$ eine Konstante. Im Produkt $\\Psi^*\\ldots\\Psi$ ergibt er $e^{+iEt/\\hbar}e^{-iEt/\\hbar} = 1$.'}}
+          ]},
+        q:{q:R`$\Psi = \psi_2(x)\,e^{-iE_2t/\hbar}$ im Kasten. Was liefert eine Energiemessung?`,
+          opts:[R`je nach Zeitpunkt $E_1$ oder $E_2$`, R`im Mittel $E_2$, einzeln andere Werte`, R`sicher den Wert $E_2$`], a:2,
+          ex:R`$\hat H\psi_2 = E_2\psi_2$, also $\Delta H = 0$: Die Energie ist scharf.`,
+          fb:[R`Der Zustand enthält nur $\psi_2$. Ein Anteil mit $E_1$ kommt gar nicht vor, zu keiner Zeit.`,
+            R`Bei $\Delta H = 0$ streuen die Messwerte nicht. Jeder einzelne ist $E_2$.`,
+            '']}},
+      {id:'sg-t3d', title:'Typischer Fehler: stationär heißt in Ruhe',
+        num:{title:R`Grundzustand eines $1\,\mathrm{nm}$-Kastens`, text:R`Für $\psi_1$ ist $\langle p\rangle = 0$, aber $\langle p^2\rangle = (\pi\hbar/L)^2$. Für ein Elektron und $L = 1\,\mathrm{nm}$ ist
+
+$$\sqrt{\langle p^2\rangle} = \frac{\pi\hbar}{L} \approx 3{,}3\cdot10^{-25}\,\mathrm{kg\,m/s},\qquad \frac{\langle p^2\rangle}{2m_e} \approx 0{,}38\,\mathrm{eV}.$$
+
+Die ganze Energie $E_1$ ist kinetisch.`},
+        text:R`**Stationär heißt nicht „in Ruhe“.** Im Grundzustand des Kastens ist $\langle p\rangle = 0$, aber $\langle p^2\rangle > 0$: Die kinetische Energie ist nicht null. Positive und negative Impulse kommen gleich oft vor. Ihr Mittelwert ist null, ihre Quadrate nicht.
+
+Stationär ist die Wahrscheinlichkeitsverteilung, nicht das Teilchen. Das Bild eines Teilchens, das ruhig an einer Stelle sitzt, passt zu keinem Zustand im Kasten. Ebenso falsch ist das Bild eines Teilchens auf einer festen Bahn, das hin- und herfliegt. Es gibt nur die Verteilung der Messwerte, und die ändert sich nicht.`,
+        q:{q:R`Was gilt im Grundzustand $\psi_1$ eines Kastens?`,
+          opts:[R`$\langle p\rangle = 0$ und $\langle p^2\rangle > 0$`, R`$\langle p\rangle = 0$ und $\langle p^2\rangle = 0$, das Teilchen ruht.`, R`$\langle p\rangle > 0$, weil die Energie positiv ist`], a:0,
+          ex:R`$\langle p\rangle = 0$, weil $\psi_1$ reell ist. $\langle p^2\rangle = (\pi\hbar/L)^2 = 2mE_1 > 0$.`,
+          fb:['',
+            R`$\langle p^2\rangle = 0$ hieße kinetische Energie null. Im Kasten ist aber $E_1 > 0$, und sie ist ganz kinetisch.`,
+            R`Positive Energie heißt nicht positiver Impuls. Die Impulse nach links und rechts mitteln sich weg.`]}},
+      {id:'sg-t3e', title:'Typischer Fehler: jeder Zustand ist stationär',
+        num:{title:R`Die Parabel $x(L - x)$`, text:R`Im Kasten ist $\psi = A\,x(L - x)$ ein erlaubter Zustand. Mit $\psi'' = -2A$ und $V = 0$ ist
+
+$$\hat H\psi = -\frac{\hbar^2}{2m}\psi'' = \frac{\hbar^2A}{m}.$$
+
+Das ist eine Konstante, kein Vielfaches von $\psi$. Es gibt kein $E$ mit $\hat H\psi = E\psi$.`},
+        text:R`**Nicht jeder Zustand ist stationär.** Das ist eine der häufigsten Fehlvorstellungen der Quantenmechanik (Styer 1996; Singh & Marshman 2015). Die Parabel im Beispiel ist ein erlaubter Zustand, aber keine Energie-Eigenfunktion. Ihre Dichte ändert sich mit der Zeit. Thema 3 zeigt, wie: Man zerlegt sie in stationäre Zustände.
+
+**Test.** Wende $\hat H$ auf $\psi$ an. Kommt ein konstantes Vielfaches von $\psi$ heraus *und* erfüllt $\psi$ die Randbedingungen, ist $\psi$ eine Energie-Eigenfunktion. Beispiel: $\sin(3\pi x/2L)$ erfüllt im Inneren des Kastens $\hat H\psi = E\psi$, aber wegen $\psi(L) \ne 0$ ist es keine Eigenfunktion des Kastens. Normierung und Realität von $\psi$ entscheiden die Frage nicht.`,
+        q:{q:R`Welche Funktion ist eine Energie-Eigenfunktion im Kasten $0 < x < L$?`,
+          opts:[R`$A\,x(L - x)$`, R`$A\sin(3\pi x/2L)$`, R`$A\sin(2\pi x/L)$`, R`$A\cos(\pi x/L)$`], a:2,
+          ex:R`$\sin(2\pi x/L)$ erfüllt $\hat H\psi = E\psi$ und ist an beiden Wänden null.`,
+          fb:[R`$\hat H$ macht daraus eine Konstante, kein Vielfaches von $\psi$.`,
+            R`Im Inneren stimmt die Gleichung, aber bei $x = L$ ist $\sin(3\pi/2) = -1 \ne 0$. Die Randbedingung fehlt.`,
+            '',
+            R`Im Inneren stimmt die Gleichung, aber bei $x = 0$ ist $\cos 0 = 1 \ne 0$.`]}}
+    ]},
+
+    /* ===== Abschnitt 4: Anschlussbedingungen, Krümmung, Quantisierung ===== */
+    {id:'sg-t4', title:'Welche Lösungen sind zulässig?', steps:[
+      {id:'sg-t4a', title:'Stetig und glatt: die Anschlussbedingungen',
+        num:{title:'Ein schmales Intervall an einer Stufe', text:R`Integriere $\psi'' = \frac{2m}{\hbar^2}(V - E)\psi$ über $[x_0 - \varepsilon,\ x_0 + \varepsilon]$. Mit $\frac{2m}{\hbar^2}|V - E| \le 1\,\mathrm{nm}^{-2}$, $|\psi| \le 1\,\mathrm{nm}^{-1/2}$ und $\varepsilon = 0{,}01\,\mathrm{nm}$ ist der Sprung von $\psi'$ höchstens
+
+$$1\cdot1\cdot2\varepsilon = 0{,}02\,\mathrm{nm}^{-3/2}.$$
+
+Für $\varepsilon \to 0$ geht er gegen null.`},
+        text:R`Für jedes $E$ hat die stationäre Gleichung zwei unabhängige Lösungen. Physikalisch zulässig sind nur Lösungen mit drei Eigenschaften ([[lex:anschluss|Anschlussbedingungen]]):
+
+- $\psi$ ist überall **stetig**. Ein Sprung in $\psi$ ergäbe in $\psi''$ die Ableitung einer δ-Funktion, und die kann kein Term der Gleichung ausgleichen.
+- $\psi'$ ist stetig, **wo $V$ endlich ist**. Das zeigt das Beispiel: Der Sprung von $\psi'$ ist $\frac{2m}{\hbar^2}\int(V - E)\,\psi\,dx$ über ein schrumpfendes Intervall. Nur an unendlich hohen Wänden (Thema 3) oder bei einem δ-Potential darf $\psi'$ springen.
+- Für gebundene Zustände ist $\psi$ **normierbar**.`,
+        q:{q:R`An welcher Stelle darf $\psi'$ springen?`,
+          opts:[R`an jeder Stufe des Potentials`, R`an einer unendlich hohen Wand`, R`nirgends, auch nicht an einer Wand`], a:1,
+          ex:R`Bei endlichem $V$ verschwindet $\int(V - E)\psi\,dx$ über ein schrumpfendes Intervall, also ist $\psi'$ stetig. An einer unendlich hohen Wand gilt das Argument nicht.`,
+          fb:[R`An einer endlichen Stufe bleibt $\psi'$ stetig. Erst ein unendlich hohes $V$ macht das Integral über das schrumpfende Intervall nicht klein.`,
+            '',
+            R`An einer unendlich hohen Wand versagt das Argument; dort darf $\psi'$ springen, etwa im Kasten.`]}},
+      {id:'sg-t4b', title:'Krümmung: ψ″ gegen (V − E)ψ',
+        pre:{from:'m-dgl', seg:'md-t3', title:'Schwingen oder Abklingen', text:R`Bei konstantem $V_0$ wird die stationäre Gleichung zu $\psi'' = -k^2\psi$ (für $E > V_0$) mit Schwingungen $e^{\pm ikx}$, oder zu $\psi'' = +\kappa^2\psi$ (für $E < V_0$) mit Lösungen $e^{\pm\kappa x}$, die wachsen oder abklingen. Mini-Beispiel: $\psi = e^{-2x}$ hat $\psi'' = 4\psi$.`},
+        num:{title:'Zwei Stellen', text:R`Nimm Einheiten mit $2m/\hbar^2 = 1$ und $\psi = 0{,}5$ an einer Stelle. Ist dort $V - E = -1$, folgt $\psi'' = -0{,}5$: Die Kurve ist nach unten gekrümmt, zur Achse hin. Ist dort $V - E = +1$, folgt $\psi'' = +0{,}5$: Die Kurve ist nach oben gekrümmt, von der Achse weg.`},
+        text:R`Die stationäre Gleichung lässt sich als Aussage über die Krümmung lesen:
+
+$$\psi'' = \frac{2m}{\hbar^2}\,(V - E)\,\psi.$$
+
+Wo $E > V$ ist (klassisch erlaubt), hat $\psi''$ das Vorzeichen von $-\psi$: $\psi$ krümmt sich zur Achse hin und schwingt, umso schneller, je größer $E - V$ ist. Wo $E < V$ ist (klassisch verboten), hat $\psi''$ das Vorzeichen von $\psi$: $\psi$ krümmt sich von der Achse weg und wächst oder fällt exponentiell. Mit dieser Regel kannst du Lösungen skizzieren, ohne sie auszurechnen.`,
+        q:{q:R`In einem Bereich ist $E < V$. Wie verhält sich eine Lösung $\psi$ dort?`,
+          opts:[R`Sie krümmt sich zur Achse hin und schwingt mit kleiner Wellenlänge.`, R`Sie muss dort überall exakt null sein, weil das Teilchen nicht hinkann.`, R`Sie krümmt sich von der Achse weg und wächst oder fällt exponentiell.`], a:2,
+          ex:R`$\psi'' = \frac{2m}{\hbar^2}(V - E)\psi$ mit $V - E > 0$ hat das Vorzeichen von $\psi$. Null ist $\psi$ nur bei unendlich hohem $V$; bei endlichem $V$ dringt $\psi$ ein (Thema 5).`,
+          fb:[R`Schwingen tut $\psi$ im erlaubten Bereich, wo $E > V$ ist.`,
+            R`Bei endlichem $V$ ist $\psi$ im verbotenen Bereich nicht null. Es fällt ab, aber das Teilchen dringt ein Stück ein.`,
+            '']}},
+      {id:'sg-t4c', title:'Das Krümmungsbild an einer Stufe',
+        num:{title:'Eine Stufe, zwei Bereiche', text:R`In Einheiten mit $2m/\hbar^2 = 1$ sei $V = 0$ für $x < 0$, $V = 2$ für $x > 0$ und $E = 1$. Dann ist links $\psi'' = -\psi$ und rechts $\psi'' = +\psi$. Eine Lösung ist
+
+$$\psi = \sqrt2\cos\!\left(x + \tfrac\pi4\right)\ (x < 0),\qquad \psi = e^{-x}\ (x > 0).$$
+
+Bei $x = 0$ passen Wert und Steigung: $\psi(0) = 1$ und $\psi'(0) = -1$ von beiden Seiten.`},
+        text:R`Die Tafel zeigt die Krümmungsregel an diesem Beispiel. Im Graphen ist $\psi$ durchgezogen und $\psi''$ gestrichelt gezeichnet. Links, wo $E > V$ ist, liegen die beiden Kurven spiegelbildlich zur Achse: $\psi''$ hat stets das andere Vorzeichen als $\psi$, und $\psi$ schwingt. Rechts, wo $E < V$ ist, liegen sie aufeinander: gleiches Vorzeichen, $\psi$ fällt ab.
+
+Achte auf die Stelle $x = 0$. Dort ändert $\psi''$ sprunghaft sein Vorzeichen, weil $V$ springt. $\psi$ selbst und seine Steigung gehen aber glatt über, wie es die Anschlussbedingungen verlangen.`,
+        reps:{obj:'Krümmung an einer Potentialstufe',
+          rows:[
+            {k:'worte', text:R`Wo die Energie über dem Potential liegt, krümmt sich $\psi$ zur Achse hin; wo sie darunter liegt, von der Achse weg.`},
+            {k:'formel', tex:R`\psi'' = \frac{2m}{\hbar^2}\,(V - E)\,\psi,\qquad V - E = \begin{cases}-1, & x < 0\\ +1, & x > 0\end{cases}\quad(2m/\hbar^2 = 1)`},
+            {k:'graph', plot:{x:[-7, 3], y:[-1.6, 1.6], xlab:'x', ylab:R`\psi,\ \psi''`, regions:[{x:[-7, 0], lab:'E > V'}, {x:[0, 3], lab:'E < V'}]}, f:x => x < 0 ? Math.SQRT2 * Math.cos(x + Math.PI / 4) : Math.exp(-x), lab:R`\psi`, f2:x => x < 0 ? -Math.SQRT2 * Math.cos(x + Math.PI / 4) : Math.exp(-x), lab2:R`\psi''`,
+              cap:R`Links spiegelbildlich: $\psi''$ und $\psi$ haben entgegengesetzte Vorzeichen, $\psi$ schwingt. Rechts deckungsgleich: gleiches Vorzeichen, $\psi$ fällt ab.`},
+            {k:'physik', text:R`Links ist das Teilchen klassisch erlaubt. Rechts dringt es ein Stück in den verbotenen Bereich ein, auf einer Länge von etwa $1/\kappa$ (Thema 5).`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`„Energie über dem Potential“ heißt $V - E < 0$; das Vorzeichen von $V - E$ in die Gleichung einsetzen.`},
+            {from:'formel', to:'graph', rule:R`$\psi''$ als zweite Kurve zeichnen: $\psi$ mit $V - E$ multipliziert. Bei $V - E < 0$ wird die Kurve an der Achse gespiegelt.`},
+            {from:'graph', to:'physik', rule:R`Wo die Kurve schwingt, kann sich das Teilchen klassisch bewegen; wo sie abklingt, ist es klassisch verboten.`}
+          ]},
+        q:{q:R`In einem Graphen haben $\psi$ und $\psi''$ in einem Bereich dasselbe Vorzeichen. Was folgt dort für $V - E$?`, tr:{from:'graph', to:'formel'},
+          opts:[R`$V - E > 0$: klassisch verboten`, R`$V - E < 0$: klassisch erlaubt`, R`$V - E = 0$: genau am Umkehrpunkt`], a:0,
+          ex:R`$\psi'' = \frac{2m}{\hbar^2}(V - E)\psi$. Gleiches Vorzeichen von $\psi''$ und $\psi$ verlangt $V - E > 0$.`,
+          fb:['',
+            R`Bei $V - E < 0$ hätte $\psi''$ das entgegengesetzte Vorzeichen, und die Kurven lägen spiegelbildlich.`,
+            R`Bei $V - E = 0$ wäre $\psi'' = 0$; die Kurve wäre dort gerade, nicht gekrümmt.`]}},
+      {id:'sg-t4d', title:'Quantisierung ohne Zusatzannahme',
+        num:{title:'Zwei Energien knapp nebeneinander', text:R`Im Tal $V = x^2$ (Einheiten mit $2m/\hbar^2 = 1$) startest du links mit einer abfallenden Lösung und rechnest nach rechts. Für $E = 0{,}9$ ist bei $x = 3$ schon $\psi \approx +3{,}5$, für $E = 1{,}1$ ist $\psi \approx -2{,}3$. Dazwischen, bei $E = 1$, fällt $\psi = e^{-x^2/2}$ auch rechts ab.`},
+        text:R`Ein gebundenes Teilchen hat links und rechts verbotene Bereiche, und dort muss $\psi$ abfallen. Startet man links mit einer abfallenden Lösung und integriert nach rechts, läuft $\psi$ für fast jedes $E$ rechts gegen $+\infty$ oder $-\infty$. Nur für einzelne Energien fällt es auch rechts ab. Diese $E_n$ sind die erlaubten Energien.
+
+Die Quantisierung folgt also allein aus der Gleichung und der Normierbarkeit. Im Bild siehst du zwei Energien knapp unter und über einem erlaubten Wert. Die Kurven laufen in entgegengesetzte Richtungen weg; der erlaubte Wert liegt dazwischen. Im Kasten (Thema 3) lässt sich das exakt ausrechnen, beim Oszillator (Thema 7) und beim Wasserstoffatom (Thema 9) ebenfalls.`,
+        plot:{plot:{x:[-3.5, 3.2], y:[-2, 2], xlab:'x', ylab:R`\psi`, V:x => x * x, Vr:[0, 12], ticks:[{x:-3, lab:'-3'}, {x:-2, lab:'-2'}, {x:-1, lab:'-1'}, {x:0, lab:'0'}, {x:1, lab:'1'}, {x:2, lab:'2'}, {x:3, lab:'3'}]}, f:x => SG_SHOOT.lo(x), lab:R`E = 0{,}9`, f2:x => SG_SHOOT.hi(x), lab2:R`E = 1{,}1`,
+          cap:R`Grau das Potential $V = x^2$. Beide Lösungen starten links abfallend. Für $E = 0{,}9$ läuft $\psi$ rechts nach oben weg, für $E = 1{,}1$ nach unten. Bei $E = 1$ fällt es auf beiden Seiten ab.`},
+        q:{q:R`Für eine Energie knapp über $E_n$ läuft die links abfallende Lösung rechts gegen $-\infty$. Was bedeutet das?`,
+          opts:[R`Das Teilchen wird nach rechts beschleunigt und läuft davon.`, R`$\psi$ muss nur anders normiert werden, dann passt es wieder.`, R`Für ein gebundenes Teilchen ist diese Energie verboten.`], a:2,
+          ex:R`Eine Lösung, die gegen $\pm\infty$ läuft, ist nicht normierbar. Erlaubt sind nur die Energien, bei denen $\psi$ auf beiden Seiten abfällt.`,
+          fb:[R`$\psi$ beschreibt keine Bahn. Eine nach $\pm\infty$ laufende Lösung ist schlicht nicht normierbar.`,
+            R`Kein Vorfaktor macht eine Funktion normierbar, die gegen unendlich läuft.`,
+            '']}},
+      {id:'sg-t4e', title:'Folgerung: Kein Teilchen liegt am Boden',
+        num:{title:'Überall verboten', text:R`Wäre überall $E < V$, etwa mit $\frac{2m}{\hbar^2}(V - E) = 1$, dann wäre überall $\psi'' = \psi$. Die Lösungen sind $\psi = Ae^{x} + Be^{-x}$. Fällt $\psi$ links ab, ist $B = 0$, und rechts wächst $Ae^{x}$ über alle Grenzen. Auf beiden Seiten abfallen kann keine dieser Lösungen.`},
+        text:R`Daraus folgt: $E$ muss größer sein als das Minimum von $V$. Sonst wäre überall $E < V$, und $\psi$ würde sich überall von der Achse wegkrümmen. Eine solche Kurve kann nicht auf beiden Seiten abfallen, wie das Beispiel zeigt.
+
+Ein gebundenes Teilchen kann also nicht auf dem Boden des Potentials liegen. Das ist ein erster Grund für die Nullpunktsenergie; der zweite ist die Unschärferelation aus Thema 1. Im Kasten liegt der Boden bei $V = 0$, und die kleinste Energie ist $E_1 > 0$ (Thema 3).`,
+        q:{q:R`Ein Potential hat sein Minimum bei $V_{\min} = -2\,\mathrm{eV}$. Welche Energie kann ein gebundener Zustand sicher nicht haben?`,
+          opts:[R`$-1{,}9\,\mathrm{eV}$`, R`$-1\,\mathrm{eV}$`, R`$-2{,}5\,\mathrm{eV}$`], a:2,
+          ex:R`Unter dem Minimum wäre überall $E < V$. Dann krümmt sich $\psi$ überall von der Achse weg und kann nicht normierbar sein.`,
+          fb:[R`Knapp über dem Minimum ist ein gebundener Zustand möglich, wenn das Tal breit genug ist.`,
+            R`Über dem Minimum gibt es einen erlaubten Bereich; dort kann $\psi$ schwingen.`,
+            '']}}
+    ]},
+
+    /* ===== Abschnitt 5: Überlagerung, Zeitentwicklung, Labor ===== */
+    {id:'sg-t5', title:'Überlagerung und Zeitentwicklung', steps:[
+      {id:'sg-t5a', title:'Jeder Anteil dreht seine eigene Phase',
+        pre:{from:'m-dgl', seg:'md-t1', title:'Linearität', text:R`Eine lineare Differentialgleichung enthält die gesuchte Funktion und ihre Ableitungen nur in der ersten Potenz. Dann ist mit zwei Lösungen $y_1$ und $y_2$ auch jede Kombination $c_1y_1 + c_2y_2$ eine Lösung. Mini-Beispiel: $\sin x$ und $\cos x$ lösen $y'' = -y$, also auch $3\sin x - 2\cos x$.`},
+        num:{title:'Zwei Zeiger mit verschiedenem Tempo', text:R`Im Kasten ist $E_2 = 4E_1$. Der Anteil $\psi_1$ dreht seine Phase mit $E_1/\hbar$, der Anteil $\psi_2$ viermal so schnell. Nach der Zeit $t = \pi\hbar/(3E_1)$ hat der zweite Zeiger gegenüber dem ersten den Winkel
+
+$$\frac{(E_2 - E_1)t}{\hbar} = \frac{3E_1}{\hbar}\cdot\frac{\pi\hbar}{3E_1} = \pi$$
+
+aufgeholt. Aus $\psi_1 + \psi_2$ ist bis auf eine gemeinsame Phase $\psi_1 - \psi_2$ geworden.`},
+        text:R`Die Schrödingergleichung ist linear. Erfüllen $\psi_1, \psi_2, \dots$ die Gleichungen $\hat H\psi_n = E_n\psi_n$, dann löst jede Summe
+
+$$\Psi(x,t) = \sum_n c_n\,\psi_n(x)\,e^{-iE_nt/\hbar}$$
+
+die zeitabhängige Gleichung ([[lex:superposition|Superpositionsprinzip]]). Jeder Summand behält **seinen eigenen** Phasenfaktor. Die Koeffizienten $c_n$ legt der Anfangszustand fest: $\Psi(x,0) = \sum_nc_n\psi_n(x)$. Damit hast du ein Rezept für die [[lex:zeitentwicklung|Zeitentwicklung]]: Anfangszustand zerlegen, an jeden Anteil $e^{-iE_nt/\hbar}$ hängen, fertig. Im Kasten lässt sich jeder Anfangszustand so zerlegen (Thema 3).`,
+        q:{q:R`$\Psi(x,0) = (\psi_1 + \psi_3)/\sqrt2$ mit Energie-Eigenfunktionen $\psi_n$. Wie lautet $\Psi(x,t)$?`,
+          opts:[R`$\tfrac{1}{\sqrt2}\left(\psi_1 + \psi_3\right)e^{-i(E_1 + E_3)t/2\hbar}$`, R`$\tfrac{1}{\sqrt2}\left(\psi_1e^{-iE_1t/\hbar} + \psi_3e^{-iE_3t/\hbar}\right)$`, R`$\tfrac{1}{\sqrt2}\left(\psi_1 + \psi_3\right)$, weil beide stationär sind`], a:1,
+          ex:R`Jeder Anteil bekommt den Zeitfaktor seiner eigenen Energie. Ein gemeinsamer Faktor passt nur bei gleichen Energien.`,
+          fb:[R`Ein gemeinsamer Faktor mit der mittleren Energie löst die Gleichung nicht, weil $\psi_1 + \psi_3$ keine Eigenfunktion ist.`,
+            '',
+            R`Jeder Anteil für sich ist stationär, die Summe nicht. Die Phasen der Anteile laufen verschieden schnell.`]}},
+      {id:'sg-t5b', title:'Die Dichte schwappt',
+        num:{title:R`Die Dichte bei $x = L/4$`, text:R`Im Kasten mit $L = 1$ ist bei $x = L/4$ der Wert $\psi_1 = 1$ und $\psi_2 = \sqrt2$. Für $\Psi = (\psi_1e^{-iE_1t/\hbar} + \psi_2e^{-iE_2t/\hbar})/\sqrt2$ ist dort
+
+$$|\Psi|^2 = \tfrac12(1 + 2) + 1\cdot\sqrt2\cdot\cos\frac{(E_2 - E_1)t}{\hbar},$$
+
+also $2{,}91$ bei $t = 0$, $1{,}5$ nach einer Viertelperiode und $0{,}09$ nach einer halben.`},
+        text:R`Für $\Psi = \frac{1}{\sqrt2}\left(\psi_1e^{-iE_1t/\hbar} + \psi_2e^{-iE_2t/\hbar}\right)$ mit reellen $\psi_n$ rechnet die Herleitung die Dichte aus. Die Einzelterme verlieren ihre Phase, der Mischterm nicht:
+
+$$|\Psi|^2 = \tfrac12\left(\psi_1^2 + \psi_2^2\right) + \psi_1\psi_2\cos\frac{(E_2 - E_1)t}{\hbar}.$$
+
+Die Dichte schwingt mit der Kreisfrequenz $\omega_{21} = (E_2 - E_1)/\hbar$, gelesen „omega zwei eins“, und der Periode $T = 2\pi\hbar/(E_2 - E_1)$. Wo $\psi_1\psi_2 > 0$ ist, wird es abwechselnd dichter und dünner; wo $\psi_1\psi_2 < 0$ ist, genau umgekehrt.`,
+        derive:{ctx:BOX2({defs:{'ψ_n(x)':'sqrt(2/L) sin(nπx/L)', 'E_n':'n^2 π^2 ħ^2/(2m L^2)', 'Ψ(x,t)':'1/sqrt(2) (ψ_1(x) e^(-i E_1 t/ħ) + ψ_2(x) e^(-i E_2 t/ħ))'}}),
+          lines:[
+            {l:'|Ψ(x,t)|^2 = 1/2 (ψ_1(x)^2 + ψ_2(x)^2) + 1/2 ψ_1(x) ψ_2(x) (e^(i(E_2 - E_1)t/ħ) + e^(-i(E_2 - E_1)t/ħ))', w:'ausmultipliziert, ψ_n reell', why:{q:'Warum bleibt nur im Mischterm eine Zeitabhängigkeit?', opts:['Weil dort $e^{+iE_1t/\\hbar}$ und $e^{-iE_2t/\\hbar}$ zusammentreffen, mit $E_1 \\ne E_2$.', 'Weil die Einzelterme $\\psi_n^2$ zeitlich gemittelt werden.', 'Weil der Mischterm als einziger komplexe Zahlen enthält.'], a:0, ex:'In $|\\psi_1e^{-iE_1t/\\hbar}|^2$ heben sich die Phasen auf. Im Produkt $\\psi_1e^{+iE_1t/\\hbar}\\cdot\\psi_2e^{-iE_2t/\\hbar}$ bleibt $e^{-i(E_2-E_1)t/\\hbar}$ stehen.'}},
+            {l:'= 1/2 (ψ_1(x)^2 + ψ_2(x)^2) + ψ_1(x) ψ_2(x) cos((E_2 - E_1) t/ħ)', w:'e^(iu) + e^(-iu) = 2 cos u'}
+          ]},
+        q:{q:R`$(\psi_1 + \psi_2)/\sqrt2$ im Kasten, mit $E_n = n^2E_1$: Nach welcher Zeit sieht die Dichte zum ersten Mal wieder aus wie bei $t = 0$?`,
+          opts:[R`$T = 2\pi\hbar/E_1$`, R`$T = 2\pi\hbar/(3E_1)$`, R`$T = 2\pi\hbar/(5E_1)$`], a:1,
+          ex:R`$E_2 - E_1 = 4E_1 - E_1 = 3E_1$, also $T = 2\pi\hbar/(3E_1)$. Die Summe $E_1 + E_2 = 5E_1$ spielt keine Rolle.`,
+          fb:[R`Das ist die Periode des Zeitfaktors von $\psi_1$ allein. Die Dichte hängt nur von der Differenz der Energien ab.`,
+            '',
+            R`$5E_1 = E_1 + E_2$ ist die Summe. Im Mischterm steht die Differenz.`]}},
+      {id:'sg-t5c', title:'Im Labor: zwei Zustände überlagert',
+        num:{title:R`Ein Elektron im $1\,\mathrm{nm}$-Kasten`, text:R`Mit $E_1 \approx 0{,}38\,\mathrm{eV}$ ist $E_2 - E_1 = 3E_1 \approx 1{,}13\,\mathrm{eV}$. Die Periode ist
+
+$$T = \frac{h}{E_2 - E_1} \approx 3{,}7\,\mathrm{fs}.$$
+
+Licht mit dieser Energie hat $\lambda = hc/(E_2 - E_1) \approx 1{,}1\,\mu\mathrm{m}$: Mit dieser Frequenz strahlt ein System beim Übergang zwischen den beiden Niveaus.`},
+        text:R`Im Bild ist die Kurve $|\Psi(x,t)|^2$ für $\Psi = c_1\psi_1e^{-iE_1t/\hbar} + c_2\psi_2e^{-iE_2t/\hbar}$. Der Regler „Anteil $|c_1|^2$“ legt die Gewichte fest; $|c_2|^2 = 1 - |c_1|^2$. Der Regler „Zeit $t$“ zählt in Perioden $T = 2\pi\hbar/(E_2 - E_1)$. Die rote Linie ist $\langle x\rangle$.
+
+Stell $|c_1|^2 = 0{,}5$ ein und bewege die Zeit von $0$ bis $1$: Die Dichte wandert von links nach rechts und zurück, und $\langle x\rangle$ folgt ihr. Mit $|c_1|^2 = 1$ steht alles still: ein stationärer Zustand. Unter „Mehr Regler“ kannst du statt $\psi_2$ den Zustand $\psi_3$ wählen. Dann bleibt die Dichte symmetrisch zur Mitte und „atmet“ nur.`,
+        fig:{lab:'twostate', keep:['Anteil', 'Zeit'], caption:R`$|\Psi(x,t)|^2$ für $c_1\psi_1e^{-iE_1t/\hbar} + c_2\psi_2e^{-iE_2t/\hbar}$. Nur bei $|c_1|^2 = 0$ oder $1$ steht die Dichte still.`},
+        q:{q:R`Im Labor stellst du $|c_1|^2 = 0{,}5$ und $t = 0{,}5\,T$ ein. Wo liegt der größte Teil der Dichte?`, tr:{from:'formel', to:'labor'},
+          opts:[R`links, wie bei $t = 0$`, R`rechts der Mitte`, R`symmetrisch zur Mitte verteilt`], a:1,
+          ex:R`Bei $t = T/2$ ist $\cos\frac{(E_2 - E_1)t}{\hbar} = \cos\pi = -1$. Der Mischterm $\psi_1\psi_2$ wechselt das Vorzeichen, und die Dichte liegt rechts.`,
+          fb:[R`Links ist die Dichte bei $t = 0$ und $t = T$. Nach einer halben Periode hat der Mischterm das Vorzeichen gewechselt.`,
+            '',
+            R`Symmetrisch ist die Dichte bei $t = T/4$, wenn der Mischterm null ist.`]}},
+      {id:'sg-t5d', title:'Vom Zeigerpaar zur schwappenden Dichte',
+        num:{title:R`$\langle x\rangle$ im Kasten`, text:R`Für $(\psi_1 + \psi_2)/\sqrt2$ im Kasten ergibt die Rechnung
+
+$$\langle x\rangle(t) = \frac L2 - \frac{16L}{9\pi^2}\cos\frac{(E_2 - E_1)t}{\hbar}.$$
+
+$\langle x\rangle$ pendelt also zwischen $0{,}32L$ bei $t = 0$ und $0{,}68L$ bei $t = T/2$.`},
+        text:R`Die Tafel verbindet die Gestalten der Überlagerung. In Worten sind es zwei Zeiger, die sich verschieden schnell drehen. Mathematisch zählt nur ihr Winkelunterschied $(E_2 - E_1)t/\hbar$. In der Formel steckt er im Kosinus des Mischterms. Im Graphen siehst du die Dichte zu zwei Zeitpunkten, im Labor die ganze Bewegung.
+
+Physikalisch schwingt der Mittelwert $\langle x\rangle$. Ein geladenes Teilchen, dessen Ladungsschwerpunkt schwingt, strahlt mit dieser Frequenz. Darum gehört zu einem Übergang zwischen zwei Niveaus Licht der Kreisfrequenz $(E_2 - E_1)/\hbar$, wie bei den Spektrallinien aus Thema 1.`,
+        reps:{obj:R`Die Überlagerung $(\psi_1 + \psi_2)/\sqrt2$ im Kasten`,
+          rows:[
+            {k:'worte', text:R`Zwei Zeiger, einer viermal so schnell wie der andere. Wo sie gleich zeigen, ist die Dichte groß, wo sie entgegengesetzt zeigen, klein.`},
+            {k:'mathe', tex:R`\psi_1e^{-iE_1t/\hbar} + \psi_2e^{-iE_2t/\hbar} = e^{-iE_1t/\hbar}\left(\psi_1 + \psi_2\,e^{-i(E_2 - E_1)t/\hbar}\right)`},
+            {k:'formel', tex:R`|\Psi(x,t)|^2 = \tfrac12\left(\psi_1^2 + \psi_2^2\right) + \psi_1\psi_2\cos\frac{(E_2 - E_1)t}{\hbar}`},
+            {k:'graph', plot:{x:[0, 1], y:[0, 3.6], xlab:'x/L', ylab:R`|\Psi|^2\cdot L`, ticks:[{x:0, lab:'0'}, {x:0.25, lab:'0{,}25'}, {x:0.5, lab:'0{,}5'}, {x:0.75, lab:'0{,}75'}, {x:1, lab:'1'}]}, f:x => (Math.sin(Math.PI * x) + Math.sin(2 * Math.PI * x)) ** 2, lab:'t = 0', f2:x => (Math.sin(Math.PI * x) - Math.sin(2 * Math.PI * x)) ** 2, lab2:'t = T/2',
+              cap:R`Bei $t = 0$ liegt die Dichte links, bei $t = T/2$ spiegelbildlich rechts. Dazwischen wandert sie hin und her.`},
+            {k:'labor', text:R`Labor „Überlagerung zweier Zustände im Kasten“: $|c_1|^2 = 0{,}5$, Zeit $t$ von $0$ bis $1\,T$. Die rote Linie $\langle x\rangle$ pendelt zwischen $0{,}32L$ und $0{,}68L$.`},
+            {k:'physik', text:R`Der Mittelwert des Orts schwingt mit $\omega_{21} = (E_2 - E_1)/\hbar$. Mit dieser Kreisfrequenz strahlt das System beim Übergang zwischen den Niveaus.`}
+          ],
+          links:[
+            {from:'worte', to:'mathe', rule:R`Die gemeinsame Phase $e^{-iE_1t/\hbar}$ ausklammern. Übrig bleibt die relative Phase des zweiten Zeigers.`},
+            {from:'mathe', to:'formel', rule:R`Das Betragsquadrat bilden: Die gemeinsame Phase fällt weg, die relative Phase wird zum Kosinus im Mischterm.`},
+            {from:'formel', to:'graph', rule:R`Für $t = 0$ den Kosinus $+1$ einsetzen, für $t = T/2$ den Wert $-1$, und jeweils über $x$ zeichnen.`},
+            {from:'graph', to:'labor', rule:R`Im Labor dieselben Zeitpunkte mit dem Regler „Zeit $t$“ einstellen; dazwischen zeigt die Animation alle Zwischenstände.`},
+            {from:'labor', to:'physik', rule:R`Die Bewegung der roten Linie ist die Schwingung von $\langle x\rangle$; ihre Kreisfrequenz ist $(E_2 - E_1)/\hbar$.`}
+          ]},
+        q:{q:R`Im Graphen ist die Dichte bei $t = T/2$ das Spiegelbild der Dichte bei $t = 0$. Welche relative Phase hat der zweite Zeiger dann gegenüber dem ersten?`, tr:{from:'graph', to:'mathe'},
+          opts:[R`$\pi/2$`, R`$\pi$`, R`$2\pi$`, R`$0$`], a:1,
+          ex:R`$(E_2 - E_1)t/\hbar = \pi$ bei $t = T/2$. Dann ist $e^{-i\pi} = -1$, und aus $\psi_1 + \psi_2$ wird $\psi_1 - \psi_2$.`,
+          fb:[R`Bei $\pi/2$ ist der Mischterm null; die Dichte ist dann symmetrisch zur Mitte, nicht gespiegelt.`,
+            '',
+            R`Nach $2\pi$ zeigen die Zeiger wieder gleich; die Dichte ist dann wie bei $t = 0$.`,
+            R`Bei relativer Phase $0$ sieht die Dichte aus wie bei $t = 0$, nicht wie ihr Spiegelbild.`]}},
+      {id:'sg-t5e', title:'Globale und relative Phase',
+        num:{title:'Zwei Faktoren', text:R`Multipliziere $\psi_1 + \psi_2$ mit $i$: Die Dichte $|i(\psi_1 + \psi_2)|^2 = |\psi_1 + \psi_2|^2$ bleibt. Multipliziere nur $\psi_2$ mit $i$: Bei $x = L/4$ ($L = 1$) ist
+
+$$|1 + i\sqrt2|^2 = 1 + 2 = 3\qquad\text{statt}\qquad |1 + \sqrt2|^2 \approx 5{,}83.$$
+
+Die relative Phase ändert die Dichte, die globale nicht.`},
+        text:R`Ein gemeinsamer Faktor $e^{i\alpha}$ vor der ganzen Summe ist unbeobachtbar ([[lex:globale-phase|globale Phase]]). Die Phasendifferenz zwischen den Anteilen bestimmt dagegen, wohin die Dichte gerade geschwappt ist: $\psi_1 + \psi_2$ hat mehr Gewicht links, $\psi_1 - \psi_2$ mehr rechts.
+
+In der Zeitentwicklung steckt beides. Klammerst du $e^{-iE_1t/\hbar}$ aus, bleibt die relative Phase $e^{-i(E_2 - E_1)t/\hbar}$. Nur sie hat Folgen. Deshalb ist es falsch, eine Überlagerung verschiedener Energien mit einem gemeinsamen Faktor $e^{-iEt/\hbar}$ zu versehen: Damit wäre die relative Phase eingefroren.`,
+        q:{q:R`Welche Größe bestimmt, wo die Dichte von $(\psi_1e^{-iE_1t/\hbar} + \psi_2e^{-iE_2t/\hbar})/\sqrt2$ gerade liegt?`,
+          opts:[R`die relative Phase $(E_2 - E_1)t/\hbar$`, R`die globale Phase $E_1t/\hbar$`, R`die Summe der Energien $E_1 + E_2$`], a:0,
+          ex:R`Nach dem Ausklammern der globalen Phase bleibt nur die relative Phase. Sie geht in den Mischterm ein.`,
+          fb:['',
+            R`Die globale Phase fällt im Betragsquadrat weg. Sie hat keine Folgen.`,
+            R`Die Summe der Energien tritt nur in einer gemeinsamen Phase auf und ist deshalb unbeobachtbar.`]}},
+      {id:'sg-t5f', title:'Typischer Fehler: Die Summe stationärer Zustände ist stationär',
+        num:{title:'Was sich ändert und was nicht', text:R`Für $(\psi_1 + \psi_2)/\sqrt2$ im $1\,\mathrm{nm}$-Kasten schwingt $\langle x\rangle$ zwischen $0{,}32\,\mathrm{nm}$ und $0{,}68\,\mathrm{nm}$. Die Gewichte $|c_1|^2 = |c_2|^2 = \tfrac12$ bleiben. Also bleibt auch
+
+$$\langle H\rangle = \tfrac12E_1 + \tfrac12E_2 = \tfrac52E_1 \approx 0{,}94\,\mathrm{eV}.$$`},
+        text:R`„$\psi_1$ und $\psi_2$ sind stationär, also auch ihre Summe“ ist falsch. Stationär ist eine Überlagerung nur, wenn alle beteiligten Energien gleich sind. Sonst schwappt die Dichte.
+
+Was bleibt konstant? Die Gewichte $|c_ne^{-iE_nt/\hbar}|^2 = |c_n|^2$ ändern sich nicht. Damit ist auch $\langle H\rangle = \sum_n|c_n|^2E_n$ konstant, die Energieerhaltung, obwohl $\langle x\rangle$ schwingt. In $\langle H\rangle = \int\Psi^*\hat H\Psi\,dx$ fallen die Mischterme weg, weil $\int\psi_1\psi_2\,dx = 0$ ist; diese Orthogonalität zeigt Thema 3. **Ausblick:** Thema 3 zeigt auch, dass $|c_n|^2$ die Wahrscheinlichkeit ist, bei einer Energiemessung $E_n$ zu finden.`,
+        q:{q:R`Was bleibt bei $(\psi_1 + \psi_2)/\sqrt2$ im Kasten zeitlich konstant?`,
+          opts:[R`$\langle x\rangle$`, R`die Dichte bei $x = L/4$`, R`$\langle H\rangle$`], a:2,
+          ex:R`$\langle H\rangle = \sum_n|c_n|^2E_n$ hängt nur von den Gewichten ab, und die bleiben. $\langle x\rangle$ und die Dichte schwingen.`,
+          fb:[R`$\langle x\rangle$ pendelt zwischen $0{,}32L$ und $0{,}68L$; der Mischterm verschiebt die Dichte.`,
+            R`Bei $x = L/4$ ist die Dichte $2{,}91$ bei $t = 0$ und $0{,}09$ bei $t = T/2$, jeweils in Einheiten von $1/L$.`,
+            '']}}
+    ]},
+
+    /* ===== Abschnitt 6: Strom und Kontinuitätsgleichung ===== */
+    {id:'sg-t6', title:'Wahrscheinlichkeitsstrom und Kontinuitätsgleichung', steps:[
+      {id:'sg-t6a', title:'Wahrscheinlichkeit fließt durch die Ränder',
+        pre:{from:'wf', seg:'wf-t5', title:'Die Normierung bleibt erhalten', text:R`In Thema 1 ergab die Rechnung $\frac{d}{dt}\int_{-\infty}^\infty|\Psi|^2dx = \frac{i\hbar}{2m}\left[\Psi^*\Psi' - \Psi\Psi^{*\prime}\right]_{-\infty}^{\infty}$. Der Randterm war null, weil $\Psi$ im Unendlichen verschwindet. Gebraucht wurden nur die Schrödingergleichung und ein reelles $V$.`},
+        num:{title:'Ein Intervall füllt sich', text:R`Angenommen, an der linken Grenze eines Intervalls fließt die Wahrscheinlichkeit $j(a) = 0{,}3\,\mathrm{fs}^{-1}$ hinein, an der rechten $j(b) = 0{,}1\,\mathrm{fs}^{-1}$ hinaus. Die Zahlen sind ausgedacht, aber von typischer Größe für Elektronen. Dann ist
+
+$$\frac{d}{dt}P_{ab} = j(a) - j(b) = 0{,}2\,\mathrm{fs}^{-1}.$$
+
+In $0{,}1\,\mathrm{fs}$ wächst die Wahrscheinlichkeit im Intervall um etwa $0{,}02$.`},
+        text:R`In Thema 1 hast du gezeigt, dass $\int|\Psi|^2dx$ über die ganze Achse erhalten bleibt. Was passiert in einem endlichen Stück $[a, b]$? Die Herleitung geht dieselben Schritte, nur mit endlichen Grenzen. Jetzt verschwindet der Randterm nicht:
+
+$$\frac{d}{dt}\int_a^b|\Psi|^2dx = j(a,t) - j(b,t),\qquad j = \frac{\hbar}{2mi}\left(\Psi^*\frac{\partial\Psi}{\partial x} - \Psi\frac{\partial\Psi^*}{\partial x}\right).$$
+
+$j$ heißt [[lex:stromdichte|Wahrscheinlichkeitsstromdichte]]. Die Wahrscheinlichkeit im Intervall ändert sich nur, weil bei $a$ etwas hinein- und bei $b$ etwas hinausfließt. Sie verschwindet nicht an einer Stelle, um woanders aufzutauchen.`,
+        derive:{ctx:DYN({params:{m:'pos', a:'pos', b:'pos'}}),
+          lines:[
+            {l:'d/dt ∫_a^b |Ψ|^2 dx = iħ/(2m) ∫_a^b (Ψ^* ∂^2Ψ/∂x^2 - Ψ ∂^2Ψ^*/∂x^2) dx', w:'Produktregel, Schrödingergleichung, V reell'},
+            {l:'= iħ/(2m) [Ψ^* ∂Ψ/∂x - Ψ ∂Ψ^*/∂x]_a^b', w:'Integrand ist eine Ableitung nach x', why:{q:'Warum ist $\\Psi^*\\Psi\'\' - \\Psi\\Psi^{*\\prime\\prime}$ eine Ableitung?', opts:['weil es $\\partial_x(\\Psi^*\\Psi\' - \\Psi\\Psi^{*\\prime})$ ist; $\\Psi^{*\\prime}\\Psi\'$ hebt sich weg', 'weil jede Funktion eine Stammfunktion hat', 'weil $\\Psi^*\\Psi\'\'$ und $\\Psi\\Psi^{*\\prime\\prime}$ gleich sind'], a:0, ex:'Produktregel: $\\partial_x(\\Psi^*\\Psi\') = \\Psi^{*\\prime}\\Psi\' + \\Psi^*\\Psi\'\'$, ebenso für den zweiten Term. Die gemischten Produkte heben sich in der Differenz weg.'}},
+            {l:'= -[ħ/(2m i) (Ψ^* ∂Ψ/∂x - Ψ ∂Ψ^*/∂x)]_a^b', w:'= j(a) − j(b)', why:{q:'Wie liest man das Ergebnis?', opts:['Was bei $a$ hineinfließt, minus was bei $b$ hinausfließt.', 'Die Wahrscheinlichkeit in $[a, b]$ ist immer konstant.', 'Der Strom ist bei $a$ und $b$ immer gleich groß.'], a:0, ex:'$-[j]_a^b = j(a) - j(b)$. Nur wenn $j(a) = j(b)$, bleibt die Wahrscheinlichkeit im Intervall konstant.'}}
+          ]},
+        q:{q:R`In einem Intervall $[a, b]$ nimmt die Wahrscheinlichkeit gerade ab. Was folgt?`,
+          opts:[R`$j(a) > j(b)$: links fließt mehr hinein als rechts hinaus.`, R`$j(b) > j(a)$: rechts fließt mehr hinaus als links hinein.`, R`$j$ ist im ganzen Intervall negativ.`], a:1,
+          ex:R`$\frac{d}{dt}P_{ab} = j(a) - j(b) < 0$ heißt $j(b) > j(a)$. Das Vorzeichen von $j$ allein entscheidet nichts.`,
+          fb:[R`Dann nähme die Wahrscheinlichkeit zu: Es käme mehr hinein, als hinausgeht.`,
+            '',
+            R`Auch mit negativem $j$ überall kann die Wahrscheinlichkeit zunehmen. Es kommt auf die Differenz $j(a) - j(b)$ an.`]}},
+      {id:'sg-t6b', title:'Die Kontinuitätsgleichung',
+        num:{title:'Ein Strom, der nach rechts schwächer wird', text:R`Angenommen, an einer Stelle sinkt der Strom auf $\Delta x = 0{,}01\,\mathrm{nm}$ von $0{,}30\,\mathrm{fs}^{-1}$ auf $0{,}28\,\mathrm{fs}^{-1}$. Also ist $\partial j/\partial x \approx -2\,\mathrm{nm}^{-1}\mathrm{fs}^{-1}$, und
+
+$$\frac{\partial|\Psi|^2}{\partial t} = -\frac{\partial j}{\partial x} \approx +2\,\mathrm{nm}^{-1}\mathrm{fs}^{-1}.$$
+
+Es fließt mehr hinein als hinaus: Die Dichte wächst.`},
+        text:R`Weil $a$ und $b$ beliebig sind, folgt eine Gleichung an jedem Ort, die [[lex:kontinuitaet|Kontinuitätsgleichung]]:
+
+$$\frac{\partial|\Psi|^2}{\partial t} + \frac{\partial j}{\partial x} = 0.$$
+
+Dazu setzt man $b = a + \Delta x$, teilt durch $\Delta x$ und lässt $\Delta x \to 0$. Links wird aus dem Integral die Dichte mal $\Delta x$, rechts aus $j(a) - j(b)$ die Ableitung $-\partial_xj$ mal $\Delta x$.
+
+Die Gleichung hat dieselbe Form wie die Ladungserhaltung in der Elektrodynamik. Wird der Strom an einer Stelle nach rechts schwächer, sammelt sich dort Wahrscheinlichkeit an, wie im Beispiel.`,
+        q:{q:R`An einer Stelle wächst $j$ nach rechts hin, $\partial j/\partial x > 0$. Was macht die Dichte dort?`,
+          opts:[R`Sie wächst, weil der Strom zunimmt.`, R`Sie bleibt gleich, weil der Strom positiv ist.`, R`Sie nimmt ab, weil mehr abfließt als ankommt.`], a:2,
+          ex:R`$\partial_t|\Psi|^2 = -\partial_xj < 0$. Rechts fließt mehr ab, als links nachkommt.`,
+          fb:[R`Ein stärker werdender Strom trägt mehr weg, als ankommt. Die Dichte sinkt.`,
+            R`Es zählt nicht das Vorzeichen von $j$, sondern wie sich $j$ mit dem Ort ändert.`,
+            '']}},
+      {id:'sg-t6c', title:'Der Strom einer ebenen Welle',
+        num:{title:R`Elektronen mit $k = 10\,\mathrm{nm}^{-1}$`, text:R`Für $\Psi = A\,e^{i(kx - \omega t)}$ ist $\Psi' = ik\Psi$, also $j = |A|^2\hbar k/m$. Mit $k = 10\,\mathrm{nm}^{-1}$ ist die Geschwindigkeit
+
+$$v = \frac{\hbar k}{m_e} \approx 1{,}16\cdot10^6\,\mathrm{m/s} = 1{,}16\,\mathrm{nm/fs}.$$
+
+Bei der Dichte $|A|^2 = 1\,\mathrm{nm}^{-1}$ ist $j \approx 1{,}16\,\mathrm{fs}^{-1}$: gut ein Teilchen pro Femtosekunde fließt vorbei.`},
+        text:R`Eigenschaften von $j$:
+
+- $j$ ist reell. Die Klammer ist $2i\,\mathrm{Im}(\Psi^*\partial_x\Psi)$, also $j = \frac{\hbar}{m}\mathrm{Im}(\Psi^*\partial_x\Psi) = \frac1m\mathrm{Re}(\Psi^*\hat p\Psi)$.
+- In einer Dimension hat $j$ die Einheit $1/\mathrm{s}$: Wahrscheinlichkeit pro Zeit, die an einer Stelle vorbeifließt.
+- Für $A\,e^{i(kx-\omega t)}$ ist $j = |A|^2\hbar k/m$: Dichte $|A|^2$ mal Geschwindigkeit $v = \hbar k/m$. Für $e^{-ikx}$ ist $j$ negativ; der Strom fließt nach links.
+- Ist $\psi(x)$ reell, trägt $\psi(x)e^{-iEt/\hbar}$ keinen Strom. Strom braucht eine Phase, die sich mit dem Ort ändert.`,
+        reps:{obj:'Der Strom einer ebenen Welle',
+          rows:[
+            {k:'worte', text:R`Die Dichte $|A|^2$ strömt mit der Geschwindigkeit $\hbar k/m$ nach rechts.`},
+            {k:'formel', tex:R`j = \frac{\hbar}{2mi}\left(\Psi^*\Psi' - \Psi\Psi^{*\prime}\right) = \frac{\hbar}{2mi}\left(|A|^2ik + |A|^2ik\right) = |A|^2\frac{\hbar k}{m}`},
+            {k:'mathe', text:R`$j = \frac{\hbar}{m}\operatorname{Im}(\Psi^*\Psi')$: Nur die Änderung der Phase mit $x$ trägt bei.`},
+            {k:'physik', text:R`Ein Elektronenstrahl: Teilchen pro Zeit, die einen Punkt passieren. Mit $j$ berechnet Thema 5 Reflexion und Transmission an einer Barriere.`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`„Dichte mal Geschwindigkeit“ als $|A|^2$ mal $\hbar k/m$ schreiben und mit der Definition von $j$ nachrechnen.`},
+            {from:'formel', to:'mathe', rule:R`Die Klammer als zweimal $i$ mal Imaginärteil von $\Psi^*\Psi'$ lesen. Bei reellem $\Psi$ ist dieser Imaginärteil null.`},
+            {from:'mathe', to:'physik', rule:R`Das Vorzeichen von $\operatorname{Im}(\Psi^*\Psi')$ gibt die Richtung des Strahls, sein Betrag die Zahl der Teilchen pro Zeit.`}
+          ]},
+        q:{q:R`$\Psi = A\,e^{-ikx}e^{-iEt/\hbar}$ mit $k > 0$. Wie groß ist der Strom?`, tr:{from:'formel', to:'physik'},
+          opts:[R`$+|A|^2\hbar k/m$, nach rechts`, R`$-|A|^2\hbar k/m$, nach links`, R`$0$, eine reine Phase trägt keinen Strom`], a:1,
+          ex:R`$\Psi' = -ik\Psi$, also $j = \frac{\hbar}{m}\operatorname{Im}(-ik|A|^2) = -|A|^2\hbar k/m$. Die Welle läuft nach links.`,
+          fb:[R`Das Vorzeichen von $k$ im Exponenten bestimmt die Richtung. Mit $e^{-ikx}$ läuft die Welle nach links.`,
+            '',
+            R`Die Phase ändert sich mit dem Ort, und genau das trägt Strom. Keinen Strom trägt nur ein reelles $\psi(x)$.`]}},
+      {id:'sg-t6d', title:'Typischer Fehler: stationär heißt stromlos',
+        num:{title:'Zwei stationäre Zustände', text:R`$\psi_1(x)\,e^{-iE_1t/\hbar}$ im Kasten ist stationär, und weil $\psi_1$ reell ist, ist $j = 0$. $A\,e^{ikx}e^{-iEt/\hbar}$ ist ebenfalls stationär: Seine Dichte $|A|^2$ hängt nicht von $t$ ab. Trotzdem trägt es den Strom
+
+$$j = |A|^2\frac{\hbar k}{m},$$
+
+an jeder Stelle gleich groß.`},
+        text:R`**Stationär heißt nicht stromlos.** In einem stationären Zustand ist $\partial_t|\Psi|^2 = 0$, also nach der Kontinuitätsgleichung $\partial_xj = 0$. Dann ist $j$ überall gleich, aber nicht unbedingt null. Was an einer Stelle hineinfließt, fließt an der nächsten wieder hinaus.
+
+Gebundene stationäre Zustände wie im Kasten haben reelle $\psi$ und deshalb $j = 0$. Eine ebene Welle trägt dagegen einen konstanten Strom. Mit genau diesem Gedanken berechnet Thema 5 Reflexion und Transmission: Im stationären Zustand ist der Strom links und rechts einer Barriere gleich.`,
+        q:{q:R`Ein stationärer Zustand trägt einen Strom $j$. Was gilt für $j$?`,
+          opts:[R`$j$ ist an jeder Stelle gleich groß.`, R`$j$ ist überall null, weil sich nichts ändert.`, R`$j$ nimmt nach rechts ab, bis er null ist.`], a:0,
+          ex:R`$\partial_t|\Psi|^2 = 0$ gibt mit der Kontinuitätsgleichung $\partial_xj = 0$. $j$ ist ortsunabhängig, kann aber ungleich null sein.`,
+          fb:['',
+            R`Eine ebene Welle mit Zeitfaktor ist stationär und trägt trotzdem den Strom $|A|^2\hbar k/m$.`,
+            R`Nähme $j$ ab, sammelte sich Wahrscheinlichkeit an, und die Dichte wäre nicht stationär.`]}}
+    ]}
   ],
   example:{
     title:'Eine ebene Welle löst die freie Schrödingergleichung',
@@ -243,6 +818,16 @@ topic({
   },
   lab:{type:'twostate', sketch:SK.lab, title:'Überlagerung zweier Zustände im Kasten',
     text:'Die Kurve ist $|\\Psi(x,t)|^2$ für $\\Psi = c_1\\psi_1e^{-iE_1t/\\hbar} + c_2\\psi_2e^{-iE_2t/\\hbar}$. Stelle den Anteil $|c_1|^2$ ein und lass die Zeit laufen.',
+    map:[
+      {sym:R`|c_1|^2`, ctl:'Anteil |c₁|²', says:R`Gewicht von $\psi_1$ in $\Psi = c_1\psi_1e^{-iE_1t/\hbar} + c_2\psi_2e^{-iE_2t/\hbar}$; das Labor setzt $|c_2|^2 = 1 - |c_1|^2$ und nimmt beide $c_n$ reell und positiv. Bei $0$ oder $1$ ist der Zustand stationär. Die Stärke des Schwappens ist $2|c_1c_2|$.`},
+      {sym:R`t/T,\quad T = \frac{2\pi\hbar}{E_2 - E_1}`, ctl:'Zeit t (in Perioden T)', says:R`Die Zeit in Vielfachen der Periode des Mischterms. Bei $t = 0$, $1$, $2$ sieht die Dichte gleich aus, bei $t = 0{,}5$ ist sie für $\psi_1 + \psi_2$ gespiegelt.`},
+      {sym:R`e^{-iE_nt/\hbar}`, ctl:'Abspielen', says:R`Lässt die Zeit laufen. Jeder Anteil dreht seine Phase mit seiner eigenen Energie; sichtbar wird nur der Unterschied $(E_2 - E_1)t/\hbar$ im Mischterm.`},
+      {sym:R`\psi_2\ \text{oder}\ \psi_3`, ctl:'Zweiter Zustand', says:R`Wählt den zweiten Anteil. Mit $\psi_3$ ist die Periode $2\pi\hbar/(E_3 - E_1) = 2\pi\hbar/(8E_1)$, und weil $\psi_1$ und $\psi_3$ beide symmetrisch zur Mitte sind, bleibt $\langle x\rangle = L/2$.`},
+      {sym:R`|\Psi(x,t)|^2`, ctl:'|Ψ(x,t)|² · L', says:R`Die Kurve ist die Dichte $\tfrac12(\psi_1^2 + \psi_2^2) + \psi_1\psi_2\cos\frac{(E_2 - E_1)t}{\hbar}$ für $|c_1|^2 = \tfrac12$, mal $L$ genommen.`},
+      {sym:R`\langle x\rangle`, ctl:'⟨x⟩', says:R`Die rote Linie ist $\langle x\rangle(t)$. Für $\psi_1 + \psi_2$ pendelt sie zwischen $0{,}32L$ und $0{,}68L$.`},
+      {sym:R`\hat H\psi = E\psi`, ctl:'stationär: Dichte bleibt gleich', says:R`Diese Anzeige erscheint bei $|c_1|^2 = 0$ oder $1$: Dann ist nur ein Energie-Eigenzustand beteiligt, und der Zeitfaktor fällt im Betragsquadrat weg.`},
+      {sym:R`x/L`, ctl:'x / L', says:R`Der Ort in Einheiten der Kastenbreite; bei $0$ und $1$ sind die Wände.`}
+    ],
     predict:{q:'Vorhersage: Du stellst $|c_1|^2 = 0{,}9$ statt $0{,}5$ ein. Wie schwappt die Dichte dann?', opts:['schwächer, aber mit derselben Periode', 'genauso stark und mit derselben Periode', 'genauso stark, aber deutlich schneller', 'gar nicht mehr, weil $\\psi_1$ überwiegt'], a:0, ex:'Die Amplitude des Mischterms ist $2|c_1c_2|$: bei $0{,}5/0{,}5$ gleich $1$, bei $0{,}9/0{,}1$ nur $0{,}6$. Die Periode hängt nur von $E_2 - E_1$ ab.'},
     questions:[
       {q:'Stelle $|c_1|^2 = 1$ ein und spiele die Animation ab. Was passiert?', opts:['Nichts: die Dichte bleibt gleich.', 'Die Dichte schwappt hin und her.', 'Die Dichte wird langsam breiter.'], a:0, ex:'Ein einzelner Energie-Eigenzustand ist stationär.'},

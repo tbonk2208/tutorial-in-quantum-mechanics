@@ -149,6 +149,30 @@ const SK = (() => {
   const fB = fin({id:'tunnel-sk-B', E:0.6, Etex:'0{,}6\\,', a:1.606, Ttex:'0{,}40', tol:0.14, yticks:[{y:0.4, lab:'0{,}4'}, {y:1, lab:'1'}, {y:2, lab:'2'}, {y:3, lab:'3'}]});
   return {lab, s1, s2, fA, fB};
 })();
+/* ---- Graphen für den Erklärteil (UMBAU2: reps-Zeilen k:'graph'), Einheiten wie im Labor bzw. dimensionslos ----
+   barRho: |ψ|² an der Rechteckbarriere E = 0,5 V0, a = 2 (wie SK.lab, also T ≈ 0,211);
+   step*: Stufe mit k = 2, q = 1 (E = 4V0/3): B = 1/3, C = 4/3, Re(e^{iπ/4}ψ) bzw. |ψ|² = 1 + 1/9 + (2/3)cos 4x links, 16/9 rechts;
+   tanz/rhs: grafische Lösung tan z = √((z0/z)² − 1) im Topf mit z0 = 0,5 nm·√(2m·1 eV)/ħ ≈ 2,5616 (Werte über 6 abgeschnitten) */
+const TUN_G = (() => {
+  const cm = (a, b) => [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]];
+  const cdv = (a, b) => { const d = b[0] * b[0] + b[1] * b[1]; return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d]; };
+  const E = 0.5, a = 2, k = Math.sqrt(E), ka = Math.sqrt(1 - E);
+  const ta = cdv([1, 0], [Math.cosh(ka * a), 0.5 * (ka / k - k / ka) * Math.sinh(ka * a)]);
+  const t = cm(ta, [Math.cos(-k * a), Math.sin(-k * a)]);
+  const inside = x => cm(ta, [Math.cosh(ka * (x - a)), k / ka * Math.sinh(ka * (x - a))]);
+  const r = [inside(0)[0] - 1, inside(0)[1]];
+  const psi = x => x < 0 ? [Math.cos(k * x) + r[0] * Math.cos(k * x) + r[1] * Math.sin(k * x), Math.sin(k * x) - r[0] * Math.sin(k * x) + r[1] * Math.cos(k * x)]
+    : x <= a ? inside(x) : cm(t, [Math.cos(k * x), Math.sin(k * x)]);
+  const al = Math.PI / 4, Z0 = 2.5616;
+  return {
+    barRho:x => { const p = psi(x); return p[0] * p[0] + p[1] * p[1]; },
+    stepRe:x => x < 0 ? Math.cos(2 * x + al) + Math.cos(2 * x - al) / 3 : 4 / 3 * Math.cos(x + al),
+    stepRho:x => x < 0 ? 1 + 1 / 9 + 2 / 3 * Math.cos(4 * x) : 16 / 9,
+    tanz:z => { const v = Math.tan(z); return v >= 0 && v <= 6 ? v : NaN; },
+    rhs:z => { if (z <= 0 || z >= Z0) return NaN; const v = Math.sqrt((Z0 / z) ** 2 - 1); return v <= 6 ? v : NaN; },
+    delta:x => Math.exp(-Math.abs(x))
+  };
+})();
 topic({
   id:'tunnel', math:['m-dgl', 'm-analysis'], title:'Stufe, Barriere, Tunneleffekt', short:'Tunneleffekt',
   src:'Griffiths & Schroeter Kap. 2 · Nolting 5/1 Kap. 4',
@@ -185,235 +209,607 @@ topic({
     reveal:'In der stationären Schrödingergleichung steht **ein** $E$ für alle Bereiche. Links und rechts der Barriere ist $V = 0$; deshalb ist die Wellenzahl $k = \\sqrt{2mE}/\\hbar$ auf beiden Seiten gleich – und damit auch die Wellenlänge. Die durchgelassene Welle hat nur eine kleinere **Amplitude**. Ihr Betragsquadrat ist die Wahrscheinlichkeit, dass ein einzelnes Elektron durchkommt. In der Barriere selbst schwingt $\\psi$ nicht, sondern ändert sich exponentiell.\n\nDie Vorstellung „Energieverlust beim Tunneln“ ist verbreitet und hängt oft damit zusammen, dass man die kleinere Amplitude als kleinere Energie liest (McKagan, Perkins & Wieman 2008). Die Energie siehst du an der Wellenlänge, nicht an der Amplitude.'
   },
   teach:[
-    {id:'tunnel-t1', title:'Stückweise konstantes Potential: Wellen und Exponentialfunktionen',
-      text:R`Viele Potentiale lassen sich gut durch Stücke mit konstantem $V$ annähern: eine Metalloberfläche, eine Oxidschicht zwischen zwei Leitern, eine dünne Halbleiterschicht. In jedem Stück ist die stationäre Schrödingergleichung eine DGL mit konstanten Koeffizienten ([[lex:lineare-dgl|lineare DGL]], M7):
+    /* ===== Abschnitt 1: stückweise konstantes Potential ===== */
+    {id:'tunnel-t1', title:'Stückweise konstantes Potential: Wellen und Exponentialfunktionen', steps:[
+      {id:'tunnel-t1a', title:'Ein Potential aus Stücken',
+        pre:{from:'m-dgl', seg:'md-t2', title:'Exponentialansatz', text:R`Eine lineare DGL mit konstanten Koeffizienten löst du mit $y = e^{\lambda x}$. Jede Ableitung wird zum Faktor $\lambda$, und es bleibt eine Gleichung für $\lambda$. Mini-Beispiel: $y'' = 4y$ gibt $\lambda^2 = 4$, also die Lösungen $e^{2x}$ und $e^{-2x}$.`},
+        num:{title:'Ein Elektron mit 1 eV über drei Stücken', text:R`Ein Elektron mit $E = 1\,\mathrm{eV}$ läuft über drei Stücke mit $V = 0$, $V = 0{,}5\,\mathrm{eV}$ und $V = 2\,\mathrm{eV}$. Mit $2m/\hbar^2 \approx 26{,}2\,\mathrm{eV^{-1}nm^{-2}}$ ist der Faktor $\frac{2m}{\hbar^2}(V - E)$ der Reihe nach
 
-$$\psi'' = -\frac{2m}{\hbar^2}(E - V)\,\psi.$$
+$$-26{,}2\,\mathrm{nm}^{-2},\qquad -13{,}1\,\mathrm{nm}^{-2},\qquad +26{,}2\,\mathrm{nm}^{-2}.$$
 
-Es gibt zwei Fälle.
+In den ersten beiden Stücken ist er negativ, im dritten positiv.`},
+        text:R`Viele Potentiale lassen sich gut durch Stücke mit konstantem $V$ annähern: eine Metalloberfläche, eine Oxidschicht zwischen zwei Leitern, eine dünne Halbleiterschicht. In jedem Stück ist die stationäre Schrödingergleichung eine [[lex:lineare-dgl|lineare DGL]] mit konstanten Koeffizienten (M7):
 
-- **Erlaubter Bereich, $E > V$:** $\psi'' = -k^2\psi$ mit $k = \sqrt{2m(E - V)}/\hbar$. Die Lösungen $e^{\pm ikx}$ bzw. $\cos kx$, $\sin kx$ schwingen. Je größer die kinetische Energie $E - V$, desto größer $k$ und desto kürzer die Wellenlänge $\lambda = 2\pi/k$.
-- **Verbotener Bereich, $E < V$:** $\psi'' = +\kappa^2\psi$ mit $\kappa = \sqrt{2m(V - E)}/\hbar$. Die Lösungen $e^{\pm\kappa x}$ wachsen oder fallen exponentiell und schwingen nicht.
+$$\psi'' = \frac{2m}{\hbar^2}(V - E)\,\psi.$$
 
-„Verboten“ heißt klassisch: Die kinetische Energie $E - V$ wäre negativ. Quantenmechanisch ist $\psi$ dort nicht null, sondern klingt auf der [[lex:eindringtiefe|Eindringtiefe]] $1/\kappa$ ab. Reicht der verbotene Bereich bis $x \to \infty$, bleibt nur $e^{-\kappa x}$; $e^{+\kappa x}$ wäre nicht normierbar. Die Herleitung prüft, dass $e^{-\kappa x}$ die Gleichung mit derselben Energie $E$ löst.
+Lies sie als Krümmungsregel: Die zweite Ableitung von $\psi$ ist die Funktion selbst mal einen festen Faktor. Alles hängt am Vorzeichen dieses Faktors, also an $V - E$. Ist er negativ, schwingt $\psi$. Ist er positiv, wächst oder fällt $\psi$ exponentiell.`,
+        q:{q:R`In welchem Stück aus dem Beispiel schwingt $\psi$ **nicht**?`,
+          opts:[R`im Stück mit $V = 0$`, R`im Stück mit $V = 0{,}5\,\mathrm{eV}$, weil dort $V > 0$ ist`, R`im Stück mit $V = 2\,\mathrm{eV}$`], a:2,
+          ex:R`Nur dort ist $V - E = +1\,\mathrm{eV} > 0$, der Faktor also positiv. Dann ist $\psi'' = +\kappa^2\psi$, und $\psi$ wächst oder fällt exponentiell.`,
+          fb:[R`Bei $V = 0$ ist $V - E = -1\,\mathrm{eV}$: Der Faktor ist negativ, $\psi$ schwingt.`,
+            R`Es kommt nicht auf $V > 0$ an, sondern auf $V > E$. Hier ist $V - E = -0{,}5\,\mathrm{eV}$, also schwingt $\psi$.`, '']}},
+      {id:'tunnel-t1b', title:'Erlaubter Bereich: Schwingen',
+        pre:{from:'m-dgl', seg:'md-t3', title:'Schwingen oder Abklingen', text:R`$\psi'' = -k^2\psi$ hat die Lösungen $e^{\pm ikx}$: Schwingungen mit der Wellenlänge $2\pi/k$. $\psi'' = +\kappa^2\psi$ hat die Lösungen $e^{\pm\kappa x}$, die exponentiell wachsen oder fallen. Mini-Beispiel: $\psi'' = -9\psi$ schwingt mit $\lambda = 2\pi/3$.`},
+        num:{title:'Zwei erlaubte Stücke', text:R`Mit $V = 0$ ist $k = \sqrt{26{,}2\cdot1}\,\mathrm{nm}^{-1} \approx 5{,}12\,\mathrm{nm}^{-1}$ und $\lambda \approx 1{,}23\,\mathrm{nm}$. Mit $V = 0{,}5\,\mathrm{eV}$ ist $k = \sqrt{26{,}2\cdot0{,}5}\,\mathrm{nm}^{-1} \approx 3{,}62\,\mathrm{nm}^{-1}$ und $\lambda \approx 1{,}73\,\mathrm{nm}$.`},
+        text:R`Ist $E > V$, heißt der Bereich **klassisch erlaubt**. Dann ist $\psi'' = -k^2\psi$ mit
 
-**Ein $E$ für alle Bereiche.** Das ist der wichtigste Punkt dieses Abschnitts. Die stationäre Schrödingergleichung $\hat H\psi = E\psi$ gilt überall mit derselben Zahl $E$. Von Bereich zu Bereich ändern sich nur $V$ und damit die *kinetische* Energie $E - V$. Die kinetische Energie siehst du an der Wellenlänge, nicht an der Amplitude. Die Amplitude sagt, wie wahrscheinlich das Teilchen dort anzutreffen ist.
+$$k = \frac{\sqrt{2m(E - V)}}{\hbar}.$$
 
-**Krümmung als Faustregel.** Für reelles $\psi$ sagt die Gleichung, wohin die Kurve gekrümmt ist. Im erlaubten Bereich hat $\psi''$ das entgegengesetzte Vorzeichen wie $\psi$: Die Kurve biegt sich zur Achse hin und schwingt. Im verbotenen Bereich hat $\psi''$ dasselbe Vorzeichen wie $\psi$: Die Kurve biegt sich von der Achse weg. Damit kannst du Wellenfunktionen skizzieren, bevor du rechnest. Für stehende Wellen in einem langsam veränderlichen $V$ gilt außerdem: Die Amplitude ist dort größer, wo $E - V$ klein ist, denn dort wäre ein klassisches Teilchen langsam und hielte sich länger auf. Das ist eine Aussage über die Aufenthaltswahrscheinlichkeit, nicht über die Energie.
+Die Lösungen $e^{\pm ikx}$ bzw. $\cos kx$ und $\sin kx$ schwingen. $E - V$ ist die kinetische Energie. Je größer sie ist, desto größer $k$ und desto kürzer die Wellenlänge $\lambda = 2\pi/k$. Wo $V$ steigt, aber unter $E$ bleibt, wird die Welle also länger. Das ist dieselbe Rechnung wie beim freien Teilchen in Thema 4, nur mit $E - V$ statt $E$.`,
+        q:{q:R`Eine Elektronenwelle läuft aus einem Bereich mit $V = 0$ in einen Bereich mit $V = V_1$, wobei $0 < V_1 < E$. Wie ändert sich die Wellenlänge?`,
+          opts:[R`Sie wird kleiner, weil das Potential höher ist.`, R`Sie bleibt gleich, weil $E$ gleich bleibt.`, R`Sie wird größer, weil $E - V$ kleiner wird.`], a:2,
+          ex:R`$\lambda = 2\pi\hbar/\sqrt{2m(E - V)}$ hängt von der kinetischen Energie ab. $E$ bleibt gleich, $E - V$ wird kleiner, also wird $\lambda$ größer.`,
+          fb:[R`Höheres $V$ heißt weniger kinetische Energie, kleineres $k$ und damit längere Wellen.`,
+            R`$E$ bleibt gleich, aber die Wellenlänge hängt von $E - V$ ab, und das ändert sich.`, '']}},
+      {id:'tunnel-t1c', title:'Verbotener Bereich: Abklingen',
+        num:{title:'1 eV unter dem Potential', text:R`Für $V - E = 1\,\mathrm{eV}$ ist $\kappa = \sqrt{26{,}2\cdot1}\,\mathrm{nm}^{-1} \approx 5{,}1\,\mathrm{nm}^{-1}$. Die Eindringtiefe ist $1/\kappa \approx 0{,}2\,\mathrm{nm}$, ein bis zwei Atomabstände. Nach $1\,\mathrm{nm}$ ist $\psi$ auf $e^{-5{,}1} \approx 0{,}6\,\%$ abgefallen.`},
+        text:R`Ist $E < V$, heißt der Bereich **klassisch verboten**: Die kinetische Energie $E - V$ wäre negativ. Dann ist $\psi'' = +\kappa^2\psi$ mit
 
-Ein Zahlenbeispiel: Für ein Elektron mit $V - E = 1\,\mathrm{eV}$ ist $\kappa \approx 5\,\mathrm{nm}^{-1}$, die Eindringtiefe also etwa $0{,}2\,\mathrm{nm}$ – ein bis zwei Atomabstände.`,
-      fig:{lab:'barrier', init:{a:4, e:0.6, show:'re'}, caption:'$\\mathrm{Re}\\,\\psi$, aufgetragen auf der Energielinie: Links schwingt $\\psi$; in der Barriere ($E < V$) fällt es ab, ohne zu schwingen; rechts schwingt es wieder – mit derselben Wellenlänge wie links, aber kleinerer Amplitude.'},
-      derive:{ctx:{coords:['x'], params:{m:'pos', V_0:'pos', E:{range:['0.15 V_0', '0.85 V_0']}}, defs:{κ:'sqrt(2m (V_0 - E))/ħ'}}, lines:[
-        {l:'-ħ^2/(2m) d^2/dx^2 e^(-κ x) + V_0 e^(-κ x) = (V_0 - ħ^2 κ^2/(2m)) e^(-κ x)', w:'zweimal ableiten: (−κ)² = κ²',
-          why:{q:'Warum steht in der Klammer $-\\hbar^2\\kappa^2/2m$?', opts:['$\\frac{d^2}{dx^2}e^{-\\kappa x} = +\\kappa^2e^{-\\kappa x}$, und davor steht $-\\hbar^2/2m$', '$\\frac{d^2}{dx^2}e^{-\\kappa x} = -\\kappa^2e^{-\\kappa x}$, wie bei einer Welle', 'Das Minuszeichen kommt aus dem Potential $V_0$.'], a:0, ex:'$(-\\kappa)^2 = \\kappa^2 > 0$. Bei einer Welle $e^{ikx}$ wäre es $(ik)^2 = -k^2$ – daher der Unterschied zwischen Schwingen und Abklingen.'}},
-        {l:'= E e^(-κ x)', w:'κ² = 2m(V₀ − E)/ħ²',
-          why:{q:'Was zeigt diese Zeile?', opts:['$e^{-\\kappa x}$ löst die Gleichung zur selben Energie $E$, obwohl $E < V_0$.', 'Im verbotenen Bereich ist die Energie des Teilchens $V_0$.', 'Im verbotenen Bereich ist die Energie des Teilchens negativ.'], a:0, ex:'$V_0 - \\hbar^2\\kappa^2/2m = V_0 - (V_0 - E) = E$. Negativ ist nur die kinetische Energie $E - V_0$ im klassischen Sinn.'}}
-      ]},
-      q:[
-        {q:'Eine Elektronenwelle läuft aus einem Bereich mit $V = 0$ in einen Bereich mit $V = V_1$, wobei $0 < V_1 < E$. Wie ändert sich die Wellenlänge?', opts:['Sie wird größer, weil $E - V$ kleiner wird.', 'Sie wird kleiner, weil das Potential höher ist.', 'Sie bleibt gleich, weil $E$ gleich bleibt.'], a:0,
-          ex:'$\\lambda = 2\\pi\\hbar/\\sqrt{2m(E - V)}$ hängt von der kinetischen Energie ab. $E$ bleibt gleich, $E - V$ wird kleiner, also wird $\\lambda$ größer.'},
-        {q:'Wie ist ein reelles $\\psi$ im verbotenen Bereich gekrümmt?', opts:['von der Achse weg: $\\psi\'\'$ hat dasselbe Vorzeichen wie $\\psi$', 'zur Achse hin: $\\psi\'\'$ hat das entgegengesetzte Vorzeichen', 'gar nicht: im verbotenen Bereich ist $\\psi$ eine Gerade'], a:0,
-          ex:'$\\psi\'\' = \\kappa^2\\psi$ mit $\\kappa^2 > 0$. Deshalb schwingt $\\psi$ dort nicht.'}
-      ]},
-    {id:'tunnel-t2', title:'Anschlussbedingungen',
-      text:R`Die Lösungen der einzelnen Bereiche müssen an den Grenzen zusammenpassen. Welche Bedingungen gelten dort? Du gewinnst sie aus der Schrödingergleichung selbst. Integriere $\psi'' = \frac{2m}{\hbar^2}(V - E)\psi$ über ein kleines Intervall um die Sprungstelle $x_0$:
+$$\kappa = \frac{\sqrt{2m(V - E)}}{\hbar}.$$
+
+Die Lösungen $e^{\pm\kappa x}$ wachsen oder fallen exponentiell und schwingen nicht. Quantenmechanisch ist $\psi$ dort nicht null, sondern klingt auf der [[lex:eindringtiefe|Eindringtiefe]] $1/\kappa$ ab. Reicht der verbotene Bereich bis $x \to \infty$, bleibt nur $e^{-\kappa x}$; $e^{+\kappa x}$ wäre nicht normierbar. Die Herleitung prüft, dass $e^{-\kappa x}$ die Gleichung zur selben Energie $E$ löst.`,
+        derive:{ctx:{coords:['x'], params:{m:'pos', V_0:'pos', E:{range:['0.15 V_0', '0.85 V_0']}}, defs:{κ:'sqrt(2m (V_0 - E))/ħ'}}, lines:[
+          {l:'-ħ^2/(2m) d^2/dx^2 e^(-κ x) + V_0 e^(-κ x) = (V_0 - ħ^2 κ^2/(2m)) e^(-κ x)', w:'zweimal ableiten: (−κ)² = κ²',
+            why:{q:'Warum steht in der Klammer $-\\hbar^2\\kappa^2/2m$?', opts:['$\\frac{d^2}{dx^2}e^{-\\kappa x} = +\\kappa^2e^{-\\kappa x}$, und davor steht $-\\hbar^2/2m$', '$\\frac{d^2}{dx^2}e^{-\\kappa x} = -\\kappa^2e^{-\\kappa x}$, wie bei einer Welle', 'Das Minuszeichen kommt aus dem Potential $V_0$.'], a:0, ex:'$(-\\kappa)^2 = \\kappa^2 > 0$. Bei einer Welle $e^{ikx}$ wäre es $(ik)^2 = -k^2$ – daher der Unterschied zwischen Schwingen und Abklingen.'}},
+          {l:'= E e^(-κ x)', w:'κ² = 2m(V₀ − E)/ħ² eingesetzt',
+            why:{q:'Was zeigt diese Zeile?', opts:['$e^{-\\kappa x}$ löst die Gleichung zur selben Energie $E$, obwohl $E < V_0$.', 'Im verbotenen Bereich ist die Energie des Teilchens $V_0$.', 'Im verbotenen Bereich ist die Energie des Teilchens negativ.'], a:0, ex:'$V_0 - \\hbar^2\\kappa^2/2m = V_0 - (V_0 - E) = E$. Negativ ist nur die kinetische Energie $E - V_0$ im klassischen Sinn.'}}
+        ]},
+        q:{q:R`Ein verbotener Bereich reicht von $x = 0$ bis $x \to \infty$. Welcher Ansatz gehört dorthin?`,
+          opts:[R`$Ce^{-\kappa x} + De^{\kappa x}$ mit beliebigem $D$`, R`$Ce^{-\kappa x}$`, R`$C\cos(\kappa x)$`], a:1,
+          ex:R`$e^{+\kappa x}$ wächst für $x \to \infty$ über alle Grenzen; normierbar bleibt nur $e^{-\kappa x}$.`,
+          fb:[R`Mit $D \ne 0$ wüchse $\psi$ nach rechts ohne Grenze. Also muss $D = 0$ sein.`, '',
+            R`Im verbotenen Bereich schwingt $\psi$ nicht: $\psi'' = +\kappa^2\psi$ hat keine Kosinus-Lösungen.`]}},
+      {id:'tunnel-t1d', title:'Typischer Fehler: Die Energie ändert sich von Bereich zu Bereich',
+        num:{title:'Dasselbe E, drei kinetische Energien', text:R`Im Beispiel ist $E = 1\,\mathrm{eV}$ in allen drei Stücken. Die kinetische Energie $E - V$ ist dort $1\,\mathrm{eV}$, $0{,}5\,\mathrm{eV}$ und $-1\,\mathrm{eV}$. Zurück auf $V = 0$ ist sie wieder $1\,\mathrm{eV}$, mit $\lambda = 1{,}23\,\mathrm{nm}$ wie am Anfang.`},
+        text:R`**Ein $E$ für alle Bereiche.** Das ist der wichtigste Punkt dieses Abschnitts. Die stationäre Gleichung $\hat H\psi = E\psi$ gilt überall mit derselben Zahl $E$. Von Bereich zu Bereich ändern sich nur $V$ und damit die *kinetische* Energie $E - V$. **Typische Fehlvorstellung:** „Wo $\psi$ klein ist, hat das Teilchen weniger Energie.“ Die kinetische Energie siehst du an der Wellenlänge, nicht an der Amplitude. Die Amplitude sagt nur, wie wahrscheinlich das Teilchen dort anzutreffen ist.`,
+        q:{q:R`Eine Elektronenwelle hat hinter einer Barriere eine kleinere Amplitude, aber dieselbe Wellenlänge wie davor. Was schließt du?`,
+          opts:[R`Die Elektronen dort haben weniger Energie.`, R`Dort sind weniger Elektronen, mit derselben Energie.`, R`Dort sind mehr Elektronen, weil sie sich stauen.`], a:1,
+          ex:R`Gleiche Wellenlänge bei gleichem $V$ heißt gleiche Energie. Die kleinere Amplitude heißt: Die Aufenthaltswahrscheinlichkeit ist kleiner.`,
+          fb:[R`Die Energie steckt in der Wellenlänge, und die ist gleich. Die Amplitude misst etwas anderes.`, '',
+            R`Kleinere Amplitude heißt kleinere Dichte $|\psi|^2$, also weniger Elektronen, nicht mehr.`]}},
+      {id:'tunnel-t1e', title:'Ein Ansatz je Bereich: Gleichung, Mathe, Bild',
+        num:{title:'Die Barriere des Labors', text:R`Im Labor ist $V_0$ die Energieeinheit und $\hbar/\sqrt{2mV_0}$ die Längeneinheit. Dann ist $k = \sqrt{E/V_0}$ und in der Barriere $\kappa = \sqrt{1 - E/V_0}$. Für $E = 0{,}5\,V_0$ ist $k = \kappa \approx 0{,}71$: links und rechts die Wellenlänge $2\pi/k \approx 8{,}9$, in der Barriere die Eindringtiefe $1/\kappa \approx 1{,}4$.`},
+        text:R`Jetzt setzt du die Teile zusammen. Für jeden Bereich bestimmst du das Vorzeichen von $V - E$ und schreibst den passenden Ansatz hin. Die Tafel zeigt den Weg an der Rechteckbarriere aus dem Labor: von der Gleichung über die charakteristische Gleichung aus M7 zum Bild. Links und rechts der Barriere schwingt $\mathrm{Re}\,\psi$ mit derselben Wellenlänge. In der Barriere krümmt es sich von der Achse weg und fällt ab, ohne zu schwingen. Achtung: In der Tafel ist $\lambda$ wie in M7 die Wurzel der charakteristischen Gleichung, nicht die Wellenlänge.`,
+        reps:{obj:R`Rechteckbarriere mit $E = 0{,}5\,V_0$ und Breite $a = 2$ (Einheiten des Labors)`,
+          rows:[
+            {k:'worte', text:R`Links und rechts frei, in der Mitte ein Wall, der höher ist als die Energie des Teilchens.`},
+            {k:'formel', tex:R`\psi'' = \frac{2m}{\hbar^2}\,(V - E)\,\psi,\qquad V = \begin{cases}0, & x < 0\\ V_0, & 0 < x < a\\ 0, & x > a\end{cases}`},
+            {k:'mathe', tex:R`\lambda^2 = \frac{2m(V - E)}{\hbar^2}:\qquad \lambda = \pm ik\ \ (V < E),\qquad \lambda = \pm\kappa\ \ (V > E)`},
+            {k:'graph', plot:{x:[-15, 15], xlab:'x', ylab:R`\mathrm{Re}\,\psi`, ticks:[{x:-10, lab:'-10'}, {x:0, lab:'0'}, {x:2, lab:'a'}, {x:10, lab:'10'}], V:x => x > 0 && x < 2 ? 1 : 0, Vr:[0, 1.3], E:0.5, regions:[{x:[0, 2], lab:'Barriere'}]}, f:SK.lab.f,
+              cap:R`$\mathrm{Re}\,\psi$ zu einem festen Zeitpunkt. Grau das Potential, gestrichelt die Energie. Links Überlagerung aus ein- und auslaufender Welle, in der Barriere Abfall ohne Schwingung, rechts eine Welle mit derselben Wellenlänge und kleinerer Amplitude.`},
+            {k:'labor', text:R`Labor „Transmission durch eine Rechteckbarriere“: Regler „Energie E/V₀“ auf $0{,}5$, „Breite“ auf $2$, Wellenfunktion „nur Re ψ“. Die dünne Kurve ist $\mathrm{Re}\,\psi$, auf der gestrichelten Energielinie aufgetragen.`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`Jedes Stück mit eigenem konstantem $V$ wird ein Fall in $V(x)$. In allen Fällen steht dasselbe $E$.`},
+            {from:'formel', to:'mathe', rule:R`Mit $\psi = e^{\lambda x}$ wird $\psi''$ zu $\lambda^2\psi$. Es bleibt die charakteristische Gleichung $\lambda^2 = 2m(V - E)/\hbar^2$.`},
+            {from:'mathe', to:'graph', rule:R`Imaginäre Wurzeln $\lambda = \pm ik$: eine Schwingung mit der Wellenlänge $2\pi/k$ zeichnen. Reelle Wurzeln $\pm\kappa$: Exponentialkurven ohne Nullstelle zeichnen.`},
+            {from:'graph', to:'labor', rule:R`Dieselbe Energie und Breite im Labor einstellen und die dünne Kurve mit dem Bild vergleichen. Im Labor sitzt die Kurve auf der Energielinie, nicht auf der Achse.`}
+          ]},
+        q:{q:R`In einem Bereich eines anderen Potentials schwingt $\mathrm{Re}\,\psi$ mit der Wellenlänge $2\pi/3$ (Laboreinheiten). Welche Wurzeln hat dort die charakteristische Gleichung?`, tr:{from:'graph', to:'mathe'},
+          opts:[R`$\lambda = \pm3$`, R`$\lambda = \pm3i$`, R`$\lambda = \pm2\pi/3$`], a:1,
+          ex:R`Die Wellenlänge $2\pi/k = 2\pi/3$ gibt die Wellenzahl $k = 3$. Schwingung heißt imaginäre Wurzeln, also $\lambda = \pm ik = \pm3i$.`,
+          fb:[R`Reelle Wurzeln $\pm3$ gäben $e^{\pm3x}$, also Abklingen ohne Schwingung.`, '',
+            R`$2\pi/3$ ist die Wellenlänge, nicht die Wellenzahl $k$. Und für eine Schwingung muss die Wurzel $\lambda$ imaginär sein.`]}},
+      {id:'tunnel-t1f', title:'Krümmung als Faustregel',
+        num:{title:'Vorzeichen von ψ und ψ″', text:R`Im erlaubten Bereich sei $\psi = \cos kx$. Dann ist $\psi'' = -k^2\cos kx$: Wo $\psi > 0$ ist, ist $\psi'' < 0$, die Kurve biegt sich nach unten zur Achse. Im verbotenen Bereich sei $\psi = e^{-\kappa x} > 0$. Dann ist $\psi'' = \kappa^2e^{-\kappa x} > 0$: Die Kurve biegt sich nach oben, von der Achse weg.`},
+        text:R`Für reelles $\psi$ sagt die Gleichung, wohin die Kurve gekrümmt ist. Im erlaubten Bereich hat $\psi''$ das entgegengesetzte Vorzeichen wie $\psi$: Die Kurve biegt sich zur Achse hin und schwingt. Im verbotenen Bereich hat $\psi''$ dasselbe Vorzeichen wie $\psi$: Die Kurve biegt sich von der Achse weg. Im Bild daneben ist $\mathrm{Re}\,\psi$ auf der gestrichelten Energielinie aufgetragen. Der getönte Streifen ist die Barriere mit $V = V_0$. Mit dieser Regel kannst du Wellenfunktionen skizzieren, bevor du rechnest.`,
+        fig:{lab:'barrier', init:{a:4, e:0.6, show:'re'}, caption:'$\\mathrm{Re}\\,\\psi$, aufgetragen auf der Energielinie: Links schwingt $\\psi$; in der Barriere ($E < V$) fällt es ab, ohne zu schwingen; rechts schwingt es wieder – mit derselben Wellenlänge wie links, aber kleinerer Amplitude.'},
+        q:{q:R`Wie ist ein reelles $\psi$ im verbotenen Bereich gekrümmt?`,
+          opts:[R`zur Achse hin: $\psi''$ hat das entgegengesetzte Vorzeichen wie $\psi$`, R`von der Achse weg: $\psi''$ hat dasselbe Vorzeichen wie $\psi$`, R`gar nicht: im verbotenen Bereich ist $\psi$ eine Gerade`], a:1,
+          ex:R`$\psi'' = \kappa^2\psi$ mit $\kappa^2 > 0$. Deshalb schwingt $\psi$ dort nicht.`,
+          fb:[R`So ist es im erlaubten Bereich; dort schwingt $\psi$.`, '',
+            R`Eine Gerade hätte $\psi'' = 0$. Hier ist $\psi'' = \kappa^2\psi \ne 0$.`]}}
+    ]},
+
+    /* ===== Abschnitt 2: Anschlussbedingungen ===== */
+    {id:'tunnel-t2', title:'Anschlussbedingungen', steps:[
+      {id:'tunnel-t2a', title:'Woher die Bedingungen kommen',
+        num:{title:'Ein schmales Intervall', text:R`An einer Stufe springe $V - E$ von $-1\,\mathrm{eV}$ auf $+1\,\mathrm{eV}$, und es sei $|\psi| \le 1$. Über $[x_0 - \varepsilon, x_0 + \varepsilon]$ mit $\varepsilon = 0{,}01\,\mathrm{nm}$ ändert sich die Steigung höchstens um
+
+$$26{,}2\,\mathrm{eV^{-1}nm^{-2}}\cdot1\,\mathrm{eV}\cdot0{,}02\,\mathrm{nm} \approx 0{,}5\,\mathrm{nm}^{-1}.$$
+
+Mit $\varepsilon = 0{,}001\,\mathrm{nm}$ sind es nur noch $0{,}05\,\mathrm{nm}^{-1}$.`},
+        text:R`Die Lösungen der einzelnen Bereiche müssen an den Grenzen zusammenpassen. Welche Bedingungen gelten dort? Du gewinnst sie aus der Schrödingergleichung selbst. Integriere $\psi'' = \frac{2m}{\hbar^2}(V - E)\psi$ über ein kleines Intervall um die Sprungstelle $x_0$:
 
 $$\psi'(x_0 + \varepsilon) - \psi'(x_0 - \varepsilon) = \frac{2m}{\hbar^2}\int_{x_0 - \varepsilon}^{x_0 + \varepsilon}(V - E)\,\psi\,dx.$$
 
-Ist $V$ endlich, ist der Integrand beschränkt, und das Integral geht für $\varepsilon \to 0$ gegen null. Also ist **$\psi'$ stetig**. Dann ist $\psi$ erst recht stetig, denn ein Sprung in $\psi$ würde ein unendliches $\psi'$ bedeuten. Das sind die [[lex:anschluss|Anschlussbedingungen]]:
+Links steht die Änderung der Steigung über das Intervall. Ist $V$ endlich, ist der Integrand beschränkt. Das Integral ist dann höchstens Höhe mal Breite $2\varepsilon$ und geht für $\varepsilon \to 0$ gegen null.`,
+        q:{q:R`Warum geht das Integral auf der rechten Seite für $\varepsilon \to 0$ gegen null?`,
+          opts:[R`Weil $\psi$ an der Sprungstelle null ist.`, R`Weil der Integrand beschränkt ist und das Intervall schrumpft.`, R`Weil $V - E$ dort das Vorzeichen wechselt und sich alles aufhebt.`], a:1,
+          ex:R`Ein beschränkter Integrand über ein Intervall der Länge $2\varepsilon$ gibt höchstens Schranke mal $2\varepsilon$. Das geht gegen null, egal ob $V$ springt.`,
+          fb:[R`$\psi$ ist an einer Stufe im Allgemeinen nicht null. Null wird es nur an einer unendlich hohen Wand.`, '',
+            R`Ein Vorzeichenwechsel ist nicht nötig. Auch ein Sprung von $V$ von $1\,\mathrm{eV}$ auf $3\,\mathrm{eV}$ gäbe ein verschwindendes Integral.`]}},
+      {id:'tunnel-t2b', title:'ψ und ψ′ sind stetig',
+        num:{title:'Die Stufe mit k = 2 und q = 1', text:R`An einer Stufe bei $x = 0$ sei links $\psi_L = e^{2ix} + Be^{-2ix}$ und rechts $\psi_R = Ce^{ix}$. Bei $x = 0$ ist jede Exponentialfunktion $1$, und ihre Ableitung ist der Faktor im Exponenten:
+
+$$\begin{gathered}\psi_L(0) = 1 + B,\quad \psi_R(0) = C,\\ \psi_L'(0) = 2i(1 - B),\quad \psi_R'(0) = iC.\end{gathered}$$`},
+        text:R`Aus dem letzten Schritt folgt: Bei endlichem $V$ ist **$\psi'$ stetig**. Dann ist $\psi$ erst recht stetig, denn ein Sprung in $\psi$ würde ein unendliches $\psi'$ bedeuten. Das sind die [[lex:anschluss|Anschlussbedingungen]]:
 
 $$\psi(x_0^-) = \psi(x_0^+),\qquad \psi'(x_0^-) = \psi'(x_0^+).$$
 
-Nur $\psi''$ springt, zusammen mit $V$. Zwei Ausnahmen: An einer unendlich hohen Wand (Thema 3) ist das Integral nicht klein; dort gilt nur $\psi = 0$, und $\psi'$ springt. Beim δ-Potential (Abschnitt 6) liefert das Integral einen endlichen Beitrag, und $\psi'$ springt um einen festen Betrag.
+Nur $\psi''$ springt, zusammen mit $V$. Es gibt zwei Ausnahmen. An einer unendlich hohen Wand (Thema 3) ist das Integral nicht klein; dort gilt nur $\psi = 0$, und $\psi'$ springt. Beim δ-Potential (Abschnitt 6) liefert das Integral einen endlichen Beitrag, und $\psi'$ springt um einen festen Betrag.`,
+        q:{q:R`An einer Stufe springt $V$ von $0$ auf ein endliches $V_0$. Was gilt bei $x = 0$?`,
+          opts:[R`$\psi$ ist stetig, $\psi'$ springt.`, R`$\psi$ ist null, weil das Potential springt.`, R`$\psi$ und $\psi'$ sind stetig, $\psi''$ springt.`], a:2,
+          ex:R`$\psi'' = \frac{2m}{\hbar^2}(V - E)\psi$ springt mit $V$. Einmal integriert, bleibt $\psi'$ stetig; $\psi = 0$ gilt nur an unendlich hohen Wänden.`,
+          fb:[R`Einen Sprung in $\psi'$ gibt es nur bei unendlich hohem $V$ oder einem δ-Potential.`,
+            R`Das gilt an einer unendlich hohen Wand. Bei endlichem $V_0$ dringt $\psi$ in die Stufe ein.`, '']}},
+      {id:'tunnel-t2c', title:'Zwei Gleichungen, zwei Unbekannte',
+        num:{title:'Aufgelöst', text:R`Aus dem Beispiel: $1 + B = C$ und $2i(1 - B) = iC$, also $2 - 2B = 1 + B$. Daraus folgen
 
-**Abzählen.** An jeder Sprungstelle gibt es zwei Bedingungen. An einer [[lex:potentialstufe|Potentialstufe]] mit einlaufender Welle von links sind $B$ (reflektiert) und $C$ (durchgelassen) unbekannt: zwei Gleichungen, zwei Unbekannte. Die Amplitude der einlaufenden Welle setzt man auf 1. Rechts gibt es keine von rechts einlaufende Welle, weil dort keine Quelle ist.
+$$B = \tfrac13,\qquad C = \tfrac43.$$
 
-**Die Stufe mit $E < V_0$.** Für $x < 0$ ist $\psi_L = e^{ikx} + Be^{-ikx}$, für $x > 0$ ist $\psi_R = Ce^{-\kappa x}$. Die Herleitung ergibt
+Probe: $1 + \tfrac13 = \tfrac43$ und $2\left(1 - \tfrac13\right) = \tfrac43$.`},
+        text:R`**Abzählen.** An jeder Sprungstelle gibt es zwei Bedingungen. An einer [[lex:potentialstufe|Potentialstufe]] mit einlaufender Welle von links sind $B$ (reflektiert) und $C$ (durchgelassen) unbekannt: zwei Gleichungen, zwei Unbekannte. Die Amplitude der einlaufenden Welle setzt man auf $1$. Rechts gibt es keine von rechts einlaufende Welle, weil dort keine Quelle ist. Das Beispiel gehört zur Stufe mit $E = \tfrac43V_0$, denn $q^2/k^2 = (E - V_0)/E = \tfrac14$. Allgemein folgen $B = \frac{k - q}{k + q}$ und $C = \frac{2k}{k + q}$. Die allgemeine Rechnung für $B$ steht im Lernschritt „Beispiel“ dieses Themas.`,
+        q:{q:R`Jetzt läuft die Welle von **rechts** auf dieselbe Stufe zu. Welcher Ansatz gehört dann links der Stufe ($x < 0$)?`,
+          opts:[R`nur $Be^{-ikx}$`, R`$e^{ikx} + Be^{-ikx}$, wie bisher`, R`nur $Be^{ikx}$`], a:0,
+          ex:R`Von links kommt nichts. Links bleibt nur die durchgelassene Welle, und die läuft nach links: $e^{-ikx}$. Angesetzt wird auf jeder Seite nur, was dort einläuft oder wegläuft.`,
+          fb:['', R`Die einlaufende Welle $e^{ikx}$ kam von einer Quelle links. Die gibt es jetzt nicht mehr; links läuft nur Durchgelassenes weg.`,
+            R`$e^{ikx}$ läuft nach rechts, also auf die Stufe zu. Was links ankommt, läuft aber von der Stufe weg nach links: $e^{-ikx}$.`]}},
+      {id:'tunnel-t2d', title:'Anschluss als Gleichungssystem',
+        num:{title:'In Matrixform', text:R`Sortiert nach den Unbekannten werden die Gleichungen aus dem Beispiel zu $B - C = -1$ und $2B + C = 2$:
+
+$$\begin{pmatrix}1 & -1\\ 2 & 1\end{pmatrix}\begin{pmatrix}B\\ C\end{pmatrix} = \begin{pmatrix}-1\\ 2\end{pmatrix},\qquad \det = 1 + 2 = 3.$$
+
+Aus der ersten Zeile folgt $C = B + 1$, eingesetzt in die zweite $3B + 1 = 2$. Also $B = \frac13$ und $C = \frac43$.`},
+        text:R`Anschlussbedingungen sind ein lineares Gleichungssystem für die Amplituden. Das ist lineare Algebra, aber jede Zeile und jede Spalte hat eine physikalische Bedeutung. Die erste Zeile ist „$\psi$ stetig“, die zweite „$\psi'$ stetig“. Die Spalten gehören zur reflektierten und zur durchgelassenen Welle. Die rechte Seite stammt von der einlaufenden Welle; ohne sie wären alle Amplituden null. Die Tafel verfolgt die Stufe aus dem Beispiel von den Worten bis zum Bild.`,
+        reps:{obj:R`Stufe mit $k = 2$ und $q = 1$, also $E = \tfrac43V_0$`,
+          rows:[
+            {k:'worte', text:R`Eine Welle läuft von links auf die Stufe. Ein Teil kommt zurück, ein Teil läuft weiter. Bei $x = 0$ gehen Wert und Steigung glatt ineinander über.`},
+            {k:'formel', tex:R`1 + B = C,\qquad ik\,(1 - B) = iq\,C`},
+            {k:'matrix', tex:R`\begin{pmatrix}1 & -1\\ k & q\end{pmatrix}\begin{pmatrix}B\\ C\end{pmatrix} = \begin{pmatrix}-1\\ k\end{pmatrix}`},
+            {k:'mathe', text:R`Lineares $2\times2$-System mit $\det = k + q \ne 0$, also genau eine Lösung: $B = \frac{k - q}{k + q} = \frac13$ und $C = \frac{2k}{k + q} = \frac43$.`},
+            {k:'graph', plot:{x:[-8, 8], y:[-1.6, 1.6], xlab:'x', ylab:R`\mathrm{Re}\,\psi`, ticks:[{x:-2 * Math.PI, lab:R`-2\pi`}, {x:-Math.PI, lab:R`-\pi`}, {x:0, lab:'0'}, {x:Math.PI, lab:R`\pi`}, {x:2 * Math.PI, lab:R`2\pi`}], V:x => x > 0 ? 0.75 : 0, Vr:[0, 1.5], E:1}, f:TUN_G.stepRe,
+              cap:R`$\mathrm{Re}\,\psi$ zu einem festen Zeitpunkt. Links die Wellenlänge $\pi$, rechts $2\pi$. Bei $x = 0$ stimmen Wert und Steigung überein; nur die Krümmung springt.`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`„Wert geht glatt über“ wird $\psi_L(0) = \psi_R(0)$, „Steigung geht glatt über“ wird $\psi_L'(0) = \psi_R'(0)$. Ansätze einsetzen, $x = 0$ setzen.`},
+            {from:'formel', to:'matrix', rule:R`Den Faktor $i$ kürzen, dann nach $B$ und $C$ sortieren. Ihre Vorfaktoren werden die Matrix, alles andere die rechte Seite.`},
+            {from:'matrix', to:'mathe', rule:R`Die Determinante bilden. Ist sie nicht null, gibt es genau eine Lösung; dann durch Einsetzen lösen.`},
+            {from:'mathe', to:'graph', rule:R`$B$ und $C$ in die Ansätze einsetzen und $\mathrm{Re}\,\psi$ links und rechts zeichnen. Probe: Bei $x = 0$ treffen sich die Kurven ohne Knick.`}
+          ]},
+        q:{q:R`Eine Stufe hat $k = 3$ und $q = 1$. Welche Matrixgleichung beschreibt den Anschluss?`, tr:{from:'formel', to:'matrix'},
+          opts:[R`$\begin{pmatrix}1 & 1\\ 3 & -1\end{pmatrix}\begin{pmatrix}B\\ C\end{pmatrix} = \begin{pmatrix}1\\ 3\end{pmatrix}$`, R`$\begin{pmatrix}1 & -1\\ 1 & 3\end{pmatrix}\begin{pmatrix}B\\ C\end{pmatrix} = \begin{pmatrix}-1\\ 1\end{pmatrix}$`, R`$\begin{pmatrix}1 & -1\\ 3 & 1\end{pmatrix}\begin{pmatrix}B\\ C\end{pmatrix} = \begin{pmatrix}-1\\ 3\end{pmatrix}$`], a:2,
+          ex:R`$1 + B = C$ wird $B - C = -1$, und $3(1 - B) = C$ wird $3B + C = 3$. Lösung: $B = \tfrac12 = \frac{3 - 1}{3 + 1}$.`,
+          fb:[R`Die erste Zeile muss aus $1 + B = C$ kommen, also $B - C = -1$. Hier sind Vorzeichen vertauscht.`,
+            R`$k$ und $q$ sind vertauscht. $k = 3$ gehört zur reflektierten Welle links, also vor $B$.`, '']}},
+      {id:'tunnel-t2e', title:'Die Stufe mit E < V₀: Totalreflexion',
+        pre:{from:'m-komplex', seg:'mk-t1', title:'Betrag eines Quotienten', text:R`Es gilt $|z_1/z_2| = |z_1|/|z_2|$ und $|z^*| = |z|$. Ein Quotient aus einer Zahl und ihrer Konjugierten hat also den Betrag $1$. Mini-Beispiel: $\frac{1 - i}{1 + i} = -i$, und $|-i| = 1$.`},
+        num:{title:'E = V₀/2', text:R`Dann ist $\kappa = k$, und die Formel unten gibt
+
+$$B = \frac{k - ik}{k + ik} = \frac{1 - i}{1 + i} = -i,\qquad C = 1 + B = 1 - i.$$
+
+Es ist $|B| = 1$: Alles wird reflektiert, mit der Phase $-i$, also um $90°$ verschoben.`},
+        text:R`Ist $E < V_0$, wird rechts der Stufe aus der Welle ein abklingender Anteil: $\psi_L = e^{ikx} + Be^{-ikx}$ für $x < 0$ und $\psi_R = Ce^{-\kappa x}$ für $x > 0$. Dieselben zwei Anschlussbedingungen ergeben in der Herleitung
 
 $$B = \frac{k - i\kappa}{k + i\kappa},\qquad |B| = 1.$$
 
-Alles wird reflektiert. Trotzdem ist $\psi_R \ne 0$: Das Teilchen dringt in die Stufe ein. Die reflektierte Welle ist gegenüber der einlaufenden phasenverschoben, denn $B$ ist komplex. Wie groß die Phase ist, hängt von $\kappa/k$ ab.
+Alles wird reflektiert. Trotzdem ist $\psi_R \ne 0$: Das Teilchen dringt in die Stufe ein. Die reflektierte Welle ist gegenüber der einlaufenden phasenverschoben, denn $B$ ist komplex. Wie groß die Phase ist, hängt von $\kappa/k$ ab.`,
+        derive:{ctx:{coords:['x'], params:{m:'pos', V_0:'pos', E:{range:['0.15 V_0', '0.85 V_0']}}, defs:{k:'sqrt(2m E)/ħ', κ:'sqrt(2m (V_0 - E))/ħ'}, unknowns:{B:{ref:'(k - iκ)/(k + iκ)', kind:'complex'}, C:{ref:'2k/(k + iκ)', kind:'complex'}}}, lines:[
+          {l:'1 + B = C', w:'ψ stetig bei x = 0',
+            why:{q:'Woher kommt diese Gleichung?', opts:['aus $\\psi_L(0) = \\psi_R(0)$; alle Exponentialfunktionen sind bei $x = 0$ gleich 1', 'aus $|\\psi_L|^2 = |\\psi_R|^2$, weil die Wahrscheinlichkeit erhalten ist', 'aus der Normierung: $B$ und $C$ müssen sich zu 1 ergänzen'], a:0, ex:'Stetig ist $\\psi$ selbst, nicht $|\\psi|^2$ allein. Bei $x = 0$ wird $e^{ikx}$, $e^{-ikx}$ und $e^{-\\kappa x}$ jeweils 1.'}},
+          {l:'ik (1 - B) = -κ C', w:'ψ′ stetig bei x = 0',
+            why:{q:'Warum steht rechts $-\\kappa C$?', opts:['weil $\\frac{d}{dx}Ce^{-\\kappa x} = -\\kappa Ce^{-\\kappa x}$ ist, bei $x = 0$ also $-\\kappa C$', 'weil im verbotenen Bereich die kinetische Energie negativ ist', 'weil $\\psi\'$ an der Stufe sein Vorzeichen wechseln muss'], a:0, ex:'Ableiten bringt den Faktor $-\\kappa$. Links bringt $e^{-ikx}$ den Faktor $-ik$, daher $ik(1 - B)$.'}},
+          {l:'ik (1 - B) = -κ (1 + B)', w:'C eingesetzt'},
+          {l:'B (κ - ik) = -κ - ik', w:'nach B sortiert'},
+          {l:'B = (k - iκ)/(k + iκ)', w:'geteilt, Zähler und Nenner mit i multipliziert',
+            why:{q:'Wie wird aus $B = \\frac{-\\kappa - ik}{\\kappa - ik}$ diese Form?', opts:['Zähler und Nenner mit $i$ multiplizieren', 'Zähler und Nenner konjugieren, $i \\to -i$', 'mit dem konjugierten Nenner $\\kappa + ik$ erweitern'], a:0, ex:'$i(-\\kappa - ik) = k - i\\kappa$ und $i(\\kappa - ik) = k + i\\kappa$.'}},
+          {l:'|B| = 1', w:'Zähler und Nenner zueinander konjugiert',
+            why:{q:'Was bedeutet $|B| = 1$?', opts:['Totalreflexion: $R = |B|^2 = 1$', 'Rechts der Stufe ist $\\psi = 0$', 'Die Welle kommt ohne Phasenverschiebung zurück'], a:0, ex:'Alles läuft zurück, aber $\\psi_R = Ce^{-\\kappa x} \\ne 0$, und $B$ hat eine Phase.'}}
+        ]},
+        q:{q:R`Bei einer Stufe mit $E < V_0$ ist $\kappa = 3k$. Welchen Betrag hat $B$?`,
+          opts:[R`$\tfrac12$, aus $\frac{1 - 3}{1 + 3}$`, R`$1$`, R`$\tfrac13$, weil $\kappa = 3k$ ist`], a:1,
+          ex:R`$B = \frac{1 - 3i}{1 + 3i}$: Zähler und Nenner sind zueinander konjugiert, also $|B| = 1$. Für jedes $E < V_0$ wird alles reflektiert.`,
+          fb:[R`Das $i$ ist verloren gegangen. Mit $\frac{k - i\kappa}{k + i\kappa}$ haben Zähler und Nenner denselben Betrag.`, '',
+            R`$|B|$ hängt nicht von $\kappa/k$ ab; nur die Phase von $B$ tut es.`]}},
+      {id:'tunnel-t2f', title:'Typischer Fehler: Im verbotenen Bereich ist das Teilchen nie',
+        num:{title:'Dichte hinter der Stufe', text:R`Mit $C = 1 - i$ aus dem letzten Schritt ist $|\psi_R|^2 = |C|^2e^{-2\kappa x} = 2\,e^{-2\kappa x}$. Bei $x = 0$ ist die Dichte $2$, bei $x = 1/\kappa$ noch $2/e^2 \approx 0{,}27$. Die Dichte fällt also mit der halben Eindringtiefe $1/(2\kappa)$ ab.`},
+        text:R`**Typische Fehlvorstellung:** „Im verbotenen Bereich ist das Teilchen nie.“ Eine Ortsmessung kann es dort finden, mit kleiner, aber nicht verschwindender Wahrscheinlichkeit. Die Dichte $|\psi|^2$ fällt dort exponentiell ab, ist aber nicht null. Und der Energiesatz? Nach einer solchen Ortsmessung ist die Energie des Teilchens nicht mehr scharf; die Messung selbst überträgt Energie. Deshalb widerspricht das Eindringen nicht dem Energiesatz. Hinter einer unendlich langen Stufe kommt trotzdem nichts an. Wie der nächste Abschnitt zeigt, fließt dort kein Strom.`,
+        q:{q:R`Wie groß ist die Dichte $|\psi_R|^2$ bei $x = 1/\kappa$ im Vergleich zu $x = 0$?`,
+          opts:[R`$1/e \approx 0{,}37$-mal so groß`, R`$1/e^2 \approx 0{,}14$-mal so groß`, R`null, das Teilchen kann dort nicht sein`], a:1,
+          ex:R`$|\psi|^2 \propto e^{-2\kappa x}$, bei $x = 1/\kappa$ also $e^{-2}$.`,
+          fb:[R`Auf $1/e$ fällt $\psi$ selbst. Die Dichte ist das Quadrat davon.`, '',
+            R`Die Dichte ist dort klein, aber nicht null. Das ist das Eindringen in den verbotenen Bereich.`]}}
+    ]},
 
-**Typische Fehlvorstellung:** „Im verbotenen Bereich ist das Teilchen nie.“ Eine Ortsmessung kann es dort finden, mit kleiner Wahrscheinlichkeit. Nach dieser Messung ist seine Energie nicht mehr scharf; die Messung selbst überträgt Energie. Deshalb widerspricht das nicht dem Energiesatz.`,
-      derive:{ctx:{coords:['x'], params:{m:'pos', V_0:'pos', E:{range:['0.15 V_0', '0.85 V_0']}}, defs:{k:'sqrt(2m E)/ħ', κ:'sqrt(2m (V_0 - E))/ħ'}, unknowns:{B:{ref:'(k - iκ)/(k + iκ)', kind:'complex'}, C:{ref:'2k/(k + iκ)', kind:'complex'}}}, lines:[
-        {l:'1 + B = C', w:'ψ stetig bei x = 0',
-          why:{q:'Woher kommt diese Gleichung?', opts:['aus $\\psi_L(0) = \\psi_R(0)$; alle Exponentialfunktionen sind bei $x = 0$ gleich 1', 'aus $|\\psi_L|^2 = |\\psi_R|^2$, weil die Wahrscheinlichkeit erhalten ist', 'aus der Normierung: $B$ und $C$ müssen sich zu 1 ergänzen'], a:0, ex:'Stetig ist $\\psi$ selbst, nicht $|\\psi|^2$ allein. Bei $x = 0$ wird $e^{ikx}$, $e^{-ikx}$ und $e^{-\\kappa x}$ jeweils 1.'}},
-        {l:'ik (1 - B) = -κ C', w:'ψ′ stetig bei x = 0',
-          why:{q:'Warum steht rechts $-\\kappa C$?', opts:['$\\frac{d}{dx}Ce^{-\\kappa x} = -\\kappa C e^{-\\kappa x}$, bei $x = 0$ also $-\\kappa C$', 'weil im verbotenen Bereich die kinetische Energie negativ ist', 'weil $\\psi\'$ an der Stufe sein Vorzeichen wechseln muss'], a:0, ex:'Ableiten bringt den Faktor $-\\kappa$. Links bringt $e^{-ikx}$ den Faktor $-ik$, daher $ik(1 - B)$.'}},
-        {l:'ik (1 - B) = -κ (1 + B)', w:'C eingesetzt'},
-        {l:'B (κ - ik) = -κ - ik', w:'nach B sortiert'},
-        {l:'B = (k - iκ)/(k + iκ)', w:'geteilt, Zähler und Nenner mit i multipliziert',
-          why:{q:'Wie wird aus $B = \\frac{-\\kappa - ik}{\\kappa - ik}$ diese Form?', opts:['Zähler und Nenner mit $i$ multiplizieren', 'Zähler und Nenner komplex konjugieren', 'mit dem konjugierten Nenner erweitern'], a:0, ex:'$i(-\\kappa - ik) = k - i\\kappa$ und $i(\\kappa - ik) = k + i\\kappa$.'}},
-        {l:'|B| = 1', w:'Zähler und Nenner zueinander konjugiert',
-          why:{q:'Was bedeutet $|B| = 1$?', opts:['Totalreflexion: $R = |B|^2 = 1$', 'Rechts der Stufe ist $\\psi = 0$', 'Die Welle kommt ohne Phasenverschiebung zurück'], a:0, ex:'Alles läuft zurück, aber $\\psi_R = Ce^{-\\kappa x} \\ne 0$, und $B$ hat eine Phase.'}}
-      ]},
-      q:[
-        {q:'An einer Stufe springt $V$ von $0$ auf ein endliches $V_0$. Was gilt bei $x = 0$?', opts:['$\\psi$ und $\\psi\'$ sind stetig, $\\psi\'\'$ springt.', '$\\psi$ ist stetig, $\\psi\'$ springt.', '$\\psi$ ist null, weil das Potential springt.'], a:0,
-          ex:'$\\psi\'\' = \\frac{2m}{\\hbar^2}(V - E)\\psi$ springt mit $V$. Einmal integriert, bleibt $\\psi\'$ stetig; $\\psi = 0$ gilt nur an unendlich hohen Wänden.'}
-      ]},
-    {id:'tunnel-t3', title:'Stromdichte: Was heißen Reflexion und Transmission?',
-      text:R`Eine ebene Welle ist nicht normierbar (Thema 4). Deshalb deutet man bei der Streuung nicht $|C|^2$ als Wahrscheinlichkeit, sondern vergleicht Teilchen**ströme**. Die [[lex:stromdichte|Wahrscheinlichkeitsstromdichte]] aus Thema 2 ist
+    /* ===== Abschnitt 3: Stromdichte, R und T ===== */
+    {id:'tunnel-t3', title:'Stromdichte: Was heißen Reflexion und Transmission?', steps:[
+      {id:'tunnel-t3a', title:'Warum Ströme?',
+        pre:{from:'frei', seg:'frei-t2', title:'Ebene Welle als Strahl', text:R`Eine ebene Welle $Ae^{ikx}$ ist nicht normierbar. Als Modell eines Strahls ist sie trotzdem brauchbar: $|A|^2$ ist eine Teilchendichte, $j = \frac{\hbar k}{m}|A|^2$ die Zahl der Teilchen pro Zeit. Mini-Beispiel: $|A|^2 = 10^6\,\mathrm m^{-1}$ und $v = 6\cdot10^5\,\mathrm{m/s}$ geben $6\cdot10^{11}$ Teilchen pro Sekunde.`},
+        num:{title:'Zwei Strahlen, gleiche Dichte', text:R`Mit $\hbar = m = 1$ hat $e^{2ix}$ die Dichte $1$ und den Strom $j = 2\cdot1 = 2$. $e^{ix}$ hat dieselbe Dichte, aber nur den Strom $j = 1$: Die Teilchen sind halb so schnell. Für $\frac43e^{ix}$ ist $j = 1\cdot\frac{16}{9} \approx 1{,}78$.`},
+        text:R`Eine ebene Welle ist nicht normierbar (Thema 4). Deshalb deutet man bei der Streuung nicht $|C|^2$ als Wahrscheinlichkeit, sondern vergleicht Teilchen**ströme**. Die [[lex:stromdichte|Wahrscheinlichkeitsstromdichte]] aus Thema 2 ist
 
 $$j = \frac{\hbar}{m}\,\mathrm{Im}\left(\psi^*\psi'\right).$$
 
-Für $\psi = Ae^{ikx}$ ist $j = \frac{\hbar k}{m}|A|^2$: Dichte $|A|^2$ mal Geschwindigkeit $\hbar k/m$. Wie viele Teilchen pro Zeit durchkommen, hängt also auch davon ab, wie schnell sie sind.
+Für $\psi = Ae^{ikx}$ ist $j = \frac{\hbar k}{m}|A|^2$: Dichte $|A|^2$ mal Geschwindigkeit $\hbar k/m$. Wie viele Teilchen pro Zeit durchkommen, hängt also auch davon ab, wie schnell sie sind. Zwei Wellen mit gleicher Amplitude können verschieden starke Ströme tragen.`,
+        q:{q:R`Welchen Strom trägt $\psi = 3e^{-2ix}$ ($\hbar = m = 1$)?`,
+          opts:[R`$+18$, denn Ströme sind immer positiv`, R`$-6$, also Amplitude mal Wellenzahl`, R`$-18$, der Strom fließt nach links`], a:2,
+          ex:R`$j = \frac{\hbar k}{m}|A|^2 = (-2)\cdot9 = -18$. Das Vorzeichen gibt die Richtung.`,
+          fb:[R`Das Vorzeichen von $j$ ist die Richtung. $e^{-2ix}$ läuft nach links.`,
+            R`In $j$ steht das Betragsquadrat $|A|^2 = 9$, nicht $A$.`, '']}},
+      {id:'tunnel-t3b', title:'Im stationären Zustand ist j überall gleich',
+        pre:{from:'sg', seg:'sg-t6', title:'Kontinuitätsgleichung', text:R`$\partial_t|\Psi|^2 + \partial_xj = 0$. Die Wahrscheinlichkeit in einem Intervall ändert sich nur durch die Ströme an seinen Rändern: $\frac{d}{dt}\int_a^b|\Psi|^2dx = j(a) - j(b)$. Mini-Beispiel: Fließt bei $a$ mehr hinein als bei $b$ hinaus, wächst sie.`},
+        num:{title:'Ein Gegenbeispiel, das es nicht gibt', text:R`Angenommen, links fließe $j = 2$ hinein und rechts nur $j = 1$ hinaus. Dann sammelte sich dazwischen in jeder Zeiteinheit die Wahrscheinlichkeit $1$ an. Die Dichte dort würde wachsen – im Widerspruch zu einem stationären Zustand, in dem $|\psi|^2$ fest ist.`},
+        text:R`In einem stationären Zustand ist $|\psi|^2$ zeitunabhängig. Die [[lex:kontinuitaet|Kontinuitätsgleichung]] $\partial_t|\psi|^2 + \partial_xj = 0$ verlangt dann $\partial_xj = 0$. Der Strom ist also überall gleich: Was links ankommt, muss rechts weiterfließen. Das gilt auch über Sprungstellen von $V$ hinweg. Damit hast du eine Erhaltungsgröße, mit der du Reflexion und Transmission ausdrücken kannst. Links ist der Strom einlaufend minus reflektiert, rechts ist er der durchgelassene Strom.`,
+        q:{q:R`In einem stationären Streuzustand ist links der Stufe der Strom $j = 0{,}9$ (netto nach rechts). Was gilt rechts?`,
+          opts:[R`weniger als $0{,}9$, weil die Stufe bremst`, R`$j = 0{,}9$, weil sich nirgends etwas ansammelt`, R`$j = 1$, weil die einlaufende Welle die Amplitude $1$ hat`], a:1,
+          ex:R`Im stationären Zustand ist $\partial_xj = 0$: Der Strom ist auf beiden Seiten gleich.`,
+          fb:[R`Die Teilchen werden langsamer, aber dafür dichter. Der Strom bleibt.`, '',
+            R`$1$ ist der einlaufende Strom bei $\hbar k/m = 1$. Netto fließt links nur einlaufend minus reflektiert.`]}},
+      {id:'tunnel-t3c', title:'Links: einlaufend minus reflektiert',
+        num:{title:'Die Stufe mit B = 1/3', text:R`Mit $k = 2$ und $B = \tfrac13$ ($\hbar = m = 1$):
 
-**$j$ ist überall gleich.** In einem stationären Zustand ist $|\psi|^2$ zeitunabhängig. Die [[lex:kontinuitaet|Kontinuitätsgleichung]] $\partial_t|\psi|^2 + \partial_xj = 0$ verlangt dann $\partial_xj = 0$: Was links ankommt, muss rechts weiterfließen.
+$$j_L = 2\left(1 - \tfrac19\right) = \tfrac{16}{9}.$$
 
-**Links: einlaufend minus reflektiert.** Die Herleitung setzt $\psi_L = e^{ikx} + Be^{-ikx}$ ein. Die Mischterme fallen weg, und es bleibt
+Rechts ist mit $q = 1$ und $C = \tfrac43$ der Strom $j_R = 1\cdot\tfrac{16}{9} = \tfrac{16}{9}$. Beide sind gleich, wie verlangt.`},
+        text:R`Die Herleitung setzt $\psi_L = e^{ikx} + Be^{-ikx}$ in die Stromdichte ein. Die Mischterme aus einlaufender und reflektierter Welle fallen weg, und es bleibt
 
 $$j_L = \frac{\hbar k}{m}\left(1 - |B|^2\right).$$
 
-Rechts ist mit $\psi_R = Ce^{iqx}$ und $q = \sqrt{2m(E - V_0)}/\hbar$ der Strom $j_R = \frac{\hbar q}{m}|C|^2$. Aus $j_L = j_R$ folgt
+Lies das als Bilanz: einlaufender Strom $\hbar k/m$ minus reflektierter Strom $\frac{\hbar k}{m}|B|^2$. Rechts ist mit $\psi_R = Ce^{iqx}$ und $q = \sqrt{2m(E - V_0)}/\hbar$ der Strom $j_R = \frac{\hbar q}{m}|C|^2$. Die Dichte links schwankt mit $x$, der Strom tut es nicht.`,
+        derive:{ctx:{coords:['x'], params:{m:'pos', k:'pos', 'b_1':'real', 'b_2':'real'}, defs:{B:'b_1 + i b_2', 'ψ_L(x)':'e^(i k x) + B e^(-i k x)'}}, lines:[
+          {l:"ψ_L(x)^* = e^(-ikx) + B^* e^(ikx)", w:'ψ_L konjugiert',
+            why:{q:'Woher kommt $B^*e^{ikx}$?', opts:['vom Konjugieren: $(Be^{-ikx})^* = B^*e^{ikx}$', 'vom Ableiten der reflektierten Welle $Be^{-ikx}$', 'Das ist die einlaufende Welle $e^{ikx}$.'], a:0, ex:'Konjugieren dreht das Vorzeichen von $i$ im Exponenten und konjugiert den Koeffizienten.'}},
+          {l:"ψ_L'(x) = ik e^(ikx) - ik B e^(-ikx)", w:'ψ_L abgeleitet'},
+          {l:"ψ_L(x)^* ψ_L'(x) = ik - ik |B|^2 + ik (B^* e^(2ikx) - B e^(-2ikx))", w:'beide Zeilen multipliziert und ausmultipliziert',
+            why:{q:'Warum steht $-ik|B|^2$ und nicht $+ik|B|^2$?', opts:['Weil der Term aus $B^*e^{ikx}\\cdot(-ikB\\,e^{-ikx})$ entsteht.', 'Weil $|B|^2$ immer negativ ist.', 'Weil reflektierte Wellen negative Energie haben.'], a:0, ex:'Die Ableitung der reflektierten Welle bringt $-ik$; mal $B^*B = |B|^2$ ergibt $-ik|B|^2$.'}},
+          {l:"ħ/m Im(ψ_L(x)^* ψ_L'(x)) = ħ k/m (1 - |B|^2)", w:'Imaginärteil genommen; der Mischterm ist reell',
+            why:{q:'Warum fällt der Mischterm $ik(B^*e^{2ikx} - Be^{-2ikx})$ weg?', opts:['$B^*e^{2ikx} - Be^{-2ikx}$ ist rein imaginär, mal $ik$ also reell.', 'Er mittelt sich über $x$ weg; die Zeile gilt nur im Mittel.', 'Er ist klein, weil $|B| < 1$ ist, und wird weggelassen.'], a:0, ex:'Mit $w = Be^{-2ikx}$ ist $w^* - w = -2i\\,\\mathrm{Im}\\,w$ rein imaginär. Die Zeile gilt exakt, für jedes $x$.'}}
+        ]},
+        q:{q:R`An einer anderen Stufe ist $|B|^2 = 0{,}25$ und $k = 1$ ($\hbar = m = 1$). Wie groß ist $j_L$?`,
+          opts:[R`$1{,}25$, einlaufend plus reflektiert`, R`$0{,}75$`, R`$0{,}5$, also $1 - |B|$`], a:1,
+          ex:R`$j_L = 1\cdot(1 - 0{,}25) = 0{,}75$. Der reflektierte Strom fließt nach links und wird abgezogen.`,
+          fb:[R`Der reflektierte Strom zeigt nach links; er zählt negativ.`, '',
+            R`In der Bilanz steht $|B|^2$, nicht $|B|$.`]}},
+      {id:'tunnel-t3d', title:'Reflexion und Transmission im Bild',
+        num:{title:'Bilanz an der Stufe', text:R`Mit $B = \tfrac13$, $C = \tfrac43$ und $q/k = \tfrac12$:
+
+$$\begin{gathered}R = |B|^2 = \tfrac19 \approx 0{,}11,\\ T = \frac qk|C|^2 = \tfrac12\cdot\tfrac{16}{9} = \tfrac89 \approx 0{,}89,\\ R + T = 1.\end{gathered}$$`},
+        text:R`Aus $j_L = j_R$ folgt
 
 $$R + T = 1\qquad\text{mit}\qquad R = |B|^2,\quad T = \frac{q}{k}|C|^2.$$
 
-Das sind die [[lex:reflexion-transmission|Reflexions- und Transmissionswahrscheinlichkeit]]. Mit diesen Wahrscheinlichkeiten wird ein einzelnes Teilchen reflektiert oder durchgelassen.
+Das sind die [[lex:reflexion-transmission|Reflexions- und Transmissionswahrscheinlichkeit]]. Mit diesen Wahrscheinlichkeiten wird ein einzelnes Teilchen reflektiert oder durchgelassen. Die Tafel zeigt, wie du sie im Bild der Dichte wiederfindest. Links überlagern sich zwei Wellen, und $|\psi|^2$ bildet Streifen im Abstand einer halben Wellenlänge. Rechts läuft nur eine Welle, und $|\psi|^2$ ist konstant.`,
+        reps:{obj:R`Reflexion und Transmission an der Stufe mit $k = 2$ und $q = 1$`,
+          rows:[
+            {k:'worte', text:R`Von neun einlaufenden Teilchen kommt im Mittel eines zurück, acht laufen weiter.`},
+            {k:'formel', tex:R`j = \frac{\hbar}{m}\,\mathrm{Im}(\psi^*\psi'),\qquad R = \frac{|j_\mathrm{ref}|}{j_\mathrm{ein}} = |B|^2,\qquad T = \frac{j_\mathrm{trans}}{j_\mathrm{ein}} = \frac qk\,|C|^2`},
+            {k:'graph', plot:{x:[-6, 6], y:[0, 2.1], xlab:'x', ylab:R`|\psi|^2`, ticks:[{x:-Math.PI, lab:R`-\pi`}, {x:-Math.PI / 2, lab:R`-\tfrac\pi2`}, {x:0, lab:'0'}, {x:Math.PI, lab:R`\pi`}], V:x => x > 0 ? 0.75 : 0, Vr:[0, 1.5], E:1}, f:TUN_G.stepRho,
+              cap:R`Links schwankt $|\psi|^2$ zwischen $(1 - \tfrac13)^2 = \tfrac49$ und $(1 + \tfrac13)^2 = \tfrac{16}{9}$, im Abstand $\pi/2$. Rechts ist es konstant $|C|^2 = \tfrac{16}{9}$.`},
+            {k:'physik', text:R`$R = \tfrac19$ und $T = \tfrac89$. Ein Zähler hinter der Stufe registriert pro Zeit $\tfrac89$ der einlaufenden Teilchen.`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`„Teilchen pro Zeit“ heißt Strom. Den reflektierten und den durchgelassenen Strom durch den einlaufenden teilen.`},
+            {from:'formel', to:'graph', rule:R`Die Dichte zeichnen. Links ist sie $1 + |B|^2 + 2|B|\cos(2kx)$ für reelles $B$, mit Streifen im Abstand $\pi/k$. Rechts ist sie $|C|^2$, ohne Streifen.`},
+            {from:'graph', to:'physik', rule:R`Aus dem Streifenkontrast $|B|$ ablesen: Maximum $(1 + |B|)^2$, Minimum $(1 - |B|)^2$. Die Höhe rechts ist $|C|^2$; sie muss noch mit $q/k$ multipliziert werden.`}
+          ]},
+        q:{q:R`In einem anderen Bild schwankt $|\psi|^2$ links einer Stufe zwischen $0{,}64$ und $1{,}44$. Wie groß ist $R$?`, tr:{from:'graph', to:'physik'},
+          opts:[R`$R = 0{,}2$`, R`$R = 0{,}8$, die Differenz der Werte`, R`$R = 0{,}04$`], a:2,
+          ex:R`$(1 + |B|)^2 = 1{,}44$ und $(1 - |B|)^2 = 0{,}64$ geben $|B| = 0{,}2$, also $R = |B|^2 = 0{,}04$.`,
+          fb:[R`$0{,}2$ ist $|B|$, die Amplitude. Die Wahrscheinlichkeit ist ihr Quadrat.`,
+            R`Die Differenz $(1 + |B|)^2 - (1 - |B|)^2 = 4|B|$ ist kein Strom. Lies $|B|$ aus Maximum und Minimum ab.`, '']}},
+      {id:'tunnel-t3e', title:'Typischer Fehler: T = |C|²',
+        num:{title:'Die falsche Bilanz', text:R`Mit $B = \tfrac13$ und $C = \tfrac43$ wäre $|B|^2 + |C|^2 = \tfrac19 + \tfrac{16}{9} = \tfrac{17}{9} > 1$ – mehr Teilchen, als einlaufen. Erst der Faktor $q/k = \tfrac12$ bringt die Bilanz auf $\tfrac19 + \tfrac89 = 1$.`},
+        text:R`**Typischer Fehler:** $T = |C|^2$. Dann wäre $|B|^2 + |C|^2 = 1$ – das gilt an der Stufe nicht. Rechts sind die Teilchen langsamer ($q < k$). Bei gleichem Strom drängen sie sich dichter: $|C|^2$ kann größer als $1$ sein, ohne dass mehr Teilchen durchkommen. Ähnlich staut sich der Verkehr, wo eine Straße langsamer wird. Kontrolliere deshalb immer $R + T = 1$. Im verbotenen Bereich ist $\psi_R = Ce^{-\kappa x}$, und $\psi_R^*\psi_R' = -\kappa|C|^2e^{-2\kappa x}$ ist reell. Dort fließt kein Strom: Hinter einer unendlich breiten Stufe ist $T = 0$ und deshalb $|B| = 1$.`,
+        q:{q:R`An einer Stufe mit $E > V_0$ ist $C = 1{,}2$. Kommen dann mehr Teilchen durch, als einlaufen?`,
+          opts:[R`Ja: $|C|^2 = 1{,}44 > 1$ heißt, dass die Welle verstärkt wird.`, R`Nein: Rechts sind sie langsamer und dichter; $T = \frac qk|C|^2 < 1$.`, R`Das kann nicht sein: Eine Amplitude $C > 1$ ist verboten.`], a:1,
+          ex:R`Gezählt werden Teilchen pro Zeit, also Ströme. Die Dichte $|C|^2$ darf größer als $1$ sein.`,
+          fb:[R`$|C|^2$ ist eine Dichte, kein Strom. Erst mit $q/k < 1$ wird daraus $T$.`, '',
+            R`$C > 1$ ist erlaubt, etwa $C = 2k/(k + q)$ an der Stufe. Nur $T$ muss unter $1$ bleiben.`]}}
+    ]},
 
-**Warum $q/k$?** Rechts sind die Teilchen langsamer ($q < k$). Bei gleichem Strom drängen sie sich dichter: $|C|^2$ kann größer als 1 sein, ohne dass mehr Teilchen durchkommen. An der Stufe mit $E > V_0$ ist zum Beispiel $C = 2k/(k + q) > 1$.
-
-**Verbotener Bereich.** Für $\psi_R = Ce^{-\kappa x}$ ist $\psi_R^*\psi_R' = -\kappa|C|^2e^{-2\kappa x}$ reell, also $j_R = 0$. Hinter einer unendlich breiten Stufe fließt kein Strom; daher ist $|B| = 1$. Erst eine *endlich* breite Barriere lässt Strom durch: Dort tragen $e^{-\kappa x}$ und $e^{+\kappa x}$ gemeinsam einen Strom, wenn ihre Koeffizienten eine Phase gegeneinander haben (Abschnitt 4).
-
-**Typischer Fehler:** $T = |C|^2$. Dann wäre $|B|^2 + |C|^2 = 1$ – das gilt an der Stufe nicht. Kontrolliere immer $R + T = 1$.`,
-      derive:{ctx:{coords:['x'], params:{m:'pos', k:'pos', 'b_1':'real', 'b_2':'real'}, defs:{B:'b_1 + i b_2', 'ψ_L(x)':'e^(i k x) + B e^(-i k x)'}}, lines:[
-        {l:'ħ/m Im(ψ_L(x)^* d/dx ψ_L(x)) = ħ/m Im((e^(-ikx) + B^* e^(ikx)) (ik e^(ikx) - ik B e^(-ikx)))', w:'ψ_L* und ψ_L′ eingesetzt',
-          why:{q:'Woher kommt $B^*e^{ikx}$ im ersten Faktor?', opts:['vom Konjugieren: $(Be^{-ikx})^* = B^*e^{ikx}$', 'vom Ableiten der reflektierten Welle $Be^{-ikx}$', 'Das ist die einlaufende Welle $e^{ikx}$.'], a:0, ex:'Konjugieren dreht das Vorzeichen von $i$ im Exponenten und konjugiert den Koeffizienten.'}},
-        {l:'= ħ/m Im(ik - ik |B|^2 + ik (B^* e^(2ikx) - B e^(-2ikx)))', w:'ausmultipliziert'},
-        {l:'= ħ k/m (1 - |B|^2)', w:'Mischterm ist reell',
-          why:{q:'Warum fällt der Mischterm $ik(B^*e^{2ikx} - Be^{-2ikx})$ weg?', opts:['$B^*e^{2ikx} - Be^{-2ikx}$ ist rein imaginär, mal $ik$ also reell.', 'Er mittelt sich über $x$ weg; die Zeile gilt nur im Mittel.', 'Er ist klein, weil $|B| < 1$ ist, und wird weggelassen.'], a:0, ex:'Mit $w = Be^{-2ikx}$ ist $w^* - w = -2i\\,\\mathrm{Im}\\,w$ rein imaginär. Die Zeile gilt exakt, für jedes $x$.'}}
-      ]},
-      q:[
-        {q:'An einer Stufe mit $E > V_0$ ist $C = 1{,}2$. Kommen dann mehr Teilchen durch, als einlaufen?', opts:['Nein: Rechts sind sie langsamer und dichter; $T = \\frac qk|C|^2 < 1$.', 'Ja: $|C|^2 = 1{,}44 > 1$ heißt, dass die Welle verstärkt wird.', 'Das kann nicht sein: Eine Amplitude $C > 1$ ist verboten.'], a:0,
-          ex:'Gezählt werden Teilchen pro Zeit, also Ströme. Die Dichte $|C|^2$ darf größer als 1 sein.'}
-      ]},
-    {id:'tunnel-t4', title:'Rechteckbarriere und Tunneleffekt',
-      text:R`Jetzt ist der verbotene Bereich endlich: $V = V_0$ für $0 < x < a$, sonst $V = 0$, und $E < V_0$. Der Ansatz hat drei Teile:
+    /* ===== Abschnitt 4: Rechteckbarriere ===== */
+    {id:'tunnel-t4', title:'Rechteckbarriere und Tunneleffekt', steps:[
+      {id:'tunnel-t4a', title:'Drei Bereiche, vier Unbekannte',
+        num:{title:'Abzählen', text:R`Unbekannt sind $B$ (reflektiert), $C$ und $D$ (in der Barriere) und $F$ (durchgelassen). Bei $x = 0$ gibt es zwei Bedingungen, bei $x = a$ noch einmal zwei. Vier Gleichungen für vier Unbekannte: Das System hat genau eine Lösung.`},
+        text:R`Jetzt ist der verbotene Bereich endlich: $V = V_0$ für $0 < x < a$, sonst $V = 0$, und $E < V_0$. Der Ansatz hat drei Teile:
 
 $$\psi = \begin{cases} e^{ikx} + Be^{-ikx}, & x < 0,\\ Ce^{-\kappa x} + De^{\kappa x}, & 0 < x < a,\\ Fe^{ikx}, & x > a.\end{cases}$$
 
-In der Barriere darfst du $e^{+\kappa x}$ nicht streichen, denn der Bereich ist endlich. Vier Unbekannte ($B, C, D, F$), vier Anschlussbedingungen (je zwei bei $x = 0$ und $x = a$). Die Rechnung ist länger, aber nicht schwieriger als an der Stufe. Sie liefert
+In der Barriere darfst du $e^{+\kappa x}$ nicht streichen. Der Bereich ist endlich, also wächst $e^{\kappa x}$ nirgends über alle Grenzen. Rechts steht wieder nur die auslaufende Welle. Die Rechnung ist länger als an der Stufe, aber nicht schwieriger.`,
+        q:{q:R`Warum bleibt in der Barriere der Anteil $De^{+\kappa x}$ stehen?`,
+          opts:[R`Weil er die Gleichung in der Barriere besser löst als $e^{-\kappa x}$.`, R`Weil der Bereich endlich ist; $e^{\kappa x}$ bleibt dort beschränkt.`, R`Weil von rechts ein Teilchen in die Barriere einläuft.`], a:1,
+          ex:R`Gestrichen wird $e^{\kappa x}$ nur, wenn der Bereich bis $x \to \infty$ reicht. Hier endet er bei $x = a$.`,
+          fb:[R`Beide lösen $\psi'' = \kappa^2\psi$ gleich gut. Es geht um die Normierbarkeit.`, '',
+            R`Von rechts läuft nichts ein; das steckt im Ansatz $Fe^{ikx}$ allein. $De^{\kappa x}$ ist keine einlaufende Welle.`]}},
+      {id:'tunnel-t4b', title:'Die Transmission T(E)',
+        num:{title:'Die Barriere des Labors', text:R`$E = 0{,}5\,V_0$ und $a = 2$ in Laboreinheiten: $\kappa = \sqrt{0{,}5} \approx 0{,}707$, $\kappa a \approx 1{,}414$ und $\sinh^2(\kappa a) \approx 3{,}75$. Mit $\frac{V_0^2}{4E(V_0 - E)} = 1$ wird
+
+$$T = \frac{1}{1 + 3{,}75} \approx 0{,}21.$$
+
+Rund jedes fünfte Teilchen kommt durch.`},
+        text:R`Die vier Anschlussbedingungen liefern
 
 $$T = |F|^2 = \left[1 + \frac{V_0^2\sinh^2(\kappa a)}{4E(V_0 - E)}\right]^{-1}.$$
 
-Hier ist $T = |F|^2$ ohne Faktor, weil links und rechts dasselbe $k$ gilt. $T$ ist für jede endliche Breite größer als null: Das Teilchen **tunnelt**. Das ist der [[lex:tunneleffekt|Tunneleffekt]].
+Hier ist $T = |F|^2$ ohne den Faktor aus Abschnitt 3, weil links und rechts dasselbe $k$ gilt. $\sinh$ ist der hyperbolische Sinus, $\sinh u = (e^u - e^{-u})/2$. Für jede endliche Breite ist $\sinh^2(\kappa a)$ endlich, also $T > 0$: Das Teilchen **tunnelt**. Das ist der [[lex:tunneleffekt|Tunneleffekt]]. Klassisch wäre $T = 0$ für jedes $E < V_0$.`,
+        q:{q:R`Warum ist für $E < V_0$ und endliche Breite immer $T > 0$?`,
+          opts:[R`Weil das Teilchen in der Barriere Energie gewinnt.`, R`Weil $\sinh$ für große Argumente negativ wird.`, R`Weil $\sinh^2(\kappa a)$ endlich ist und der Nenner endlich bleibt.`], a:2,
+          ex:R`$T = 1/(1 + \text{endliche Zahl}) > 0$. Erst für $a \to \infty$ geht $T$ gegen null.`,
+          fb:[R`Die Energie ist in allen Bereichen dieselbe. Tunneln braucht keinen Energiegewinn.`,
+            R`$\sinh u$ ist für $u > 0$ positiv und wächst wie $e^u/2$.`, '']}},
+      {id:'tunnel-t4c', title:'Dicke Barrieren: exponentiell kleines T',
+        num:{title:'Ein Elektron vor 1 nm Oxid', text:R`Für $V_0 - E = 1\,\mathrm{eV}$ ist $\kappa \approx 5{,}12\,\mathrm{nm}^{-1}$. Bei $a = 1\,\mathrm{nm}$ ist $2\kappa a \approx 10{,}2$ und
 
-**Dicke Barrieren.** Ist $\kappa a \gg 1$, dann ist $\sinh(\kappa a) \approx e^{\kappa a}/2$, und die Eins in der Klammer ist vernachlässigbar. Die Herleitung führt das aus:
+$$e^{-2\kappa a} \approx 3{,}5\cdot10^{-5}.$$
+
+Ein Proton ist $1836$-mal schwerer; sein $\kappa$ ist $\sqrt{1836} \approx 43$-mal so groß, und $e^{-2\kappa a} \approx e^{-440}$ ist praktisch null.`},
+        text:R`Ist $\kappa a \gg 1$, dann ist $\sinh(\kappa a) \approx e^{\kappa a}/2$, und die Eins in der Klammer ist vernachlässigbar. Die Herleitung führt das aus:
 
 $$T \approx 16\,\frac{E}{V_0}\left(1 - \frac{E}{V_0}\right)e^{-2\kappa a}.$$
 
-Entscheidend ist der Exponentialfaktor. Er hängt von Breite, Höhe und Masse ab: $\kappa a = a\sqrt{2m(V_0 - E)}/\hbar$. Für ein Elektron mit $V_0 - E = 1\,\mathrm{eV}$ und $a = 1\,\mathrm{nm}$ ist $e^{-2\kappa a} \approx 4\cdot10^{-5}$. Für ein Proton ist $\kappa$ etwa 43-mal so groß, und $e^{-2\kappa a}$ ist praktisch null.
+Entscheidend ist der Exponentialfaktor. Er hängt von Breite, Höhe und Masse ab: $\kappa a = a\sqrt{2m(V_0 - E)}/\hbar$. Der Vorfaktor liegt dagegen immer zwischen $0$ und $4$. Deshalb tunneln Elektronen durch Schichten von einem Nanometer merklich, schwere Teilchen praktisch nie.`,
+        derive:{ctx:{coords:[], params:{m:'pos', V_0:'pos', a:'pos', E:{range:['0.15 V_0', '0.85 V_0']}}, defs:{κ:'sqrt(2m (V_0 - E))/ħ'}}, lines:[
+          {l:'V_0^2 sinh(κa)^2/(4E(V_0 - E)) = V_0^2 (e^(κa) - e^(-κa))^2/(16 E (V_0 - E))', w:'sinh u = (eᵘ − e⁻ᵘ)/2',
+            why:{q:'Woher kommt der Faktor 16 im Nenner?', opts:['aus $\\sinh^2 u = (e^u - e^{-u})^2/4$ zusammen mit der 4', 'aus $V_0^2$ mit $V_0 = 4E$', 'aus der Normierung der einlaufenden Welle'], a:0, ex:'$4\\cdot 4 = 16$. Die Zeile ist noch exakt.'}},
+          {l:'≈ V_0^2 e^(2κa)/(16 E (V_0 - E))', w:'κa ≫ 1: e^{−κa} vernachlässigt',
+            why:{q:'Warum darf man $e^{-\\kappa a}$ weglassen?', opts:['Weil für $\\kappa a \\gg 1$ gilt: $e^{-\\kappa a} \\ll e^{\\kappa a}$.', 'Weil $e^{-\\kappa a}$ negativ ist.', 'Weil die Barriere dünn ist.'], a:0, ex:'Schon bei $\\kappa a = 3$ ist $e^{-\\kappa a}/e^{\\kappa a} = e^{-6} \\approx 0{,}0025$.'}},
+          {l:'T ≈ 16 E (V_0 - E)/V_0^2 e^(-2κa)', w:'der Bruch ist ≫ 1, die Eins entfällt; Kehrwert',
+            why:{q:'Welcher Faktor bestimmt $T$ hauptsächlich?', opts:['$e^{-2\\kappa a}$', 'der Vorfaktor $16E(V_0 - E)/V_0^2$', 'beide gleich stark'], a:0, ex:'Der Vorfaktor liegt zwischen 0 und 4; $e^{-2\\kappa a}$ ändert sich über viele Zehnerpotenzen.'}}
+        ]},
+        q:{q:R`Bei $\kappa a = 5$ wird die Barriere doppelt so breit. Um welchen Faktor ändert sich $T$ ungefähr?`,
+          opts:[R`um den Faktor $\tfrac12$`, R`um $e^{-10} \approx 4{,}5\cdot10^{-5}$`, R`um $e^{-5} \approx 7\cdot10^{-3}$`], a:1,
+          ex:R`$e^{-2\kappa a}$ wird zu $e^{-4\kappa a}$: Es kommt noch einmal $e^{-2\kappa a} = e^{-10}$ dazu.`,
+          fb:[R`$T$ hängt exponentiell von $a$ ab, nicht wie $1/a$.`, '',
+            R`Im Exponenten steht $2\kappa a$. Die zusätzliche Breite $a$ bringt also $e^{-2\cdot5}$.`]}},
+      {id:'tunnel-t4d', title:'Tunneln in Formel, Bild und Labor',
+        num:{title:'Amplitude und Wahrscheinlichkeit', text:R`Im Labor mit $E = 0{,}5\,V_0$ und $a = 2$ ist $T \approx 0{,}21$. Die durchgelassene Welle hat deshalb die Amplitude $|F| = \sqrt T \approx 0{,}46$. In $\mathrm{Re}\,\psi$ siehst du rechts Berge der Höhe $0{,}46$, in $|\psi|^2$ eine waagerechte Linie bei $0{,}21$.`},
+        text:R`Die Tafel verbindet den Ansatz mit dem Bild und mit dem Labor. Achte auf zwei Übersetzungen, die oft verwechselt werden. Erstens ist rechts die **Amplitude** $|F| = \sqrt T$ kleiner, die **Wellenlänge** aber gleich. Das Teilchen verliert beim Tunneln keine Energie; es kommt nur seltener durch. Zweitens schwingt $\psi$ in der Barriere nicht. $|\psi|$ nimmt dort im Wesentlichen exponentiell ab, weil die beiden Anteile $Ce^{-\kappa x}$ und $De^{\kappa x}$ zusammenwirken.`,
+        reps:{obj:R`Rechteckbarriere mit $E = 0{,}5\,V_0$ und $a = 2$ (Laboreinheiten)`,
+          rows:[
+            {k:'worte', text:R`Ein Teilchen trifft auf einen Wall, der höher ist als seine Energie. Etwa jedes fünfte kommt trotzdem durch, mit unveränderter Energie.`},
+            {k:'formel', tex:R`\psi = \begin{cases} e^{ikx} + Be^{-ikx}\\ Ce^{-\kappa x} + De^{\kappa x}\\ Fe^{ikx}\end{cases}\qquad T = |F|^2 = \left[1 + \frac{V_0^2\sinh^2\kappa a}{4E(V_0 - E)}\right]^{-1}`},
+            {k:'graph', plot:{x:[-15, 15], xlab:'x', ylab:R`\psi`, ticks:[{x:-10, lab:'-10'}, {x:0, lab:'0'}, {x:2, lab:'a'}, {x:10, lab:'10'}], V:x => x > 0 && x < 2 ? 1 : 0, Vr:[0, 1.3], E:0.5, regions:[{x:[0, 2], lab:'Barriere'}]}, f:SK.lab.f, lab:R`\mathrm{Re}\,\psi`, f2:TUN_G.barRho, lab2:R`|\psi|^2`,
+              cap:R`Rechts ist $|\psi|^2 = |F|^2 \approx 0{,}21$ konstant, und $\mathrm{Re}\,\psi$ schwingt mit der Amplitude $0{,}46$ und derselben Wellenlänge wie links. In der Barriere fallen beide ohne Schwingung ab.`},
+            {k:'labor', text:R`Regler „Energie E/V₀“ auf $0{,}5$, „Breite“ auf $2$. Die Anzeige nennt $T = |t|^2 \approx 0{,}21$ und $R = |r|^2 \approx 0{,}79$; das Labor nennt die Amplituden $r$ und $t$, hier heißen sie $B$ und $F$. Unten markiert ein Punkt $T$ auf der Kurve $T(E)$.`},
+            {k:'physik', text:R`Von $1000$ Elektronen kommen im Mittel $211$ durch. Hinter der Barriere haben sie dieselbe Energie und Wellenlänge wie davor.`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`Drei Bereiche, drei Ansätze. „Kommt durch“ ist $|F|^2$; „unveränderte Energie“ heißt rechts dasselbe $k$ wie links.`},
+            {from:'formel', to:'graph', rule:R`Die Konstanten aus den vier Anschlussbedingungen einsetzen. Rechts ist $|\psi|^2 = |F|^2$ konstant, $\mathrm{Re}\,\psi$ schwingt mit der Amplitude $|F|$.`},
+            {from:'graph', to:'labor', rule:R`Dieselbe Energie und Breite im Labor einstellen. Die dicke Kurve ist $|\psi|^2$, die dünne $\mathrm{Re}\,\psi$; $T$ steht in der Anzeige.`},
+            {from:'labor', to:'physik', rule:R`$T$ ist der Anteil der durchgelassenen Teilchen. Die Wellenlänge rechts zeigt, dass keine Energie verloren geht.`}
+          ]},
+        q:{q:R`Im Labor liest du bei einer anderen Einstellung $T = 0{,}04$ ab. Was heißt das für einen Strahl von $10^6$ Elektronen pro Sekunde?`, tr:{from:'labor', to:'physik'},
+          opts:[R`Es kommen $2\cdot10^5$ pro Sekunde durch, denn $\sqrt{0{,}04} = 0{,}2$.`, R`Alle kommen durch, aber mit $4\,\%$ ihrer Energie.`, R`Es kommen etwa $4\cdot10^4$ pro Sekunde durch, mit voller Energie.`], a:2,
+          ex:R`$T$ ist die Wahrscheinlichkeit für ein einzelnes Elektron: $0{,}04\cdot10^6 = 4\cdot10^4$. Ihre Energie ist dieselbe wie vorher.`,
+          fb:[R`$\sqrt T = |F|$ ist die Amplitude. Gezählt wird mit $T = |F|^2$.`,
+            R`$T$ ist kein Energieanteil. Durchgelassene Elektronen haben die volle Energie.`, '']}},
+      {id:'tunnel-t4e', title:'Typischer Fehler: Energieverlust beim Tunneln',
+        num:{title:'Breiter, aber nicht langsamer', text:R`Bei $E = 0{,}5\,V_0$ fällt $T$ von $0{,}21$ ($a = 2$) über $0{,}056$ ($a = 3$) auf $0{,}014$ ($a = 4$). Die Wellenlänge rechts bleibt in allen drei Fällen $2\pi/k \approx 8{,}9$.`},
+        text:R`**Typische Fehlvorstellung:** „Beim Tunneln verliert das Teilchen Energie, deshalb ist die Welle rechts länger.“ Sie ist unter Studierenden verbreitet (McKagan, Perkins & Wieman 2008). Ein stationärer Zustand hat aber in allen Bereichen dasselbe $E$. Rechts ist $V = 0$ wie links, also sind auch $k$ und die Wellenlänge gleich. Im Labor siehst du das oben im Bild: Vergrößerst du die Breite, wird nur die Amplitude rechts kleiner. Unten zeigt die Kurve $T(E)$; ihr Punkt bei der eingestellten Energie sinkt mit wachsender Breite rasch ab.`,
+        fig:{lab:'barrier', init:{a:3, e:0.5, view:'both'}, caption:'Oben: $V(x)$, die Energie $E$ (gestrichelt) und $\\psi$ auf der Energielinie (dünn $\\mathrm{Re}\\,\\psi$, dick $|\\psi|^2$). Unten: $T(E)$. Vergrößere die Breite: $T$ fällt exponentiell, die Wellenlänge rechts bleibt gleich. Oberhalb von $V_0$ gibt es Resonanzen mit $T = 1$.'},
+        q:{q:R`Ein Elektron hat die Barriere durchtunnelt. Wie verhält sich seine Wellenlänge rechts zu der links?`,
+          opts:[R`größer, weil $E$ in der Barriere abgenommen hat`, R`gleich, weil links und rechts $V = 0$ und $E$ gleich ist`, R`kleiner, weil es von der Barriere beschleunigt wurde`], a:1,
+          ex:R`Kleiner ist nur die Amplitude. Die Energie – und damit $k$ – ist dieselbe (McKagan, Perkins & Wieman 2008).`,
+          fb:[R`Das ist die verbreitete Fehlvorstellung. In der stationären Gleichung steht überall dasselbe $E$.`, '',
+            R`Rechts ist $V = 0$ wie links. Es gibt nichts, was das Elektron beschleunigt hätte.`]}},
+      {id:'tunnel-t4f', title:'Über der Barriere: Resonanzen',
+        num:{title:'Breite 3', text:R`Für $E > V_0$ ist in Laboreinheiten $q = \sqrt{E/V_0 - 1}$. Bei $a = 3$ ist $qa = \pi$ für $E = \left(1 + (\pi/3)^2\right)V_0 \approx 2{,}10\,V_0$. Dort ist $T = 1$. Bei $E = 1{,}5\,V_0$ ist dagegen nur $T \approx 0{,}81$.`},
+        text:R`Für $E > V_0$ wird aus $\kappa$ die reelle Wellenzahl $q = \sqrt{2m(E - V_0)}/\hbar$ und aus $\sinh$ ein $\sin$:
 
-**Das Wellenbild.** Links überlagern sich einlaufende und reflektierte Welle. In der Barriere schwingt $\psi$ nicht; $|\psi|$ nimmt im Wesentlichen exponentiell ab. Rechts läuft eine Welle mit **derselben Wellenlänge** wie links, aber mit der kleinen Amplitude $|F| = \sqrt T$. Das Teilchen verliert beim Tunneln keine Energie. Es ist nur unwahrscheinlich, dass es durchkommt.
+$$T = \left[1 + \frac{V_0^2\sin^2(qa)}{4E(E - V_0)}\right]^{-1}.$$
 
-**Über der Barriere.** Für $E > V_0$ wird aus $\kappa$ die reelle Wellenzahl $q$ und aus $\sinh$ ein $\sin$. Dann ist $T < 1$; nur bei $qa = n\pi$ ist $T = 1$. An diesen Resonanzen löschen sich die Reflexionen an beiden Kanten aus. Klassisch wäre $T = 1$ für alle $E > V_0$ und $T = 0$ für $E < V_0$.`,
-      fig:{lab:'barrier', init:{a:3, e:0.5, view:'both'}, caption:'Oben: $V(x)$, die Energie $E$ (gestrichelt) und $\\psi$ auf der Energielinie (dünn $\\mathrm{Re}\\,\\psi$, dick $|\\psi|^2$). Unten: $T(E)$. Vergrößere die Breite: $T$ fällt exponentiell, die Wellenlänge rechts bleibt gleich. Oberhalb von $V_0$ gibt es Resonanzen mit $T = 1$.'},
-      derive:{ctx:{coords:[], params:{m:'pos', V_0:'pos', a:'pos', E:{range:['0.15 V_0', '0.85 V_0']}}, defs:{κ:'sqrt(2m (V_0 - E))/ħ'}}, lines:[
-        {l:'V_0^2 sinh(κa)^2/(4E(V_0 - E)) = V_0^2 (e^(κa) - e^(-κa))^2/(16 E (V_0 - E))', w:'sinh u = (eᵘ − e⁻ᵘ)/2',
-          why:{q:'Woher kommt der Faktor 16 im Nenner?', opts:['aus $\\sinh^2 u = (e^u - e^{-u})^2/4$ zusammen mit der 4', 'aus $V_0^2$ mit $V_0 = 4E$', 'aus der Normierung der einlaufenden Welle'], a:0, ex:'$4\\cdot 4 = 16$. Die Zeile ist noch exakt.'}},
-        {l:'≈ V_0^2 e^(2κa)/(16 E (V_0 - E))', w:'κa ≫ 1: e^{−κa} vernachlässigt',
-          why:{q:'Warum darf man $e^{-\\kappa a}$ weglassen?', opts:['Für $\\kappa a \\gg 1$ ist $e^{-\\kappa a} \\ll e^{\\kappa a}$.', 'Weil $e^{-\\kappa a}$ negativ ist.', 'Weil die Barriere dünn ist.'], a:0, ex:'Schon bei $\\kappa a = 3$ ist $e^{-\\kappa a}/e^{\\kappa a} = e^{-6} \\approx 0{,}0025$.'}},
-        {l:'T ≈ 16 E (V_0 - E)/V_0^2 e^(-2κa)', w:'der Bruch ist ≫ 1, die Eins entfällt; Kehrwert',
-          why:{q:'Welcher Faktor bestimmt $T$ hauptsächlich?', opts:['$e^{-2\\kappa a}$', 'der Vorfaktor $16E(V_0 - E)/V_0^2$', 'beide gleich stark'], a:0, ex:'Der Vorfaktor liegt zwischen 0 und 4; $e^{-2\\kappa a}$ ändert sich über viele Zehnerpotenzen.'}}
-      ]},
-      q:[
-        {q:'Bei $\\kappa a = 5$ wird die Barriere doppelt so breit. Um welchen Faktor ändert sich $T$ ungefähr?', opts:['um $e^{-10} \\approx 4{,}5\\cdot10^{-5}$', 'um den Faktor $1/2$', 'um $e^{-5} \\approx 7\\cdot10^{-3}$'], a:0,
-          ex:'$e^{-2\\kappa a}$ wird zu $e^{-4\\kappa a}$: Es kommt noch einmal $e^{-2\\kappa a} = e^{-10}$ dazu.'},
-        {q:'Ein Elektron hat die Barriere durchtunnelt. Wie verhält sich seine Wellenlänge rechts zu der links?', opts:['gleich, weil links und rechts $V = 0$ und $E$ gleich ist', 'größer, weil es in der Barriere Energie verloren hat', 'kleiner, weil es von der Barriere beschleunigt wurde'], a:0,
-          ex:'Kleiner ist nur die Amplitude. Die Energie – und damit $k$ – ist dieselbe (McKagan, Perkins & Wieman 2008).'}
-      ]},
-    {id:'tunnel-t5', title:'Der endliche Potentialtopf',
-      text:R`Kehre das Vorzeichen um: ein Topf $V = -V_0$ für $|x| < a$, außen $V = 0$. Für $-V_0 < E < 0$ ist das Innere erlaubt und das Äußere verboten. Das ist ein realistischeres Modell als der unendliche Kasten, etwa für ein Elektron in einer dünnen Halbleiterschicht (Quantentopf).
+Dann ist im Allgemeinen $T < 1$: Auch über der Barriere wird ein Teil reflektiert. Nur bei $qa = n\pi$ ist $T = 1$. An diesen **Resonanzen** löschen sich die Reflexionen an beiden Kanten aus. Klassisch wäre $T = 1$ für alle $E > V_0$ und $T = 0$ für alle $E < V_0$. Quantenmechanisch steigt $T(E)$ stetig an.`,
+        q:{q:R`Bei welcher Energie hat eine Barriere der Breite $a = \pi$ (Laboreinheiten) ihre erste Resonanz über $V_0$?`,
+          opts:[R`bei $E = V_0$, genau an der Kante`, R`bei $E = 2V_0$`, R`bei $E = (1 + \pi^2)V_0$`], a:1,
+          ex:R`$qa = \pi$ heißt $q = 1$, also $E/V_0 - 1 = 1$.`,
+          fb:[R`Bei $E = V_0$ ist $q = 0$, und $\sin(qa)/q$ bleibt endlich: $T < 1$.`, '',
+            R`Das wäre $q = \pi$, also $qa = \pi^2$. Gesucht ist $qa = \pi$.`]}}
+    ]},
 
-**Ansatz.** Innen schwingt $\psi$ mit $l = \sqrt{2m(E + V_0)}/\hbar$, außen klingt es mit $\kappa = \sqrt{-2mE}/\hbar$ ab. Weil $V$ symmetrisch ist, kannst du gerade und ungerade Lösungen getrennt suchen. Für die geraden ist
+    /* ===== Abschnitt 5: endlicher Potentialtopf ===== */
+    {id:'tunnel-t5', title:'Der endliche Potentialtopf', steps:[
+      {id:'tunnel-t5a', title:'Ein Topf mit endlich hohen Wänden',
+        num:{title:'Ein Quantentopf von 1 nm', text:R`Ein Elektron in einem Topf der Breite $2a = 1\,\mathrm{nm}$ und der Tiefe $V_0 = 1\,\mathrm{eV}$. Für eine Energie $0{,}2\,\mathrm{eV}$ über dem Boden ist
+
+$$\begin{aligned}l &= \sqrt{26{,}2\cdot0{,}2}\,\mathrm{nm}^{-1}\\ &\approx 2{,}29\,\mathrm{nm}^{-1}\ \text{(innen)},\\ \kappa &= \sqrt{26{,}2\cdot0{,}8}\,\mathrm{nm}^{-1}\\ &\approx 4{,}58\,\mathrm{nm}^{-1}\ \text{(außen)}.\end{aligned}$$
+
+Innen schwingt $\psi$, außen klingt es auf $1/\kappa \approx 0{,}22\,\mathrm{nm}$ ab.`},
+        text:R`Kehre das Vorzeichen um: ein Topf mit $V = -V_0$ für $|x| < a$, außen $V = 0$. Für $-V_0 < E < 0$ ist das Innere erlaubt und das Äußere verboten. Das ist ein realistischeres Modell als der unendliche Kasten, etwa für ein Elektron in einer dünnen Halbleiterschicht (Quantentopf). Innen schwingt $\psi$ mit $l = \sqrt{2m(E + V_0)}/\hbar$, außen klingt es mit $\kappa = \sqrt{-2mE}/\hbar$ ab. Weil $V$ symmetrisch ist, kannst du gerade und ungerade Lösungen getrennt suchen.`,
+        q:{q:R`Welcher Ansatz gehört außen rechts ($x > a$) zu einem gebundenen Zustand?`,
+          opts:[R`$Fe^{ikx}$, eine auslaufende Welle`, R`$Fe^{-\kappa x}$`, R`$Fe^{-\kappa x} + Ge^{\kappa x}$`], a:1,
+          ex:R`Für $E < 0$ ist außen verbotenes Gebiet, und der Bereich reicht bis $x \to \infty$. Normierbar bleibt nur $e^{-\kappa x}$.`,
+          fb:[R`Eine laufende Welle gibt es nur bei $E > 0$. Gebunden heißt $E < 0$.`, '',
+            R`$e^{\kappa x}$ wächst für $x \to \infty$ über alle Grenzen. Also muss $G = 0$ sein.`]}},
+      {id:'tunnel-t5b', title:'Anschluss bei x = a: eine Gleichung für E',
+        num:{title:'Die gerade Lösung im Beispiel', text:R`Mit $l \approx 2{,}29\,\mathrm{nm}^{-1}$ und $a = 0{,}5\,\mathrm{nm}$ ist $la \approx 1{,}15$ und $l\tan(la) \approx 2{,}29\cdot2{,}21\,\mathrm{nm}^{-1} \approx 5{,}1\,\mathrm{nm}^{-1}$. Das ist nicht ganz $\kappa \approx 4{,}58\,\mathrm{nm}^{-1}$: $0{,}2\,\mathrm{eV}$ liegt knapp daneben. Die Bedingung erfüllt erst $E + V_0 \approx 0{,}19\,\mathrm{eV}$.`},
+        text:R`Für die geraden Lösungen setzt du an:
 
 $$\psi = A\cos(lx)\ \ (|x| < a),\qquad \psi = Fe^{-\kappa|x|}\ \ (|x| > a).$$
 
-Die Anschlussbedingungen bei $x = a$ ergeben in der Herleitung $l\tan(la) = \kappa$; bei $x = -a$ folgt dasselbe aus der Symmetrie. Für ungerade Lösungen ($\sin lx$) entsteht $-l\cot(la) = \kappa$.
+Die Anschlussbedingungen bei $x = a$ ergeben in der Herleitung $l\tan(la) = \kappa$. Bei $x = -a$ folgt dasselbe aus der Symmetrie. Für ungerade Lösungen ($\sin lx$) entsteht $-l\cot(la) = \kappa$. Die Amplituden $A$ und $F$ fallen heraus. Übrig bleibt eine Gleichung, in der nur noch $E$ unbekannt ist, denn $l$ und $\kappa$ hängen beide von $E$ ab.`,
+        derive:{ctx:{coords:['x'], params:{a:'pos', A:'pos', m:'pos', l:{range:['0.2/a', '1.3/a']}}, defs:{κ:'l tan(l a)', F:'A cos(l a) e^(κ a)'}}, lines:[
+          {l:'A cos(l a) = F e^(-κ a)', w:'ψ stetig bei x = a',
+            why:{q:'Welche Bedingung steckt in dieser Zeile?', opts:['$\\psi$ innen und außen sind bei $x = a$ gleich.', '$\\psi$ ist bei $x = a$ gleich null, wie an einer Wand.', 'Die Normierung von $\\psi$ über den Topf.'], a:0, ex:'Die Wand ist endlich hoch: $\\psi(a) \\ne 0$, die Funktion ragt hinaus.'}},
+          {l:'-l A sin(l a) = -κ F e^(-κ a)', w:'ψ′ stetig bei x = a'},
+          {l:'l tan(l a) = κ', w:'zweite Gleichung durch die erste geteilt',
+            why:{q:'Warum teilt man die beiden Gleichungen durcheinander?', opts:['$A$ und $F$ fallen heraus; übrig bleibt eine Gleichung nur für $E$.', 'um $\\kappa$ unabhängig von $E$ zu machen', 'weil eine der beiden Gleichungen überflüssig ist'], a:0, ex:'$l$ und $\\kappa$ hängen beide von $E$ ab. Die Gleichung bestimmt die erlaubten Energien; $F/A$ folgt danach aus der ersten Zeile.'}}
+        ]},
+        q:{q:R`Was bestimmt die Gleichung $l\tan(la) = \kappa$?`,
+          opts:[R`das Verhältnis $F/A$ der Amplituden`, R`die erlaubten Energien $E$`, R`die Breite $a$, die der Topf haben muss`], a:1,
+          ex:R`$l$ und $\kappa$ hängen von $E$ ab, $a$ ist gegeben. Die Gleichung hat nur einzelne Lösungen $E$: Die Energie ist quantisiert.`,
+          fb:[R`$F/A$ folgt erst danach aus der Stetigkeit. Beim Teilen ist es herausgefallen.`, '',
+            R`Die Breite ist durch den Topf vorgegeben. Gesucht sind die Energien, die zu ihm passen.`]}},
+      {id:'tunnel-t5c', title:'Grafische Lösung: Schnittpunkte sind Energien',
+        num:{title:'Der Topf aus dem Beispiel', text:R`$z_0 = a\sqrt{2mV_0}/\hbar = 0{,}5\cdot\sqrt{26{,}2} \approx 2{,}56$. Der erste Ast von $\tan z$ schneidet $\sqrt{(z_0/z)^2 - 1}$ bei $z \approx 1{,}12$. Daraus folgt die Energie über dem Boden
 
-**Warum ist $E$ jetzt quantisiert?** $l$ und $\kappa$ hängen beide von $E$ ab. Die Bedingung $l\tan(la) = \kappa$ ist eine Gleichung für $E$ und hat nur einzelne Lösungen. Physikalisch: Nur bei bestimmten Energien passt eine Schwingung innen glatt an eine abklingende Lösung außen. Bei allen anderen Energien müsste außen ein Anteil $e^{+\kappa|x|}$ dazukommen – nicht normierbar.
-
-**Grafisch lösen.** Mit $z = la$ und $z_0 = a\sqrt{2mV_0}/\hbar$ gilt $(la)^2 + (\kappa a)^2 = z_0^2$, und die Bedingung wird
+$$E + V_0 = \frac{\hbar^2z^2}{2ma^2} = \frac{1{,}12^2}{26{,}2\cdot0{,}25}\,\mathrm{eV} \approx 0{,}19\,\mathrm{eV}.$$`},
+        text:R`Mit $z = la$ und $z_0 = a\sqrt{2mV_0}/\hbar$ gilt $(la)^2 + (\kappa a)^2 = z_0^2$. Die Bedingung wird dann
 
 $$\tan z = \sqrt{(z_0/z)^2 - 1}.$$
 
-Zeichne beide Seiten über $z$; die Schnittpunkte sind die Energien. Die rechte Seite fällt von $\infty$ (bei $z \to 0$) auf $0$ (bei $z = z_0$). Der erste Ast von $\tan z$ steigt von $0$ an. Deshalb gibt es immer mindestens einen Schnittpunkt: Jeder endliche Topf in einer Dimension hat einen gebundenen Zustand, so flach er auch ist. Insgesamt gibt es $N = \lceil 2z_0/\pi\rceil$ gebundene Zustände, gerade und ungerade abwechselnd.
+Zeichne beide Seiten über $z$; die Schnittpunkte sind die Energien. Die rechte Seite fällt von $\infty$ bei $z \to 0$ auf $0$ bei $z = z_0$. Der erste Ast von $\tan z$ steigt von $0$ an. Deshalb gibt es immer mindestens einen Schnittpunkt: Jeder endliche Topf in einer Dimension hat einen gebundenen Zustand, so flach er auch ist. Insgesamt gibt es $N = \lceil 2z_0/\pi\rceil$ gebundene Zustände, gerade und ungerade abwechselnd.`,
+        reps:{obj:R`Gerade Zustände im Topf mit $z_0 \approx 2{,}56$`,
+          rows:[
+            {k:'worte', text:R`Nur bei bestimmten Energien passt eine Schwingung innen glatt an eine abklingende Lösung außen.`},
+            {k:'formel', tex:R`l\tan(la) = \kappa,\qquad l^2 + \kappa^2 = \frac{2mV_0}{\hbar^2}`},
+            {k:'mathe', tex:R`\tan z = \sqrt{(z_0/z)^2 - 1},\qquad z = la,\quad z_0 = \frac{a\sqrt{2mV_0}}{\hbar}`},
+            {k:'graph', plot:{x:[0, 3], y:[0, 5], xlab:'z', ylab:'', ticks:[{x:Math.PI / 2, lab:R`\pi/2`}, {x:1.1188, lab:R`1{,}12`}, {x:2.5616, lab:'z_0'}]}, f:TUN_G.tanz, lab:R`\tan z`, f2:TUN_G.rhs, lab2:R`\sqrt{(z_0/z)^2 - 1}`,
+              cap:R`Schnittpunkt bei $z \approx 1{,}12$: der gerade Grundzustand. Der nächste Ast von $\tan z$ beginnt erst bei $z = \pi > z_0$; einen zweiten geraden Zustand gibt es nicht.`},
+            {k:'physik', text:R`Grundzustand $0{,}19\,\mathrm{eV}$ über dem Boden. Dazu kommt ein ungerader Zustand bei $0{,}70\,\mathrm{eV}$: zusammen $N = 2$ gebundene Zustände.`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`„Innen schwingt, außen klingt ab, glatt verbunden“: $\psi$ und $\psi'$ bei $x = a$ gleichsetzen und durcheinander teilen.`},
+            {from:'formel', to:'mathe', rule:R`Mit $a$ multiplizieren, $z = la$ setzen und $\kappa a$ durch $\sqrt{z_0^2 - z^2}$ ersetzen. Jetzt steht eine Gleichung in einer Variablen da.`},
+            {from:'mathe', to:'graph', rule:R`Linke und rechte Seite als zwei Kurven über $z$ zeichnen und die Schnittpunkte suchen.`},
+            {from:'graph', to:'physik', rule:R`Jeden Schnittpunkt $z$ in $E + V_0 = \hbar^2z^2/(2ma^2)$ umrechnen. Die Zahl der Schnittpunkte ist die Zahl der Zustände.`}
+          ]},
+        q:{q:R`Ein tieferer Topf hat $z_0 = 5$. Wie viele **gerade** gebundene Zustände zeigt das Bild dann?`, tr:{from:'graph', to:'physik'},
+          opts:[R`$4$, so viele wie $\lceil 2z_0/\pi\rceil$`, R`$2$`, R`$1$, wie bei jedem Topf`], a:1,
+          ex:R`Die Äste von $\tan z$ mit positiven Werten beginnen bei $0$ und bei $\pi \approx 3{,}14$; beide liegen unter $z_0 = 5$. Der nächste beginnt bei $2\pi > 5$.`,
+          fb:[R`$4$ ist die Zahl aller gebundenen Zustände. Gefragt sind nur die geraden.`, '',
+            R`Mindestens einen gibt es immer, aber ein tiefer Topf hat mehr.`]}},
+      {id:'tunnel-t5d', title:'Typischer Fehler: die Energien des unendlichen Kastens übernehmen',
+        pre:{from:'kasten', seg:'kasten-t2', title:'Unendlicher Kasten', text:R`Im unendlich hohen Kasten der Breite $L$ ist $E_n = \frac{n^2\pi^2\hbar^2}{2mL^2}$, und $\psi$ verschwindet an den Wänden. Mini-Beispiel: Für ein Elektron mit $L = 1\,\mathrm{nm}$ ist $E_1 \approx 0{,}38\,\mathrm{eV}$.`},
+        num:{title:'Endlich gegen unendlich', text:R`Topf aus dem Beispiel: Grundzustand $0{,}19\,\mathrm{eV}$, erster angeregter Zustand $0{,}70\,\mathrm{eV}$ über dem Boden. Unendlicher Kasten derselben Breite $1\,\mathrm{nm}$: $0{,}38\,\mathrm{eV}$ und $1{,}50\,\mathrm{eV}$. Die Energien im endlichen Topf sind nur etwa halb so groß.`},
+        text:R`**Typischer Fehler:** die Energien des unendlichen Kastens für den endlichen Topf übernehmen. Die Wellenfunktion ragt in die Wände hinein. Sie hat effektiv mehr Platz, eine größere Wellenlänge und deshalb weniger kinetische Energie. Die Energien, vom Topfboden aus gemessen, liegen also tiefer als im unendlichen Kasten der Breite $2a$. Für $z_0 \to \infty$ nähern sie sich diesen Werten von unten. Außerdem gibt es nur endlich viele gebundene Zustände. Zusammengefasst im Lexikon: [[lex:endlicher-topf|endlicher Potentialtopf]].`,
+        q:{q:R`Ein endlicher Topf und ein unendlicher Kasten haben dieselbe Breite. Wo liegt die Grundzustandsenergie im endlichen Topf, vom Topfboden gemessen?`,
+          opts:[R`höher, weil die Wände nur $V_0$ statt $\infty$ hoch sind`, R`genauso hoch, weil die Breite $2a$ gleich ist`, R`tiefer, weil $\psi$ in die Wände eindringt`], a:2,
+          ex:R`Mehr Platz heißt größere Wellenlänge und weniger kinetische Energie.`,
+          fb:[R`Niedrigere Wände halten das Teilchen schwächer fest. Es breitet sich weiter aus und hat dadurch weniger kinetische Energie.`,
+            R`Im endlichen Topf ist $\psi$ an den Wänden nicht null, sondern ragt hinaus. Die effektive Breite ist größer.`, '']}}
+    ]},
 
-**Vergleich mit dem unendlichen Kasten.** Die Wellenfunktion ragt in die Wände hinein. Sie hat effektiv mehr Platz, eine größere Wellenlänge und deshalb weniger kinetische Energie. Die Energien, vom Topfboden aus gemessen, liegen tiefer als im unendlichen Kasten der Breite $2a$. Für $z_0 \to \infty$ nähern sie sich diesen Werten von unten. Zusammengefasst im Lexikon: [[lex:endlicher-topf|endlicher Potentialtopf]].`,
-      derive:{ctx:{coords:['x'], params:{a:'pos', A:'pos', m:'pos', l:{range:['0.2/a', '1.3/a']}}, defs:{κ:'l tan(l a)', F:'A cos(l a) e^(κ a)'}}, lines:[
-        {l:'A cos(l a) = F e^(-κ a)', w:'ψ stetig bei x = a',
-          why:{q:'Welche Bedingung steckt in dieser Zeile?', opts:['$\\psi$ innen und außen sind bei $x = a$ gleich.', '$\\psi$ ist bei $x = a$ gleich null, wie an einer Wand.', 'Die Normierung von $\\psi$ über den Topf.'], a:0, ex:'Die Wand ist endlich hoch: $\\psi(a) \\ne 0$, die Funktion ragt hinaus.'}},
-        {l:'-l A sin(l a) = -κ F e^(-κ a)', w:'ψ′ stetig bei x = a'},
-        {l:'l tan(l a) = κ', w:'zweite Gleichung durch die erste geteilt',
-          why:{q:'Warum teilt man die beiden Gleichungen durcheinander?', opts:['$A$ und $F$ fallen heraus; übrig bleibt eine Gleichung nur für $E$.', 'um $\\kappa$ unabhängig von $E$ zu machen', 'weil eine der beiden Gleichungen überflüssig ist'], a:0, ex:'$l$ und $\\kappa$ hängen beide von $E$ ab. Die Gleichung bestimmt die erlaubten Energien; $F/A$ folgt danach aus der ersten Zeile.'}}
-      ]},
-      q:[
-        {q:'Ein endlicher Topf und ein unendlicher Kasten haben dieselbe Breite. Wo liegt die Grundzustandsenergie im endlichen Topf (vom Topfboden gemessen)?', opts:['tiefer, weil $\\psi$ in die Wände eindringt', 'höher, weil die Wände nur endlich hoch sind', 'genauso hoch, weil die Breite gleich ist'], a:0,
-          ex:'Mehr Platz heißt größere Wellenlänge und weniger kinetische Energie.'},
-        {q:'Ein sehr flacher, schmaler Topf hat $z_0 = 0{,}3$. Wie viele gebundene Zustände hat er?', opts:['genau einen', 'keinen, dafür ist er zu flach', 'zwei: einen geraden, einen ungeraden'], a:0,
-          ex:'$N = \\lceil 2z_0/\\pi\\rceil = \\lceil 0{,}19\\rceil = 1$. In einer Dimension gibt es immer mindestens einen gebundenen Zustand.'}
-      ]},
-    {id:'tunnel-t6', title:'Das δ-Potential',
-      text:R`Mach den Topf immer schmaler und tiefer, so dass die Fläche $2aV_0 = \alpha$ fest bleibt. Im Grenzfall entsteht das [[lex:delta-potential|δ-Potential]]
+    /* ===== Abschnitt 6: δ-Potential ===== */
+    {id:'tunnel-t6', title:'Das δ-Potential', steps:[
+      {id:'tunnel-t6a', title:'Schmal und tief: das δ-Potential',
+        pre:{from:'m-analysis', seg:'ma-t5', title:'δ als Grenzfall', text:R`Ein Rechteck der Breite $2\varepsilon$ und der Höhe $1/(2\varepsilon)$ hat die Fläche $1$. Für $\varepsilon \to 0$ wird es zur δ-Distribution mit $\int f(x)\,\delta(x)\,dx = f(0)$. Mini-Beispiel: $\int\cos x\,\delta(x)\,dx = 1$.`},
+        num:{title:'Immer schmaler, immer tiefer', text:R`Halte $2aV_0 = \alpha = 0{,}1\,\mathrm{eV\,nm}$ fest. Ein Topf mit $2a = 0{,}1\,\mathrm{nm}$ hat dann $V_0 = 1\,\mathrm{eV}$, einer mit $2a = 0{,}01\,\mathrm{nm}$ schon $V_0 = 10\,\mathrm{eV}$. Die Fläche $2aV_0$ bleibt $0{,}1\,\mathrm{eV\,nm}$.`},
+        text:R`Mach den Topf immer schmaler und tiefer, so dass die Fläche $2aV_0 = \alpha$ fest bleibt. Im Grenzfall entsteht das [[lex:delta-potential|δ-Potential]]
 
 $$V(x) = -\alpha\,\delta(x),\qquad \alpha > 0.$$
 
-Es ist ein einfaches Modell für eine sehr kurzreichweitige Anziehung, etwa eine Störstelle in einem Kristall. Überall außer bei $x = 0$ ist das Teilchen frei.
-
-**Sprungbedingung.** Integriere die Schrödingergleichung wie in Abschnitt 2 über $[-\varepsilon, \varepsilon]$. Jetzt verschwindet das Potentialintegral nicht, denn $\int\delta(x)\psi(x)\,dx = \psi(0)$ ([[lex:delta-distribution|δ-Distribution]], M2). Es bleibt
+Es ist ein einfaches Modell für eine sehr kurzreichweitige Anziehung, etwa eine Störstelle in einem Kristall. $\alpha$ hat die Einheit Energie mal Länge. Überall außer bei $x = 0$ ist $V = 0$, das Teilchen also frei. Die ganze Wirkung des Potentials sitzt in einem einzigen Punkt.`,
+        q:{q:'Ein Topf der Breite $2a = 0{,}02\\,\\mathrm{nm}$ und der Tiefe $V_0 = 15\\,\\mathrm{eV}$ wird zum δ-Potential $V = -\\alpha\\,\\delta(x)$ zusammengezogen. Wie groß ist $\\alpha$?',
+          opts:['$15\\,\\mathrm{eV}$', '$0{,}3\\,\\mathrm{eV\\,nm}$', '$0{,}15\\,\\mathrm{eV\\,nm}$', '$750\\,\\mathrm{eV/nm}$'], a:1,
+          ex:'$\\alpha$ ist die Fläche $2aV_0 = 0{,}02\\,\\mathrm{nm}\\cdot 15\\,\\mathrm{eV} = 0{,}3\\,\\mathrm{eV\\,nm}$, also Energie mal Länge. Das passt zu $\\delta(x)$ mit der Einheit $1/\\text{Länge}$: Erst so ist $V$ eine Energie.',
+          fb:['Das ist nur die Tiefe. $\\alpha$ ist die Fläche des Topfs und hat die Einheit Energie mal Länge.', '', 'Die Breite ist $2a = 0{,}02\\,\\mathrm{nm}$, nicht $a$. Mit $a$ allein käme die halbe Fläche heraus.', 'Geteilt statt multipliziert: $V_0/(2a)$ hat die Einheit Energie durch Länge, $\\alpha$ aber Energie mal Länge.']}},
+      {id:'tunnel-t6b', title:'Die Sprungbedingung',
+        num:{title:'Integrieren über die Spitze', text:R`Über $[-\varepsilon, \varepsilon]$ ist $\int\delta(x)\,\psi(x)\,dx = \psi(0)$, für jedes noch so kleine $\varepsilon$. Mit $2m\alpha/\hbar^2 = 26{,}2\cdot0{,}1\,\mathrm{nm}^{-1} \approx 2{,}6\,\mathrm{nm}^{-1}$ springt $\psi'$ bei $\psi(0) = 1$ also um $-2{,}6\,\mathrm{nm}^{-1}$.`},
+        text:R`Integriere die Schrödingergleichung wie in Abschnitt 2 über $[-\varepsilon, \varepsilon]$. Jetzt verschwindet das Potentialintegral nicht, denn $\int\delta(x)\psi(x)\,dx = \psi(0)$ ([[lex:delta-distribution|δ-Distribution]], M2). Es bleibt die **Sprungbedingung**
 
 $$\psi'(0^+) - \psi'(0^-) = -\frac{2m\alpha}{\hbar^2}\,\psi(0).$$
 
-$\psi$ bleibt stetig, aber $\psi'$ springt: $\psi$ hat bei $x = 0$ einen Knick.
+$\psi$ bleibt stetig, aber $\psi'$ springt: $\psi$ hat bei $x = 0$ einen Knick. Das Vorzeichen ist negativ, weil das Potential anzieht. Die Steigung wird beim Durchgang durch $x = 0$ kleiner; die Kurve knickt nach unten.`,
+        q:{q:R`Was gilt bei $x = 0$ für $\psi$ im δ-Potential?`,
+          opts:[R`$\psi$ springt, $\psi'$ ist stetig.`, R`$\psi$ ist stetig, $\psi'$ springt.`, R`beide sind stetig, wie an einer Stufe`], a:1,
+          ex:R`Das Integral über die Spitze liefert $\psi(0)$ und damit einen endlichen Sprung von $\psi'$. Ein Sprung von $\psi$ selbst würde ein unendliches $\psi'$ verlangen.`,
+          fb:[R`Umgekehrt. Ein Sprung von $\psi$ hieße, dass $\psi'$ unendlich wird; das passt zu keiner Gleichung mit $\delta$.`, '',
+            R`An der Stufe ist $V$ endlich. Hier ist $V$ bei $x = 0$ unendlich, und das Integral bleibt endlich.`]}},
+      {id:'tunnel-t6c', title:'Der gebundene Zustand',
+        num:{title:'α = 0,1 eV nm', text:R`$\kappa = m\alpha/\hbar^2 = \tfrac12\cdot26{,}2\cdot0{,}1\,\mathrm{nm}^{-1} \approx 1{,}31\,\mathrm{nm}^{-1}$, also $1/\kappa \approx 0{,}76\,\mathrm{nm}$. Die Energie ist
 
-**Der gebundene Zustand.** Für $E < 0$ ist überall außer bei $x = 0$ verbotenes Gebiet. Normierbar sind nur $e^{\kappa x}$ links und $e^{-\kappa x}$ rechts, mit $\kappa = \sqrt{-2mE}/\hbar$. Stetigkeit verlangt gleiche Amplituden: $\psi = Ae^{-\kappa|x|}$. Die Sprungbedingung legt $\kappa$ fest (Herleitung):
+$$E = -\frac{\hbar^2\kappa^2}{2m} = -\frac{1{,}31^2}{26{,}2}\,\mathrm{eV} \approx -0{,}066\,\mathrm{eV}.$$`},
+        text:R`Für $E < 0$ ist überall außer bei $x = 0$ verbotenes Gebiet. Normierbar sind nur $e^{\kappa x}$ links und $e^{-\kappa x}$ rechts, mit $\kappa = \sqrt{-2mE}/\hbar$. Stetigkeit verlangt gleiche Amplituden: $\psi = Ae^{-\kappa|x|}$. Die Sprungbedingung legt $\kappa$ fest (Herleitung):
 
 $$\kappa = \frac{m\alpha}{\hbar^2},\qquad E = -\frac{\hbar^2\kappa^2}{2m} = -\frac{m\alpha^2}{2\hbar^2}.$$
 
-Es gibt **genau einen** gebundenen Zustand. Ein ungerader Zustand hätte $\psi(0) = 0$, und mit $\pm Ae^{-\kappa|x|}$ geht das nur für $A = 0$.
-
-**Streuung am δ-Potential.** Für $E > 0$ setzt du an wie an der Stufe: $\psi_L = e^{ikx} + Be^{-ikx}$, $\psi_R = Ce^{ikx}$. Mit $\beta = m\alpha/(\hbar^2k)$ folgt aus Stetigkeit und Sprungbedingung $C = 1/(1 - i\beta)$ und
+Es gibt **genau einen** gebundenen Zustand. Ein ungerader Zustand hätte $\psi(0) = 0$; mit $\pm Ae^{-\kappa|x|}$ geht das nur für $A = 0$. Die Normierung legt am Ende noch $A = \sqrt\kappa$ fest; sie ändert die Energie nicht.`,
+        derive:{ctx:TUN_DELTA(), lines:[
+          {l:'-κ A - κ A = -2m α/ħ^2 A', w:'ψ′(0⁺) − ψ′(0⁻) = −(2mα/ħ²) ψ(0)',
+            why:{q:'Warum ist $\\psi\'(0^-) = +\\kappa A$?', opts:['Weil links $\\psi = Ae^{\\kappa x}$ ist, abgeleitet $\\kappa Ae^{\\kappa x}$.', 'Weil $\\psi\'$ bei $x = 0$ stetig sein muss.', 'Weil $|x|$ bei $x = 0$ die Ableitung $1$ hat.'], a:0, ex:'Für $x < 0$ ist $|x| = -x$, also $\\psi = Ae^{\\kappa x}$. Rechts fällt $\\psi$ ab: $\\psi\'(0^+) = -\\kappa A$.'}},
+          {l:'κ = m α/ħ^2', w:'durch −2A geteilt'},
+          {l:'E = -ħ^2 κ^2/(2m)', w:'für x ≠ 0 frei: ψ″ = κ²ψ',
+            why:{q:'Woher kommt diese Beziehung?', opts:['Für $x \\ne 0$ ist $-\\frac{\\hbar^2}{2m}\\psi\'\' = E\\psi$ mit $\\psi\'\' = \\kappa^2\\psi$.', 'aus der Normierung $\\int|\\psi|^2dx = 1$', 'aus $E = \\langle V\\rangle = -\\alpha|\\psi(0)|^2$'], a:0, ex:'Außerhalb von $x = 0$ ist $V = 0$. Die Normierung legt nur $A$ fest, nicht $E$.'}},
+          {l:'E = -m α^2/(2ħ^2)', w:'κ eingesetzt'}
+        ]},
+        q:{q:R`Das δ-Potential wird doppelt so stark ($\alpha \to 2\alpha$). Wie ändert sich die Bindungsenergie $|E|$?`,
+          opts:[R`Sie verdoppelt sich.`, R`Sie vervierfacht sich.`, R`Sie halbiert sich, weil der Zustand schmaler wird.`], a:1,
+          ex:R`$|E| = m\alpha^2/(2\hbar^2)$ wächst mit $\alpha^2$. Gleichzeitig verdoppelt sich $\kappa$: Der Zustand wird halb so breit.`,
+          fb:[R`$\kappa$ verdoppelt sich, aber $E$ hängt von $\kappa^2$ ab.`, '',
+            R`Schmaler wird der Zustand tatsächlich, aber gebunden ist er dadurch stärker, nicht schwächer.`]}},
+      {id:'tunnel-t6d', title:'Der gebundene Zustand in Formel und Bild',
+        num:{title:'Ablesen am Bild', text:R`Im Bild fällt $\psi$ von der Spitze bei $x = 0$ auf $1/e$ des Maximums bei $x = \pm1/\kappa$. Für $\alpha = 0{,}1\,\mathrm{eV\,nm}$ liegen diese Stellen bei $\pm0{,}76\,\mathrm{nm}$. Die Steigung springt von $+\kappa\psi(0)$ auf $-\kappa\psi(0)$, insgesamt um $2\kappa\psi(0)$.`},
+        text:R`Die Tafel zeigt den gebundenen Zustand in fünf Darstellungen. Lies besonders die Spitze im Bild. Ihr Knick ist die Sprungbedingung: Links steigt $\psi$ mit $+\kappa\psi(0)$, rechts fällt es mit $-\kappa\psi(0)$. Die Größe des Knicks legt $\kappa$ fest und damit auch, wie schnell $\psi$ nach außen abklingt. Ein stärkeres Potential gibt einen schärferen Knick, ein schmaleres $\psi$ und eine tiefere Energie. Die Mathematik dahinter ist die Wirkung von $\delta$ unter dem Integral.`,
+        reps:{obj:R`Gebundener Zustand im Potential $V = -\alpha\,\delta(x)$`,
+          rows:[
+            {k:'worte', text:R`Ein Teilchen, das an einem Punkt festgehalten wird. Es ist um diesen Punkt verteilt und fällt nach beiden Seiten exponentiell ab.`},
+            {k:'formel', tex:R`\psi(x) = \sqrt\kappa\,e^{-\kappa|x|},\qquad \kappa = \frac{m\alpha}{\hbar^2},\qquad E = -\frac{m\alpha^2}{2\hbar^2}`},
+            {k:'graph', plot:{x:[-3, 3], y:[-0.1, 1.15], xlab:R`\kappa x`, ylab:R`\psi/\psi(0)`, ticks:[{x:-2, lab:'-2'}, {x:-1, lab:'-1'}, {x:0, lab:'0'}, {x:1, lab:'1'}, {x:2, lab:'2'}]}, f:TUN_G.delta,
+              cap:R`Knick bei $x = 0$: Steigung $+1$ links, $-1$ rechts (in Einheiten von $\kappa\psi(0)$). Bei $\kappa x = \pm1$ ist $\psi$ auf $1/e \approx 0{,}37$ gefallen.`},
+            {k:'mathe', tex:R`\int_{-\varepsilon}^{\varepsilon}\psi''\,dx = \psi'(\varepsilon) - \psi'(-\varepsilon),\qquad \int_{-\varepsilon}^{\varepsilon}\delta(x)\,\psi(x)\,dx = \psi(0)`},
+            {k:'physik', text:R`Bindungsenergie $|E| = m\alpha^2/(2\hbar^2)$, für $\alpha = 0{,}1\,\mathrm{eV\,nm}$ etwa $0{,}066\,\mathrm{eV}$. Die Ausdehnung des Zustands ist etwa $1/\kappa \approx 0{,}76\,\mathrm{nm}$.`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`„Exponentiell nach beiden Seiten“ heißt $e^{-\kappa|x|}$. „An einem Punkt festgehalten“ legt $\kappa$ über die Stärke $\alpha$ fest.`},
+            {from:'formel', to:'graph', rule:R`$e^{-\kappa|x|}$ über $\kappa x$ zeichnen: Spitze bei $0$, auf $1/e$ bei $\pm1$. Die Steigungen links und rechts der Spitze sind $\pm\kappa\psi(0)$.`},
+            {from:'graph', to:'mathe', rule:R`Den Knick als Sprung von $\psi'$ lesen. Die Gleichung über die Spitze integrieren: $\delta$ liefert genau $\psi(0)$, also den Sprung $-2m\alpha\psi(0)/\hbar^2$.`},
+            {from:'mathe', to:'physik', rule:R`Den Sprung $-2\kappa\psi(0)$ gleich $-2m\alpha\psi(0)/\hbar^2$ setzen: $\kappa = m\alpha/\hbar^2$. Dann $E = -\hbar^2\kappa^2/(2m)$ ausrechnen.`}
+          ]},
+        q:{q:R`Im Bild eines solchen Zustands ist $\psi$ bei $x = \pm0{,}5\,\mathrm{nm}$ auf $1/e$ der Spitze gefallen. Welches $\kappa$ gehört dazu?`, tr:{from:'graph', to:'formel'},
+          opts:[R`$\kappa = 0{,}5\,\mathrm{nm}^{-1}$`, R`$\kappa = 2\,\mathrm{nm}^{-1}$`, R`$\kappa = 1\,\mathrm{nm}^{-1}$, weil der Abstand der beiden Stellen $1\,\mathrm{nm}$ ist`], a:1,
+          ex:R`$e^{-\kappa\cdot0{,}5\,\mathrm{nm}} = e^{-1}$ gibt $\kappa = 1/(0{,}5\,\mathrm{nm}) = 2\,\mathrm{nm}^{-1}$.`,
+          fb:[R`$0{,}5\,\mathrm{nm}$ ist $1/\kappa$, nicht $\kappa$.`, '',
+            R`Jede Seite fällt für sich auf $1/e$, im Abstand $1/\kappa$ von der Spitze.`]}},
+      {id:'tunnel-t6e', title:'Streuung am δ-Potential',
+        num:{title:'Schnell und langsam', text:R`Mit $\alpha = 0{,}1\,\mathrm{eV\,nm}$ ist $m\alpha^2/(2\hbar^2) \approx 0{,}066\,\mathrm{eV}$. Ein Elektron mit $E = 0{,}66\,\mathrm{eV}$ hat $T \approx 0{,}91$, eines mit $E = 0{,}0066\,\mathrm{eV}$ nur $T \approx 0{,}09$.`},
+        text:R`Für $E > 0$ setzt du an wie an der Stufe: $\psi_L = e^{ikx} + Be^{-ikx}$, $\psi_R = Ce^{ikx}$. Mit $\beta = m\alpha/(\hbar^2k)$ folgt aus Stetigkeit und Sprungbedingung $C = 1/(1 - i\beta)$ und
 
 $$T = |C|^2 = \frac{1}{1 + \beta^2} = \left(1 + \frac{m\alpha^2}{2\hbar^2E}\right)^{-1}.$$
 
-Schnelle Teilchen ($\beta$ klein) gehen fast ungestört durch, langsame werden fast vollständig reflektiert – obwohl das Potential anziehend ist. Reflexion ist eine Welleneigenschaft. Sie entsteht an jeder plötzlichen Änderung des Potentials, egal in welche Richtung.
+Schnelle Teilchen ($\beta$ klein) gehen fast ungestört durch. Langsame werden fast vollständig reflektiert – obwohl das Potential anziehend ist. Reflexion ist eine Welleneigenschaft. Sie entsteht an jeder plötzlichen Änderung des Potentials, egal in welche Richtung.`,
+        q:{q:R`Wie verändert sich $T$ für die Streuung am δ-Potential, wenn die Energie wächst?`,
+          opts:[R`$T$ fällt, weil das Potential anzieht.`, R`$T$ ist für alle Energien gleich 1.`, R`$T$ wächst und geht gegen 1.`], a:2,
+          ex:R`$T = (1 + m\alpha^2/(2\hbar^2E))^{-1} \to 1$ für $E \to \infty$.`,
+          fb:[R`Anziehung verhindert Reflexion nicht. Im Gegenteil: Langsame Teilchen werden fast vollständig reflektiert.`,
+            R`Das wäre klassisch so. Quantenmechanisch ist $T < 1$ für jedes endliche $E$.`, '']}},
+      {id:'tunnel-t6f', title:'Typischer Fehler: ψ′ auch hier stetig ansetzen',
+        num:{title:'Was dann herauskäme', text:R`Mit stetigem $\psi'$ wäre $\psi'(0^+) - \psi'(0^-) = -\kappa A - \kappa A = -2\kappa A = 0$, also $\kappa = 0$ und $E = 0$. Dann wäre $\psi = A$ überall konstant und nicht normierbar: kein gebundener Zustand.`},
+        text:R`**Typischer Fehler:** $\psi'$ auch am δ-Potential als stetig ansetzen. Dann folgt $\kappa = 0$, und es gäbe keinen gebundenen Zustand. Die Regel „$\psi$ und $\psi'$ stetig“ aus Abschnitt 2 setzt ein *endliches* Potential voraus. Beim δ-Potential ist $V$ bei $x = 0$ unendlich, und das Integral über die Spitze bleibt endlich. Prüfe deshalb vor jeder Rechnung: Ist $V$ an der Sprungstelle endlich, unendlich hoch wie eine Wand oder eine δ-Spitze? Jede der drei Situationen hat ihre eigene Anschlussregel.`,
+        q:{q:R`Welche Form hat $\psi$ des gebundenen Zustands bei $x = 0$?`,
+          opts:[R`glatt, mit waagerechter Tangente`, R`stetig, mit einem Knick (Spitze)`, R`unstetig, mit einem Sprung`], a:1,
+          ex:R`$\psi$ ist stetig, $\psi'$ springt von $+\kappa A$ auf $-\kappa A$.`,
+          fb:[R`Eine glatte Kuppe hätte stetiges $\psi'$. Dann gäbe es keinen gebundenen Zustand.`, '',
+            R`$\psi$ bleibt stetig; gesprungen ist nur die Ableitung.`]}}
+    ]},
 
-**Typischer Fehler:** $\psi'$ auch hier als stetig ansetzen. Dann folgt $\kappa = 0$, und es gäbe keinen gebundenen Zustand.`,
-      derive:{ctx:TUN_DELTA(), lines:[
-        {l:'-κ A - κ A = -2m α/ħ^2 A', w:'ψ′(0⁺) − ψ′(0⁻) = −(2mα/ħ²) ψ(0)',
-          why:{q:'Warum ist $\\psi\'(0^-) = +\\kappa A$?', opts:['Links ist $\\psi = Ae^{\\kappa x}$ mit der Ableitung $\\kappa Ae^{\\kappa x}$.', 'Weil $\\psi\'$ bei $x = 0$ stetig sein muss.', 'Weil $|x|$ bei $x = 0$ die Ableitung $1$ hat.'], a:0, ex:'Für $x < 0$ ist $|x| = -x$, also $\\psi = Ae^{\\kappa x}$. Rechts fällt $\\psi$ ab: $\\psi\'(0^+) = -\\kappa A$.'}},
-        {l:'κ = m α/ħ^2', w:'durch −2A geteilt'},
-        {l:'E = -ħ^2 κ^2/(2m)', w:'für x ≠ 0 frei: ψ″ = κ²ψ',
-          why:{q:'Woher kommt diese Beziehung?', opts:['Für $x \\ne 0$ ist $-\\frac{\\hbar^2}{2m}\\psi\'\' = E\\psi$ mit $\\psi\'\' = \\kappa^2\\psi$.', 'aus der Normierung $\\int|\\psi|^2dx = 1$', 'aus $E = \\langle V\\rangle = -\\alpha|\\psi(0)|^2$'], a:0, ex:'Außerhalb von $x = 0$ ist $V = 0$. Die Normierung legt nur $A$ fest, nicht $E$.'}},
-        {l:'E = -m α^2/(2ħ^2)', w:'κ eingesetzt'}
-      ]},
-      q:[
-        {q:'Welche Form hat $\\psi$ des gebundenen Zustands bei $x = 0$?', opts:['stetig, mit einem Knick (Spitze)', 'glatt, mit waagerechter Tangente', 'unstetig, mit einem Sprung'], a:0,
-          ex:'$\\psi$ ist stetig, $\\psi\'$ springt von $+\\kappa A$ auf $-\\kappa A$.'},
-        {q:'Wie verändert sich $T$ für die Streuung am δ-Potential, wenn die Energie wächst?', opts:['$T$ wächst und geht gegen 1.', '$T$ fällt, weil das Potential anzieht.', '$T$ ist für alle Energien gleich 1.'], a:0,
-          ex:'$T = (1 + m\\alpha^2/(2\\hbar^2E))^{-1} \\to 1$ für $E \\to \\infty$.'}
-      ]},
-    {id:'tunnel-t7', title:'Anwendungen: Rastertunnelmikroskop und α-Zerfall',
-      text:R`**Rastertunnelmikroskop.** Eine feine Metallspitze wird bis auf etwa $0{,}5$ bis $1\,\mathrm{nm}$ an eine leitende Oberfläche herangeführt. Das Vakuum dazwischen ist für die Elektronen eine Barriere. Ihre Höhe über der Energie der Elektronen ist ungefähr die Austrittsarbeit, einige eV. Legt man eine kleine Spannung an, fließt ein Tunnelstrom proportional zu $e^{-2\kappa d}$, wobei $d$ der Abstand ist. Mit $V_0 - E \approx 4\,\mathrm{eV}$ ist $\kappa \approx 10\,\mathrm{nm}^{-1}$. Wird der Abstand um $0{,}1\,\mathrm{nm}$ größer, fällt der Strom um den Faktor $e^{-2} \approx 0{,}14$, also auf etwa ein Siebtel.
+    /* ===== Abschnitt 7: Anwendungen ===== */
+    {id:'tunnel-t7', title:'Anwendungen: Rastertunnelmikroskop und α-Zerfall', steps:[
+      {id:'tunnel-t7a', title:'Rastertunnelmikroskop: das Prinzip',
+        num:{title:'Spitze vor Oberfläche', text:R`Mit $V_0 - E \approx 4\,\mathrm{eV}$ ist $\kappa = \sqrt{26{,}2\cdot4}\,\mathrm{nm}^{-1} \approx 10\,\mathrm{nm}^{-1}$. Bei einem Abstand von $d = 0{,}5\,\mathrm{nm}$ ist $e^{-2\kappa d} \approx e^{-10} \approx 4{,}5\cdot10^{-5}$.`},
+        text:R`Eine feine Metallspitze wird bis auf etwa $0{,}5$ bis $1\,\mathrm{nm}$ an eine leitende Oberfläche herangeführt. Das Vakuum dazwischen ist für die Elektronen eine Barriere. Ihre Höhe über der Energie der Elektronen ist ungefähr die Austrittsarbeit, einige eV. Legt man eine kleine Spannung an, fließt ein Tunnelstrom proportional zu $e^{-2\kappa d}$, wobei $d$ der Abstand ist. Gerd Binnig und Heinrich Rohrer erhielten für das [[lex:rastertunnelmikroskop|Rastertunnelmikroskop]] 1986 den Nobelpreis.`,
+        q:{q:R`Was spielt im Rastertunnelmikroskop die Rolle der Barriere?`,
+          opts:[R`die Metallspitze selbst`, R`das Vakuum zwischen Spitze und Probe`, R`die Spannung zwischen Spitze und Probe`], a:1,
+          ex:R`Im Vakuum ist die potentielle Energie der Elektronen um etwa die Austrittsarbeit höher als im Metall. Diese Lücke durchtunneln sie.`,
+          fb:[R`In der Spitze sind die Elektronen frei beweglich. Verboten ist der Spalt davor.`, '',
+            R`Die Spannung treibt den Strom an. Die Barriere ist der Spalt, durch den er fließen muss.`]}},
+      {id:'tunnel-t7b', title:'Warum nur die Abstandsänderung zählt',
+        num:{title:'0,1 nm mehr Abstand', text:R`Mit $\kappa \approx 10\,\mathrm{nm}^{-1}$ und $b = 0{,}1\,\mathrm{nm}$ fällt der Strom um den Faktor
 
-Diese Empfindlichkeit macht atomare Auflösung möglich. Man fährt die Spitze über die Probe und regelt ihre Höhe so, dass der Strom konstant bleibt. Die Regelung zeichnet dann ein Höhenprofil, fein genug, um einzelne Atome zu sehen. Fast der ganze Strom fließt über das vorderste Atom der Spitze, weil schon das nächste Atom merklich weiter entfernt ist. Gerd Binnig und Heinrich Rohrer erhielten für das [[lex:rastertunnelmikroskop|Rastertunnelmikroskop]] 1986 den Nobelpreis.
+$$e^{-2\kappa b} = e^{-2} \approx 0{,}14,$$
 
-**α-Zerfall.** Ein α-Teilchen (zwei Protonen, zwei Neutronen) ist im Kern durch die starke Kraft gebunden; außerhalb stößt die Coulomb-Kraft es ab. Zusammen entsteht eine Barriere, die viel höher ist als die Energie, mit der das α-Teilchen später davonfliegt. Klassisch käme es nie heraus. George Gamow und unabhängig Ronald Gurney und Edward Condon erklärten 1928 den Zerfall als Tunneln durch diese Barriere. Die Barriere ist nicht rechteckig; man ersetzt $e^{-2\kappa a}$ durch
+also auf etwa ein Siebtel – egal, ob die Spitze vorher $0{,}5$ oder $0{,}8\,\mathrm{nm}$ entfernt war.`},
+        text:R`Diese Empfindlichkeit macht atomare Auflösung möglich. Die Herleitung zeigt: Ändert sich der Abstand um $b$, ändert sich der Strom um den Faktor $e^{-2\kappa b}$, unabhängig vom Ausgangsabstand. Man fährt die Spitze über die Probe und regelt ihre Höhe so, dass der Strom konstant bleibt. Die Regelung zeichnet dann ein Höhenprofil, fein genug, um einzelne Atome zu sehen. Fast der ganze Strom fließt über das vorderste Atom der Spitze, weil schon das nächste Atom merklich weiter entfernt ist.`,
+        derive:{ctx:{coords:[], params:{κ:'pos', d:'pos', b:'pos'}}, lines:[
+          {l:'e^(-2κ (d + b))/e^(-2κ d) = e^(-2κ b)', w:'Abstand wächst von d auf d + b',
+            why:{q:'Warum fällt der Ausgangsabstand $d$ heraus?', opts:['Weil das Verhältnis zweier Exponentialfunktionen nur von $b$ abhängt.', 'Weil $d$ gegen die Verschiebung $b$ vernachlässigbar klein ist.', 'Weil der Vorfaktor von $T$ den Abstand $d$ schon enthält.'], a:0, ex:'$e^{u + v}/e^u = e^v$. Deshalb ändert jede Verschiebung um $b$ den Strom um denselben Faktor $e^{-2\\kappa b}$.'}}
+        ]},
+        q:{q:R`Die Spitze eines Rastertunnelmikroskops fährt über ein Atom, das $0{,}1\,\mathrm{nm}$ höher liegt ($\kappa \approx 10\,\mathrm{nm}^{-1}$). Wie ändert sich der Strom ohne Regelung?`,
+          opts:[R`Er steigt um etwa 10 % an.`, R`Er steigt auf etwa das 7-Fache.`, R`Er bleibt nahezu gleich groß.`], a:1,
+          ex:R`Der Abstand wird um $0{,}1\,\mathrm{nm}$ kleiner: Faktor $e^{2\kappa\cdot0{,}1\,\mathrm{nm}} = e^2 \approx 7{,}4$.`,
+          fb:[R`Das wäre eine lineare Abhängigkeit. Der Abstand steht aber im Exponenten.`, '',
+            R`Gerade die starke Änderung macht das Mikroskop so empfindlich.`]}},
+      {id:'tunnel-t7c', title:'α-Zerfall: Tunneln aus dem Kern',
+        num:{title:'Zwei Kerne', text:R`Polonium-212 sendet α-Teilchen mit $E_\alpha \approx 8{,}8\,\mathrm{MeV}$ aus und zerfällt in weniger als einer Mikrosekunde. Uran-238 mit $E_\alpha \approx 4{,}3\,\mathrm{MeV}$ hat eine Halbwertszeit von $4{,}5$ Milliarden Jahren. Ein Faktor 2 in der Energie macht über 20 Zehnerpotenzen in der Zeit.`},
+        text:R`Ein α-Teilchen ist im Kern durch die starke Kraft gebunden; außerhalb stößt die Coulomb-Kraft es ab. Zusammen entsteht eine Barriere, die viel höher ist als die Energie, mit der das α-Teilchen später davonfliegt. Klassisch käme es nie heraus. George Gamow und unabhängig Ronald Gurney und Edward Condon erklärten 1928 den Zerfall als Tunneln durch diese Barriere. Die Barriere ist nicht rechteckig; man ersetzt $e^{-2\kappa a}$ durch
 
 $$T \approx \exp\left(-\frac{2}{\hbar}\int_{x_1}^{x_2}\sqrt{2m\,(V(x) - E)}\,dx\right),$$
 
-ein Integral über den klassisch verbotenen Bereich. Diese WKB-Näherung gilt, wenn sich $V$ langsam ändert. Weil die Energie im Exponenten steht, hängen die Halbwertszeiten extrem empfindlich von $E$ ab: Polonium-212 ($E_\alpha \approx 8{,}8\,\mathrm{MeV}$) zerfällt in weniger als einer Mikrosekunde, Uran-238 ($E_\alpha \approx 4{,}3\,\mathrm{MeV}$) hat eine Halbwertszeit von $4{,}5$ Milliarden Jahren. Ein Faktor 2 in der Energie macht über 20 Zehnerpotenzen in der Zeit. Mehr dazu unter [[lex:alpha-zerfall|α-Zerfall]].
-
-**Was du mitnehmen sollst:** Steht eine Größe wie $\kappa a$ im Exponenten, reagiert das Ergebnis exponentiell empfindlich auf Breite, Höhe und Masse. Die Herleitung zeigt, warum beim Rastertunnelmikroskop nur die Abstandsänderung zählt.`,
-      derive:{ctx:{coords:[], params:{κ:'pos', d:'pos', b:'pos'}}, lines:[
-        {l:'e^(-2κ (d + b))/e^(-2κ d) = e^(-2κ b)', w:'Abstand wächst von d auf d + b',
-          why:{q:'Warum fällt der Ausgangsabstand $d$ heraus?', opts:['Das Verhältnis zweier Exponentialfunktionen hängt nur von $b$ ab.', 'Weil $d$ gegen die Verschiebung $b$ vernachlässigbar klein ist.', 'Weil der Vorfaktor von $T$ den Abstand $d$ schon enthält.'], a:0, ex:'$e^{u + v}/e^u = e^v$. Deshalb ändert jede Verschiebung um $b$ den Strom um denselben Faktor $e^{-2\\kappa b}$.'}}
-      ]},
-      q:[
-        {q:'Die Spitze eines Rastertunnelmikroskops fährt über ein Atom, das $0{,}1\\,\\mathrm{nm}$ höher liegt ($\\kappa \\approx 10\\,\\mathrm{nm}^{-1}$). Wie ändert sich der Strom ohne Regelung?', opts:['Er steigt etwa auf das 7-Fache.', 'Er steigt um etwa 10 %.', 'Er bleibt nahezu gleich.'], a:0,
-          ex:'Der Abstand wird um $0{,}1\\,\\mathrm{nm}$ kleiner: Faktor $e^{2\\kappa\\cdot0{,}1\\,\\mathrm{nm}} = e^2 \\approx 7{,}4$.'},
-        {q:'Was ist der Hauptgrund dafür, dass die α-Halbwertszeiten so stark von der Energie abhängen?', opts:['$E$ steht im Exponenten der Tunnelwahrscheinlichkeit.', 'Schnellere α-Teilchen stoßen öfter an die Barriere.', 'Höhere Energie verringert die Ladung des Kerns.'], a:0,
-          ex:'Die Anlaufrate an die Barriere wächst zwar auch mit der Geschwindigkeit, aber nur proportional. Der Exponentialfaktor ändert sich um viele Zehnerpotenzen.'}
-      ]}
+ein Integral über den klassisch verbotenen Bereich. Diese WKB-Näherung gilt, wenn sich $V$ langsam ändert. Mehr dazu unter [[lex:alpha-zerfall|α-Zerfall]].`,
+        q:{q:R`Wie wird aus $e^{-2\kappa a}$ der Ausdruck für eine Barriere beliebiger Form?`,
+          opts:[R`$\kappa$ wird durch seinen Wert am höchsten Punkt ersetzt.`, R`$\kappa a$ wird zu $\int\kappa(x)\,dx$ über den verbotenen Bereich.`, R`$a$ wird durch den Kernradius ersetzt.`], a:1,
+          ex:R`Mit $\kappa(x) = \sqrt{2m(V(x) - E)}/\hbar$ wird aus $2\kappa a$ das Integral $2\int\kappa(x)\,dx$. Bei konstantem $V$ kommt wieder $2\kappa a$ heraus.`,
+          fb:[R`Das überschätzt die Barriere. Jedes Stück des verbotenen Bereichs trägt mit seinem eigenen $\kappa$ bei.`, '',
+            R`Die Breite der Barriere ist der Abstand der Umkehrpunkte $x_1$ und $x_2$, nicht der Kernradius.`]}},
+      {id:'tunnel-t7d', title:'Exponentielle Empfindlichkeit',
+        num:{title:'Höhe im Exponenten', text:R`Bei der Rechteckbarriere aus Abschnitt 4 ($V_0 - E = 1\,\mathrm{eV}$, $a = 1\,\mathrm{nm}$) ist $2\kappa a \approx 10{,}2$. Verdoppelt sich $V_0 - E$, wächst $\kappa$ um den Faktor $\sqrt2$, und $e^{-2\kappa a}$ fällt von $3{,}5\cdot10^{-5}$ auf $e^{-14{,}5} \approx 5\cdot10^{-7}$.`},
+        text:R`Steht eine Größe wie $\kappa a$ im Exponenten, reagiert das Ergebnis exponentiell empfindlich auf Breite, Höhe und Masse. Beim Rastertunnelmikroskop ist es die Breite: Ein Zehntel Nanometer macht einen Faktor sieben. Beim α-Zerfall ist es die Energie: Ein Faktor zwei macht über zwanzig Zehnerpotenzen. Beim Vergleich von Elektron und Proton ist es die Masse. Die Anlaufrate an die Barriere hängt dagegen nur linear von solchen Größen ab. Für die Größenordnung spielt sie deshalb kaum eine Rolle.`,
+        q:{q:R`Was ist der Hauptgrund dafür, dass die α-Halbwertszeiten so stark von der Energie abhängen?`,
+          opts:[R`Schnellere α-Teilchen stoßen öfter an die Barriere.`, R`$E$ steht im Exponenten der Tunnelwahrscheinlichkeit.`, R`Höhere Energie $E$ verringert die Ladung des Kerns.`], a:1,
+          ex:R`Die Anlaufrate an die Barriere wächst zwar auch mit der Geschwindigkeit, aber nur proportional. Der Exponentialfaktor ändert sich um viele Zehnerpotenzen.`,
+          fb:[R`Das gibt nur einen Faktor von der Größenordnung $\sqrt2$, keine zwanzig Zehnerpotenzen.`, '',
+            R`Die Kernladung hängt nicht von der Energie des α-Teilchens ab.`]}}
+    ]}
   ],
   example:{
     title:'Stufe mit $E > V_0$: Amplitude der reflektierten Welle',
@@ -463,6 +859,15 @@ ein Integral über den klassisch verbotenen Bereich. Diese WKB-Näherung gilt, w
     ]
   },
   lab:{type:'barrier', sketch:SK.lab, title:'Transmission durch eine Rechteckbarriere',
+    map:[
+      {sym:R`E/V_0`, ctl:'Energie E/V₀', says:R`Die Energie in $k = \sqrt{2mE}/\hbar$ und $\kappa = \sqrt{2m(V_0 - E)}/\hbar$; in Laboreinheiten $k = \sqrt{E/V_0}$, $\kappa = \sqrt{1 - E/V_0}$. Im Bild die gestrichelte Linie, unten der Punkt auf $T(E)$. Unter $1$ tunnelt das Teilchen, über $1$ läuft es über die Barriere.`},
+      {sym:R`a`, ctl:'Breite a·√(2mV₀)/ħ', says:R`Die Breite der Barriere in der Längeneinheit $\hbar/\sqrt{2mV_0}$. Sie steht im Exponenten: Für $\kappa a \gg 1$ ist $T \approx 16\frac{E}{V_0}\left(1 - \frac{E}{V_0}\right)e^{-2\kappa a}$.`},
+      {sym:R`V(x)`, ctl:'V(x)', says:R`Der getönte Streifen ist die Barriere: $V = V_0$ für $0 < x < a$, sonst $V = 0$.`},
+      {sym:R`\mathrm{Re}\,\psi,\ |\psi|^2`, ctl:'Wellenfunktion', says:R`Wählt die Kurven: dünn $\mathrm{Re}\,\psi$, dick $|\psi|^2$, beide auf der Energielinie aufgetragen. Links $e^{ikx} + re^{-ikx}$, innen $Ce^{-\kappa x} + De^{\kappa x}$, rechts $te^{ikx}$. Im Text heißen $r$ und $t$ dagegen $B$ und $F$.`},
+      {sym:R`T = |t|^2,\ R = |r|^2`, ctl:'Transmission T', says:R`Die untere Kurve zeigt $T(E)$ für die eingestellte Breite. Die Anzeige nennt $T$ und $R$; stets ist $R + T = 1$. Über $V_0$ erreicht $T$ bei $qa = n\pi$ den Wert $1$.`},
+      {sym:R`\lambda = 2\pi/k`, ctl:'Wellenlänge links und rechts gleich', says:R`Gleiche Energie und gleiches $V = 0$ links und rechts heißt gleiches $k$ und gleiche Wellenlänge. Rechts ist nur die Amplitude $|t| = \sqrt T$ kleiner: kein Energieverlust beim Tunneln.`},
+      {sym:R`e^{-iEt/\hbar}`, ctl:'Zeit laufen lassen', says:R`Dreht die Phase des stationären Zustands mit $e^{-iEt/\hbar}$. $\mathrm{Re}\,\psi$ ändert sich dabei, $|\psi|^2$ nicht – der Zustand ist stationär.`}
+    ],
     text:'Oben siehst du $V(x)$, die Energie $E$ (gestrichelt) und die Wellenfunktion, auf der Energielinie aufgetragen (dünn: $\\mathrm{Re}\\,\\psi$, dick: $|\\psi|^2$). Unten zeigt die Kurve die Transmission $T$ als Funktion von $E/V_0$; der Punkt ist die gewählte Energie. Unterhalb von $E = V_0$ tunnelt das Teilchen, oberhalb läuft es „über“ die Barriere. Mit „Zeit laufen lassen“ siehst du, wie sich die Phase von $\\psi$ dreht.',
     predict:{q:'Bevor du die Regler bewegst: Wie verläuft $T(E)$ in der Nähe von $E = V_0$?', opts:['stetig: schon unter $V_0$ ist $T > 0$, über $V_0$ noch $T < 1$', 'mit einem Sprung von $T = 0$ auf $T = 1$ genau bei $E = V_0$', 'mit einem scharfen Maximum $T = 1$ genau bei $E = V_0$'], a:0,
       ex:'Klassisch gäbe es den Sprung. Quantenmechanisch tunnelt das Teilchen unterhalb von $V_0$ und wird oberhalb teilweise reflektiert; $T$ steigt stetig an.'},

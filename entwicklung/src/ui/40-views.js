@@ -154,7 +154,7 @@ function dueTopics(){ const d = today(); return TOPICS.filter(t => { const r = s
 
 /* ---------- Neues lernen ---------- */
 VIEWS.learn = (main, args) => {
-  if (args[0]){ const t = topicById(args[0]); if (t) return topicView(main, t, +(args[1] || tstate(t).step || 1), args[2]); }
+  if (args[0]){ const t = topicById(args[0]); if (t) return topicView(main, t, +(args[1] || tstate(t).step || 1), args[2], args[3]); }
   main.append(h('h1', {}, 'Neues lernen'));
   main.append(h('p', {class:'muted'}, 'Wähle ein Thema. Du lernst es in sieben kleinen Schritten.'));
   const how = h('details', {class:'box', style:'margin-top:14px'});
@@ -196,7 +196,7 @@ function topicRows(list, onPick, label){
   }
   return wrap;
 }
-function topicView(main, t, step, sub){
+function topicView(main, t, step, sub, sub2){
   const s = tstate(t);
   const V4 = isV4(t), ST = stepsOf(t), SV = V4 ? STEPVIEW : STEPVIEW_OLD;
   step = Math.min(7, Math.max(1, step || 1));
@@ -223,7 +223,7 @@ function topicView(main, t, step, sub){
     wrap.upd = upd;
     return wrap;
   };
-  SV[step](body, t, s, nextBtn, sub);
+  SV[step](body, t, s, nextBtn, sub, sub2);
 }
 /* gemeinsame Bausteine */
 function goalBox(t){ return h('div', {class:'box box-goal', html:'<h4>Das kannst du danach</h4><ul class="clean">' + t.goals.map(g => '<li>' + inl(g) + '</li>').join('') + '</ul>'}); }
@@ -244,6 +244,8 @@ function summaryPanel(t){
   pan.innerHTML = '<div class="row sumhead"><h3>Zusammenfassung</h3><span class="grow"></span><button class="btn btn-sm" type="button" data-close>Schließen</button></div>' + clarifyHTML(c)
     + (c.more || []).map(m => '<details class="box"><summary><b>' + escH(m.title) + '</b></summary><div class="stack" style="margin-top:8px">' + md(m.text) + '</div></details>').join('')
     + (isV4(t) && (t.teach || []).length ? '<p class="small">Ausführlich: <a href="#/learn/' + t.id + '/3">Erklärteil (Schritt 3)</a> · ' + t.teach.map(sg => segLinkHTML(t.id, sg.id, sg.title)).join(' · ') + '</p>' : '');
+  const cs = hasStepSegs(t) ? cheatSheet(t, {bare:true}) : null;
+  if (cs){ const d = h('details', {class:'box cheatd'}); d.append(h('summary', {}, h('b', {}, 'Spickzettel Darstellungen')), cs); pan.append(d); }
   const set = on => { pan.hidden = !on; tab.setAttribute('aria-expanded', String(on)); tab.classList.toggle('on', on); };
   tab.onclick = () => set(pan.hidden);
   pan.querySelector('[data-close]').onclick = () => set(false);
@@ -256,7 +258,7 @@ function modelLines(ol, lines, ctx, saved, onAllDone, opt){
   const step = () => {
     if (k >= lines.length){ if (onAllDone) onAllDone(); return; }
     const L = lines[k];
-    const li = h('li', {html:lineHTML(L.l, ctx) + (L.w ? ' <span class="muted small">' + inl(L.w) + '</span>' : '')});
+    const li = h('li', {html:drlHTML(L.l, ctx) + (L.w ? ' <span class="muted small">' + inl(L.w) + '</span>' : '')});
     ol.append(li);
     const i = k; k++;
     if (L.why){
@@ -308,7 +310,7 @@ function compareBox(t, s, heading){
   const grid = h('div', {class:'cmp'});
   for (const side of [c.A, c.B]){
     const b = h('div', {class:'box'});
-    b.innerHTML = '<h4>' + inl(side.name) + '</h4>' + (side.text ? md(side.text) : '') + '<ol class="model">' + side.model.map(m => { const ml = typeof m === 'string' ? {l:m} : m; return '<li>' + lineHTML(ml.l, ctx) + (ml.w ? ' <span class="muted small">' + inl(ml.w) + '</span>' : '') + '</li>'; }).join('') + '</ol>';
+    b.innerHTML = '<h4>' + inl(side.name) + '</h4>' + (side.text ? md(side.text) : '') + '<ol class="model">' + side.model.map(m => { const ml = typeof m === 'string' ? {l:m} : m; return '<li>' + drlHTML(ml.l, ctx) + (ml.w ? ' <span class="muted small">' + inl(ml.w) + '</span>' : '') + '</li>'; }).join('') + '</ol>';
     grid.append(b);
   }
   box.append(grid);
@@ -402,7 +404,7 @@ STEPVIEW[2] = (body, t, s, nextBtn) => {
   body.append(predictBox(ph, s.pred, () => nb.upd()));
   body.append(nb);
 };
-STEPVIEW[3] = (body, t, s, nextBtn, sub) => {
+STEPVIEW[3] = (body, t, s, nextBtn, sub, sub2) => {
   const T = t.teach || [];
   s.cl = s.cl || {};
   if (!T.length){
@@ -420,9 +422,16 @@ STEPVIEW[3] = (body, t, s, nextBtn, sub) => {
   const N = T.length;
   const segDone = sg => !!tc.seg[sg.id];
   const reach = () => { let i = 0; while (i < N && segDone(T[i])) i++; return i; };   /* bis hier frei (inkl. Zusammenfassung bei i = N) */
+  /* sub: Abschnitts-id, 'zusammenfassung' oder Schritt-id (Fehlerheft, Spickzettel); sub2: Schritt-id nach der Abschnitts-id */
+  let focusStep = null;
   let cur = sub ? (sub === 'zusammenfassung' ? N : T.findIndex(x => x.id === sub)) : (tc.cur != null ? Math.min(tc.cur, reach()) : 0);
+  if (sub && cur < 0){ const f = findStep(t, sub); if (f){ cur = f.i; focusStep = f.st.id; } }
+  if (sub2 && cur >= 0 && cur < N && isStepSeg(T[cur]) && T[cur].steps.some(x => x && x.id === sub2)) focusStep = sub2;
   if (cur < 0) cur = 0;
-  body.append(h('p', {class:'small muted'}, 'Lies jeden Abschnitt in Ruhe. Die Fragen am Ende eines Abschnitts helfen beim Behalten; weiter geht es, wenn du sie beantwortet hast.'));
+  if (sub && cur < N){ tc.cur = cur; store.save(); }
+  body.append(h('p', {class:'small muted'}, hasStepSegs(t)
+    ? 'Jeder Abschnitt ist in kleine Schritte geteilt: ein Gedanke, oft erst ein Zahlenbeispiel, dann eine Kontrollfrage. Nach der Antwort geht es weiter; eine falsche Antwort ist kein Problem – lies die Rückmeldung.'
+    : 'Lies jeden Abschnitt in Ruhe. Die Fragen am Ende eines Abschnitts helfen beim Behalten; weiter geht es, wenn du sie beantwortet hast.'));
   const nav = h('div', {class:'segnav', role:'tablist', 'aria-label':'Abschnitte'});
   const area = h('div', {class:'stack segarea'});
   body.append(nav, area);
@@ -436,10 +445,17 @@ STEPVIEW[3] = (body, t, s, nextBtn, sub) => {
       nav.append(b);
     });
   };
+  let initial = true;
   const draw = scroll => {
     area.innerHTML = ''; drawNav();
-    if (cur < N) segView(area, t, T[cur], cur);
+    if (cur < N && isStepSeg(T[cur])){
+      const i = cur, sg = T[i];
+      stepSegView(area, t, sg, i, {tc, N, drawNav, focus:focusStep, initial,
+        next:() => { tc.seg[sg.id] = true; cur = i + 1; tc.cur = cur; store.save(); draw(true); }});
+    }
+    else if (cur < N) segView(area, t, T[cur], cur);
     else summaryView(area);
+    focusStep = null; initial = false;
     if (scroll) nav.scrollIntoView({block:'start', behavior:'smooth'});
   };
   function segView(area, t, sg, i){
@@ -449,7 +465,7 @@ STEPVIEW[3] = (body, t, s, nextBtn, sub) => {
     grid.append(h('div', {class:'stack segtext', html:md(sg.text)}));
     if (sg.fig){
       const fig = h('figure', {class:'segfig'}); const lab = h('div'); fig.append(lab);
-      labRun(lab, sg.fig.lab, sg.fig, {display:true, init:sg.fig.init, keep:sg.fig.keep});
+      labRun(lab, sg.fig.lab, sg.fig, {display:true, init:sg.fig.init, keep:sg.fig.keep, topic:t.id});
       if (sg.fig.caption) fig.append(h('figcaption', {class:'small muted', html:inl(sg.fig.caption)}));
       grid.append(fig);
     }
@@ -489,6 +505,7 @@ STEPVIEW[3] = (body, t, s, nextBtn, sub) => {
     area.append(h('h3', {class:'segtitle'}, 'Zusammenfassung'));
     area.append(h('div', {class:'stack', html:clarifyHTML(t.clarify)}));
     for (const m of (t.clarify || {}).more || []){ const d = h('details', {class:'box'}); d.innerHTML = '<summary><b>' + escH(m.title) + '</b></summary><div class="stack" style="margin-top:8px">' + md(m.text) + '</div>'; area.append(d); }
+    const cs = cheatSheet(t); if (cs) area.append(cs);
     const qs = (t.clarify || {}).checks || [];
     const missing = T.filter(x => !segDone(x));
     const nb = nextBtn(null, () => !missing.length && qs.every((q, i) => s.cl[i] !== undefined), missing.length ? 'Bearbeite zuerst alle Abschnitte (' + missing.map(x => T.indexOf(x) + 1).join(', ') + ').' : 'Beantworte zuerst die Frage(n) oben.');
@@ -547,8 +564,10 @@ STEPVIEW[5] = (body, t, s, nextBtn) => {
   function showLab(){
     if (labWrap.children.length) return;
     labWrap.append(h('div', {class:'stack', html:md(L.text)}));
-    const lab = h('div'); labWrap.append(lab);
-    labRun(lab, L.type, L, {});
+    const lab = h('div');
+    if (Array.isArray(L.map) && L.map.length) labWrap.append(labMapBox(L.map, () => lab));
+    labWrap.append(lab);
+    labRun(lab, L.type, L, {topic:t.id});
     const bR = h('button', {class:'btn btn-sm', type:'button'}, 'Mit dem Labor verglichen? Vorhersage auflösen');
     const rv = () => { if (!pred && !skb) return; if (pred) pred.reveal(s.lab.pr); if (skb) skb.reveal(); s.lab.prShown = true; store.save(); bR.remove(); };
     if (pred || skb){ bR.onclick = () => { rv(); if (skb) skb.scrollIntoView({block:'nearest', behavior:'smooth'}); }; labWrap.append(bR); if (s.lab.prShown) rv(); }
@@ -855,7 +874,7 @@ STEPVIEW_OLD[4] = (body, t, s, nextBtn) => {
   body.append(h('div', {class:'stack', html:md(L.text)}));
   const lab = h('div');
   body.append(lab);
-  labRun(lab, L.type, L, {});
+  labRun(lab, L.type, L, {topic:t.id});
   s.lab = s.lab || {};
   const qs = L.questions || [];
   const nb = nextBtn(null, () => qs.every((q, i) => s.lab[i] !== undefined) && (!L.noPic || s.lab.np !== undefined));
@@ -1138,7 +1157,7 @@ function errbookView(main){
   main.append(h('label', {class:'fld'}, 'Anzeigen', sel));
   const B = store.data.errbook.slice().reverse().filter(e => flt === 'all' || (!e.done && !e.solved));
   if (!B.length){ main.append(h('p', {style:'margin-top:16px'}, flt === 'all' ? 'Das Fehlerheft ist leer.' : 'Keine offenen Einträge.')); return; }
-  const KIND = {line:'Rechenzeile', concept:'Konzeptfrage', seg:'Frage im Erklärteil', final:'Abschluss', sketch:'Skizze'};
+  const KIND = {line:'Rechenzeile', concept:'Konzeptfrage', seg:'Frage im Erklärteil', final:'Abschluss', sketch:'Skizze'};   /* seg mit step: Schrittfrage (UMBAU2.md), Link „Zum Schritt“ */
   const list = h('div', {class:'eblist'});
   for (const e of B){
     const t = topicById(e.t);
@@ -1149,13 +1168,14 @@ function errbookView(main){
     if (e.k === 'line'){
       html += '<div class="small">' + inl(e.title || '') + (e.prompt ? ' – ' + inl(e.prompt) : '') + '</div><div class="ebline">' + lineHTML(e.text, ctx) + '</div>' + (e.msg ? '<div class="small ebmsg">' + inl(e.msg) + '</div>' : '');
     } else {
-      html += '<div>' + inl(e.text || '') + '</div>' + (e.ans ? '<div class="small">Deine Antwort: ' + inl(String(e.ans)) + '</div>' : '') + (e.right ? '<div class="small">Richtig: ' + inl(String(e.right)) + '</div>' : '') + (e.why ? '<div class="small">Richtige Begründung: ' + inl(String(e.why)) + '</div>' : '') + (e.msg ? '<div class="small ebmsg">' + inl(e.msg) + '</div>' : '');
+      html += (e.where ? '<div class="small muted">' + escH(e.where) + '</div>' : '') + '<div>' + inl(e.text || '') + '</div>' + (e.ans ? '<div class="small">Deine Antwort: ' + inl(String(e.ans)) + '</div>' : '') + (e.right ? '<div class="small">Richtig: ' + inl(String(e.right)) + '</div>' : '') + (e.why ? '<div class="small">Richtige Begründung: ' + inl(String(e.why)) + '</div>' : '') + (e.msg ? '<div class="small ebmsg">' + inl(e.msg) + '</div>' : '');
     }
     const links = [];
     if (t && e.k === 'line' && tk) links.push('<a href="#/practice/' + t.id + '/' + encodeURIComponent(e.ref) + '">Zur Aufgabe</a>');
     else if (t && e.k === 'line') links.push('<a href="#/learn/' + t.id + '/4">Zum Beispiel</a>');
     if (t && e.k === 'concept') links.push('<a href="#/practice/' + t.id + '/' + encodeURIComponent('c:' + e.ref) + '">Zur Frage</a>');
-    if (t && e.k === 'seg' && e.seg) links.push('<a href="#/learn/' + t.id + '/3/' + encodeURIComponent(e.seg) + '">Zum Abschnitt</a>');
+    if (t && e.k === 'seg' && e.step && findStep(t, e.step)) links.push('<a href="#/learn/' + t.id + '/3/' + encodeURIComponent(e.step) + '">Zum Schritt</a>');
+    else if (t && e.k === 'seg' && e.seg) links.push('<a href="#/learn/' + t.id + '/3/' + encodeURIComponent(e.seg) + '">Zum Abschnitt</a>');
     if (t && e.k === 'seg' && !e.seg) links.push('<a href="#/learn/' + t.id + '/4">Zum Beispiel</a>');
     if (t && e.k === 'final') links.push('<a href="#/learn/' + t.id + '/6">Üben</a>');
     if (e.k === 'sketch'){ const inPr = t && (t.sketch || []).some(x => x.id === e.ref); links.push('<a href="#/' + (inPr ? 'practice/' + t.id + '/' + encodeURIComponent('s:' + e.ref) : 'sketch/' + encodeURIComponent(e.ref)) + '">Zur Skizze</a>'); }

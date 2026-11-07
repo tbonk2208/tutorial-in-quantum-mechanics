@@ -970,6 +970,46 @@ function selfTest(spec, opt){
   return {ok:uniq.length === 0, problems:uniq};
 }
 
-return {map, dom, sample, evaluate, model, arrows, synth, validate, selfTest, T, plotOf, LABEL, YDEF, version:1,
+/* ---------- statischer Graph (didaktik/UMBAU2.md, Abschnitt 2: reps-Zeile k:'graph', Schritt-Feld plot) ----------
+   g = {plot:{x, y?, dom?, xlab, ylab, ticks, …}, f:x => …, f2?:x => …, lab?, lab2?, cap?}. Zeichnet nichts:
+   Rückgabe {plot (vollständig; y aus den Kurven, wenn nicht angegeben: [min, max] mit 0, Rand 10 %),
+             curves:[{key:'f'|'f2', lab, pts:[[x, y], …]}] (nicht endliche Werte als NaN, d. h. Lücke), problems:[…]}.
+   Werte werden nicht umskaliert (anders als model bei Skizzen ohne abs). */
+function graph(g, n){
+  const problems = [];
+  if (!g || typeof g !== 'object') return {plot:{x:[0, 1], y:[-1, 1]}, curves:[], problems:['kein Graph (Objekt erwartet)']};
+  /* auch flach erlaubt: {x, xlab, …, f} (Plot-Schlüssel auf derselben Ebene wie f) */
+  const nested = !!(g.plot && typeof g.plot === 'object');
+  const src = nested ? g.plot : Object.fromEntries(Object.entries(g).filter(([k]) => PLOT_KEYS.includes(k)));
+  const p = Object.assign({}, src);
+  if (nested) for (const k of Object.keys(src)) if (!PLOT_KEYS.includes(k)) problems.push('plot.' + k + ' unbekannt');
+  if (!isRange(p.x)){ problems.push(p.x === undefined ? 'plot.x fehlt' : 'plot.x ungültig'); p.x = [0, 1]; }
+  if (p.dom !== undefined && !isRange(p.dom)){ problems.push('plot.dom ungültig'); delete p.dom; }
+  const D = isRange(p.dom) ? p.dom : p.x;
+  n = n || 400;
+  if (typeof g.f !== 'function') problems.push('f fehlt (JS-Funktion x => …)');
+  if (g.f2 !== undefined && typeof g.f2 !== 'function') problems.push('f2 ist keine Funktion');
+  const curves = [];
+  for (const [key, f, lab] of [['f', g.f, g.lab], ['f2', g.f2, g.lab2]]){
+    if (typeof f !== 'function') continue;
+    const pts = []; let ok = 0;
+    for (let i = 0; i < n; i++){ const x = D[0] + (D[1] - D[0]) * i / (n - 1); let y; try { y = +f(x); } catch(e){ y = NaN; } if (fin(y)) ok++; pts.push([x, fin(y) ? y : NaN]); }
+    if (!ok) problems.push(key + ' liefert keine endlichen Werte auf ' + (p.dom ? 'plot.dom' : 'plot.x'));
+    curves.push({key, lab:lab || '', pts});
+  }
+  if (!isRange(p.y)){
+    if (p.y !== undefined) problems.push('plot.y ungültig');
+    let a = Infinity, b = -Infinity;
+    for (const c of curves) for (const q of c.pts) if (fin(q[1])){ if (q[1] < a) a = q[1]; if (q[1] > b) b = q[1]; }
+    if (!fin(a)){ a = -1; b = 1; }
+    a = Math.min(a, 0); b = Math.max(b, 0);
+    if (b - a < 1e-12) b = a + 1;
+    const m = 0.1 * (b - a);
+    p.y = [a - m, b + m];
+  }
+  return {plot:p, curves, problems};
+}
+
+return {map, dom, sample, evaluate, model, arrows, synth, validate, selfTest, graph, T, plotOf, LABEL, YDEF, version:1,
   _:{jumpNear, jumpFit, fitSlope, lobes, zigzag, dips}};   // interne Bausteine nur für Tests
 })();

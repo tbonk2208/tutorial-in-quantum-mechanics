@@ -1,4 +1,6 @@
 /* ===== Thema 11: Stationäre Störungstheorie ===== */
+(function(){
+const R = String.raw;
 /* Skizzen (SKIZZE.md), L = 1, E_m = m²E_1.
    (1) Punktförmige Störung α δ(x − a): E_n^(1)(a) = α|ψ_n(a)|² (Kasten: 2 sin²(nπa); Oszillator: |ψ_n(a)|² mit Hermite-Rekursion, a in x0).
    (2) Stufe V0 auf 0 < x < 1/2: ψ_1^(1) = Σ_{m≠1} V_m1/(E_1 − E_m) ψ_m mit V_m1/V0 = 2∫_0^{1/2} sin(mπx) sin(πx) dx = sin((m−1)π/2)/((m−1)π) − sin((m+1)π/2)/((m+1)π);
@@ -69,17 +71,122 @@ topic({
     reveal:'Die Verschiebung ist **quadratisch** in $\\mathcal E$. Die Störung ist $\\hat H\' = e\\mathcal E\\hat z$ (Elektronenladung $-e$). In erster Ordnung bräuchte man $\\langle z\\rangle$ im Grundzustand, und das ist null, weil $|\\psi_{100}|^2$ kugelsymmetrisch ist. Erst in zweiter Ordnung verformt das Feld den Zustand: $E^{(2)} = -\\frac12\\alpha\\mathcal E^2$ mit der Polarisierbarkeit $\\alpha$.\n\nGanz anders beim Niveau $n = 2$: Dort sind $2s$ und $2p$ entartet, und die Verschiebung ist *linear* in $\\mathcal E$. Wie Störungstheorie beide Fälle erklärt, zeigt der Lerntext.'
   },
   teach:[
-    {id:'stoer-t1', title:'Die Idee: ein gelöstes Problem plus eine kleine Störung',
-      text:'**Warum nähern?** Exakt lösen kann man nur wenige Modelle: Kasten, Oszillator, Wasserstoff. Reale Systeme weichen davon ab. Ein Molekül schwingt nicht exakt harmonisch, ein Atom sitzt in einem äußeren Feld. Oft ist die Abweichung aber klein. Dann zerlegt man\n\n$$\\hat H = \\hat H_0 + \\lambda\\hat H\'$$\n\nin ein gelöstes Problem $\\hat H_0|n^{(0)}\\rangle = E_n^{(0)}|n^{(0)}\\rangle$ und eine **Störung** $\\lambda\\hat H\'$. Der Parameter $\\lambda$ zählt nur die Ordnung mit; am Ende setzt man $\\lambda = 1$. Die Zustände $|n^{(0)}\\rangle$ bilden eine [[lex:orthonormalbasis|Orthonormalbasis]]. In diesem und den nächsten beiden Abschnitten sei das betrachtete Niveau $E_n^{(0)}$ **nicht entartet**.\n\n**Ansatz.** Man nimmt an, dass Energie und Zustand glatt von $\\lambda$ abhängen, und entwickelt nach Potenzen:\n\n$$E_n = E_n^{(0)} + \\lambda E_n^{(1)} + \\lambda^2E_n^{(2)} + \\dots,\\qquad |n\\rangle = |n^{(0)}\\rangle + \\lambda|n^{(1)}\\rangle + \\lambda^2|n^{(2)}\\rangle + \\dots$$\n\nEinsetzen in $\\hat H|n\\rangle = E_n|n\\rangle$ und Ordnen nach Potenzen von $\\lambda$ gibt eine Gleichung je Ordnung. Jede muss einzeln gelten, weil die Gleichung für jedes kleine $\\lambda$ stimmen soll (Koeffizientenvergleich):\n\n$$\\lambda^0:\\quad \\hat H_0|n^{(0)}\\rangle = E_n^{(0)}|n^{(0)}\\rangle$$\n\n$$\\lambda^1:\\quad \\hat H_0|n^{(1)}\\rangle + \\hat H\'|n^{(0)}\\rangle = E_n^{(0)}|n^{(1)}\\rangle + E_n^{(1)}|n^{(0)}\\rangle$$\n\n$$\\lambda^2:\\quad \\hat H_0|n^{(2)}\\rangle + \\hat H\'|n^{(1)}\\rangle = E_n^{(0)}|n^{(2)}\\rangle + E_n^{(1)}|n^{(1)}\\rangle + E_n^{(2)}|n^{(0)}\\rangle$$\n\nDie nullte Ordnung ist das gelöste Problem. Die beiden anderen Gleichungen werten die nächsten Abschnitte aus.\n\n**Eine Wahl, die Arbeit spart.** Der Zustand ist nur bis auf Normierung und Phase festgelegt. Man darf deshalb verlangen, dass die Korrekturen keinen Anteil längs $|n^{(0)}\\rangle$ haben: $\\langle n^{(0)}|n^{(1)}\\rangle = 0$, ebenso für $|n^{(2)}\\rangle$. Einen solchen Anteil könnte man in die Normierung stecken. Mit dieser Wahl ist $\\langle n|n\\rangle = 1 + O(\\lambda^2)$, der Zustand also bis zur ersten Ordnung normiert.\n\n**Wann ist das sinnvoll?** Die Reihe ist nur brauchbar, wenn die Störung die Zustände wenig mischt. Der übernächste Abschnitt zeigt, was „klein“ genau heißt: Die Matrixelemente $\\langle m^{(0)}|\\hat H\'|n^{(0)}\\rangle$ müssen klein gegen die Abstände $|E_n^{(0)} - E_m^{(0)}|$ sein.\n\n**Typische Fehlvorstellung.** „Klein heißt: $\\hat H\'$ hat einen kleinen Vorfaktor.“ Ob eine Störung klein ist, entscheidet der Vergleich mit den Niveauabständen, nicht die Größe einer Zahl allein. Dieselbe Feldstärke kann für den Grundzustand des Wasserstoffs klein und für hoch angeregte, eng liegende Niveaus groß sein.',
-      q:[
-        {q:'Warum muss die Gleichung für jede Potenz von $\\lambda$ einzeln stimmen?', opts:['Sie soll für jedes kleine $\\lambda$ gelten (Koeffizientenvergleich).', 'Weil am Ende $\\lambda = 1$ ist und alle Ordnungen gleich groß sind.', 'Weil $\\hat H\'$ hermitesch ist und reelle Eigenwerte hat.'], a:0, ex:'Ein Polynom in $\\lambda$, das für alle kleinen $\\lambda$ null ist, hat nur verschwindende Koeffizienten.'},
-        {q:'Ein Niveauabstand beträgt $1\\,$eV, das Matrixelement der Störung zu diesem Nachbarn $0{,}5\\,$eV. Ist Störungstheorie hier verlässlich?', opts:['eher nicht, das Matrixelement ist nicht klein gegen den Abstand', 'ja, $0{,}5\\,$eV ist für ein Atom eine kleine Energie', 'ja, solange die erste Ordnung null ist'], a:0, ex:'Maßstab ist das Verhältnis $|\\langle m|\\hat H\'|n\\rangle|/|E_n^{(0)} - E_m^{(0)}| = 0{,}5$ – zu groß für eine schnell konvergierende Reihe.'}
-      ]},
-    {id:'stoer-t2', title:'Erste Ordnung: Energie und Zustand',
-      text:'**Energie.** Multipliziere die Gleichung erster Ordnung von links mit $\\langle n^{(0)}|$:\n\n$$\\langle n^{(0)}|\\hat H_0|n^{(1)}\\rangle + \\langle n^{(0)}|\\hat H\'|n^{(0)}\\rangle = E_n^{(0)}\\langle n^{(0)}|n^{(1)}\\rangle + E_n^{(1)}.$$\n\nWeil $\\hat H_0$ [[lex:hermitescher-operator|hermitesch]] ist, wirkt es auch nach links: $\\langle n^{(0)}|\\hat H_0 = E_n^{(0)}\\langle n^{(0)}|$. Der erste Term links ist also $E_n^{(0)}\\langle n^{(0)}|n^{(1)}\\rangle$ und hebt sich gegen den ersten rechts. Es bleibt\n\n$$E_n^{(1)} = \\langle n^{(0)}|\\hat H\'|n^{(0)}\\rangle.$$\n\n**Deutung.** Die [[lex:stoerung-1|Korrektur erster Ordnung]] ist der Erwartungswert der Störung im *ungestörten* Zustand. Das Teilchen spürt die Störung dort, wo es sich aufhält.\n\n**Zustand.** Projiziere dieselbe Gleichung auf $\\langle m^{(0)}|$ mit $m \\ne n$. Wegen $\\langle m^{(0)}|n^{(0)}\\rangle = 0$ folgt $(E_m^{(0)} - E_n^{(0)})\\langle m^{(0)}|n^{(1)}\\rangle + \\langle m^{(0)}|\\hat H\'|n^{(0)}\\rangle = 0$. Mit der Wahl $\\langle n^{(0)}|n^{(1)}\\rangle = 0$ und der [[lex:vollstaendigkeit|Vollständigkeit]] der Basis ist\n\n$$|n^{(1)}\\rangle = \\sum_{m\\ne n}\\frac{\\langle m^{(0)}|\\hat H\'|n^{(0)}\\rangle}{E_n^{(0)} - E_m^{(0)}}\\,|m^{(0)}\\rangle.$$\n\nDie Störung mischt andere Zustände bei, umso stärker, je näher sie energetisch liegen. Hier sieht man auch, warum Entartung Probleme macht: Bei $E_m^{(0)} = E_n^{(0)}$ wäre der Nenner null.\n\n**Symmetrie spart Arbeit.** Ist $\\hat H_0$ symmetrisch unter $x \\to -x$, so haben die Eigenfunktionen eine feste [[lex:paritaet-auswahlregel|Parität]], und $|\\psi_n|^2$ ist gerade. Für eine ungerade Störung wie $\\lambda x$ im Oszillator ist dann $E_n^{(1)} = \\lambda\\int x|\\psi_n|^2dx = 0$.\n\n**Beispiel: Stufe in der Kastenmitte.** Im Kasten $0 < x < L$ sei $\\hat H\' = V_0$ für $L/4 < x < 3L/4$, sonst $0$. Dann ist $E_n^{(1)} = V_0\\cdot P_n(\\text{Mitte})$. Für $n = 1$ ergibt die Herleitung unten $V_0\\left(\\frac12 + \\frac1\\pi\\right) \\approx 0{,}82\\,V_0$: Der Grundzustand hat seinen Bauch in der Mitte und spürt mehr als die halbe Stufe. Für $n = 2$ sind es genau $V_0/2$. Das Labor daneben zeigt eine verwandte Störung, die Stufe auf der linken Hälfte; dort bekommt jedes $n$ genau $V_0/2$.\n\n**Typische Fehlvorstellung.** „Für die erste Ordnung muss man erst die gestörte Wellenfunktion kennen.“ Nein: Für $E_n^{(1)}$ genügt die ungestörte. Die Änderung des Zustands wirkt sich erst in der Energie zweiter Ordnung aus.',
-      fig:{lab:'perturb', caption:'Stufe $V_0$ auf der linken Kastenhälfte: grau ungestört, orange erste Ordnung $E_n^{(0)} + V_0/2$, blau exakt. Für kleines $V_0$ liegen Orange und Blau fast aufeinander. Mit wachsendem $V_0$ liegt die exakte Grundzustandsenergie sichtbar darunter.'},
-      derive:{ctx:CTX.box({params:{L:'pos', m:'pos', V_0:'pos'}, defs:{'ψ_n(x)':'sqrt(2/L) sin(nπx/L)'}, ops:{"H'":'V_0 Θ(x - L/4) Θ(3L/4 - x)'}}),
-        lines:[
+    /* ===== Abschnitt 1: Idee, Ansatz, Ordnungen ===== */
+    {id:'stoer-t1', title:'Die Idee: ein gelöstes Problem plus eine kleine Störung', steps:[
+      {id:'stoer-t1a', title:'Warum nähern?',
+        num:{title:'Ein Zweiniveausystem', text:R`Durch das ganze Thema begleitet dich dieses Beispiel, Energien in eV:
+
+$$\hat H_0 \doteq \begin{pmatrix}1 & 0\\ 0 & 3\end{pmatrix},\qquad \hat H' \doteq \begin{pmatrix}0{,}1 & 0{,}2\\ 0{,}2 & -0{,}1\end{pmatrix}.$$
+
+$\hat H_0$ ist gelöst: Niveaus bei $1$ und $3\,\mathrm{eV}$. Die exakte tiefere Energie von $\hat H_0 + \hat H'$ ist $2 - \sqrt{0{,}85} \approx 1{,}0780\,\mathrm{eV}$. Wie nah kommt man ihr, ohne zu diagonalisieren?`},
+        text:R`Exakt lösen kann man nur wenige Modelle: Kasten, Oszillator, Wasserstoff. Reale Systeme weichen davon ab. Ein Molekül schwingt nicht exakt harmonisch, ein Atom sitzt in einem äußeren Feld. Oft ist die Abweichung aber klein. Dann zerlegst du
+
+$$\hat H = \hat H_0 + \lambda\hat H'$$
+
+in ein gelöstes Problem $\hat H_0|n^{(0)}\rangle = E_n^{(0)}|n^{(0)}\rangle$ und eine **Störung** $\lambda\hat H'$. Gelesen: „n null“ für den ungestörten Zustand. Der Parameter $\lambda$ zählt nur die Ordnung mit; am Ende setzt man $\lambda = 1$. Bis Abschnitt 3 sei das betrachtete Niveau nicht entartet.`,
+        q:{q:R`Ein Molekül hat das Potential $V = \tfrac12m\omega^2x^2 + \kappa x^3$ mit kleinem $\kappa$. Wie zerlegst du $\hat H$?`,
+          opts:[R`$\hat H_0 = \frac{\hat p^2}{2m}$, $\hat H' = \tfrac12m\omega^2\hat x^2 + \kappa\hat x^3$`, R`$\hat H_0 = \frac{\hat p^2}{2m} + \tfrac12m\omega^2\hat x^2$, $\hat H' = \kappa\hat x^3$`, R`$\hat H_0 = \kappa\hat x^3$, $\hat H' = \frac{\hat p^2}{2m} + \tfrac12m\omega^2\hat x^2$`], a:1,
+          ex:R`$\hat H_0$ ist der gelöste Oszillator aus Thema 7, die kleine Abweichung $\kappa\hat x^3$ ist die Störung.`,
+          fb:[R`Das freie Teilchen ist zwar gelöst, aber das Potential $\tfrac12m\omega^2x^2$ ist keine kleine Störung.`, '',
+            R`Vertauscht: Die Störung soll der kleine, ungelöste Teil sein, nicht der große, gelöste.`]}},
+      {id:'stoer-t1b', title:R`Der Ansatz: Potenzreihen in $\lambda$`,
+        num:{title:R`Das Beispiel mit $\lambda$`, text:R`Mit $\lambda$ vor der ganzen Störung ist $\hat H \doteq \begin{pmatrix}1 + 0{,}1\lambda & 0{,}2\lambda\\ 0{,}2\lambda & 3 - 0{,}1\lambda\end{pmatrix}$. Die exakte tiefere Energie, nach $\lambda$ entwickelt, ist
+
+$$\begin{aligned}E(\lambda) &= 2 - \sqrt{1 - 0{,}2\lambda + 0{,}05\lambda^2}\\ &= 1 + 0{,}1\,\lambda - 0{,}02\,\lambda^2\\ &\quad - 0{,}002\,\lambda^3 + \dots\end{aligned}$$
+
+Die Potenzen von $\lambda$ ordnen die Beiträge: Ordnung $0$ ist $1$, Ordnung $1$ ist $0{,}1$, Ordnung $2$ ist $-0{,}02$.`},
+        text:R`Du nimmst an, dass Energie und Zustand glatt von $\lambda$ abhängen, und entwickelst nach Potenzen:
+
+$$\begin{aligned}E_n &= E_n^{(0)} + \lambda E_n^{(1)} + \lambda^2E_n^{(2)} + \dots,\\ |n\rangle &= |n^{(0)}\rangle + \lambda|n^{(1)}\rangle + \lambda^2|n^{(2)}\rangle + \dots\end{aligned}$$
+
+$E_n^{(1)}$, gelesen „E n eins“, ist die Korrektur erster Ordnung, $|n^{(1)}\rangle$ die Korrektur des Zustands. Die Reihe ist nur brauchbar, wenn jeder Beitrag deutlich kleiner ist als der vorige. Im Beispiel trifft das zu: $1$, dann $0{,}1$, dann $0{,}02$, dann $0{,}002$. Bei $\lambda = 1$ geben die ersten drei Glieder $1{,}08$, exakt sind es $1{,}0780$.`,
+        q:{q:R`Wozu dient der Parameter $\lambda$ in $\hat H = \hat H_0 + \lambda\hat H'$?`,
+          opts:['Er ist eine Naturkonstante, die die Stärke der Störung misst.', 'Er zählt die Ordnung mit und wird am Ende $1$ gesetzt.', 'Er macht die Störung $\\hat H\'$ hermitesch.'], a:1,
+          ex:R`$\lambda$ ist ein Hilfsparameter: Jeder Faktor $\hat H'$ bringt ein $\lambda$ mit. Die physikalische Stärke steckt in $\hat H'$ selbst.`,
+          fb:[R`Die Stärke steckt schon in $\hat H'$, etwa im Feld $\mathcal E$ oder in $\kappa$. $\lambda$ zählt nur mit.`, '',
+            R`Hermitesch ist $\hat H'$ von selbst; ein reeller Faktor ändert daran nichts.`]}},
+      {id:'stoer-t1c', title:'Ordnen nach Potenzen: eine Gleichung je Ordnung',
+        pre:{from:'m-analysis', seg:'ma-t1', title:'Taylor-Reihen', text:R`Eine glatte Funktion lässt sich um einen Punkt als Potenzreihe schreiben: $f(\lambda) = f(0) + f'(0)\,\lambda + \tfrac12f''(0)\,\lambda^2 + \dots$ Zwei Reihen sind genau dann gleich, wenn alle Koeffizienten gleich sind. Mini-Beispiel: $\sqrt{1 + u} \approx 1 + \tfrac12u - \tfrac18u^2$.`},
+        num:{title:'Ein Polynom, das überall null ist', text:R`Gilt $a_0 + a_1\lambda + a_2\lambda^2 = 0$ für $\lambda = 0$, $0{,}1$ und $0{,}2$, dann folgt aus $\lambda = 0$ sofort $a_0 = 0$. Die beiden anderen Werte geben
+
+$$0{,}1\,a_1 + 0{,}01\,a_2 = 0,\qquad 0{,}2\,a_1 + 0{,}04\,a_2 = 0\quad\Rightarrow\quad a_1 = a_2 = 0.$$`},
+        text:R`Setze beide Reihen in $\hat H|n\rangle = E_n|n\rangle$ ein:
+
+$$\begin{aligned}&(\hat H_0 + \lambda\hat H')\big(|n^{(0)}\rangle + \lambda|n^{(1)}\rangle + \dots\big)\\ &= \big(E_n^{(0)} + \lambda E_n^{(1)} + \dots\big)\\ &\qquad\cdot\big(|n^{(0)}\rangle + \lambda|n^{(1)}\rangle + \dots\big).\end{aligned}$$
+
+Multipliziere aus und sammle auf jeder Seite die Terme mit gleicher Potenz von $\lambda$. Ein Produkt trägt zu $\lambda^k$ bei, wenn die Ordnungen seiner beiden Faktoren zusammen $k$ ergeben. Jede Ordnung muss einzeln stimmen, weil die Gleichung für jedes kleine $\lambda$ gilt (Koeffizientenvergleich):
+
+$$\lambda^0:\quad \hat H_0|n^{(0)}\rangle = E_n^{(0)}|n^{(0)}\rangle$$
+
+$$\lambda^1:\quad \hat H_0|n^{(1)}\rangle + \hat H'|n^{(0)}\rangle = E_n^{(0)}|n^{(1)}\rangle + E_n^{(1)}|n^{(0)}\rangle$$
+
+$$\lambda^2:\quad \hat H_0|n^{(2)}\rangle + \hat H'|n^{(1)}\rangle = E_n^{(0)}|n^{(2)}\rangle + E_n^{(1)}|n^{(1)}\rangle + E_n^{(2)}|n^{(0)}\rangle$$
+
+Die nullte Ordnung ist das gelöste Problem. Die beiden anderen werten die nächsten Abschnitte aus.`,
+        q:{q:R`Welcher Term gehört in die Gleichung zur Ordnung $\lambda^2$?`,
+          opts:[R`$\hat H'|n^{(2)}\rangle$, denn er enthält $|n^{(2)}\rangle$`, R`$E_n^{(1)}|n^{(1)}\rangle$`, R`$E_n^{(2)}|n^{(2)}\rangle$`], a:1,
+          ex:R`$\lambda E_n^{(1)}$ mal $\lambda|n^{(1)}\rangle$ gibt $\lambda^2$: Die Ordnungen $1 + 1$ ergeben $2$. Jede Ordnung muss einzeln stimmen, weil die Gleichung für jedes kleine $\lambda$ gilt.`,
+          fb:[R`$\lambda\hat H'$ mal $\lambda^2|n^{(2)}\rangle$ gibt $\lambda^3$. Es zählt die Summe der Ordnungen beider Faktoren.`, '',
+            R`$\lambda^2E_n^{(2)}$ mal $\lambda^2|n^{(2)}\rangle$ gibt $\lambda^4$.`]}},
+      {id:'stoer-t1d', title:'Eine Wahl, die Arbeit spart',
+        num:{title:'Ein Anteil längs des alten Zustands', text:R`Angenommen, $|n^{(1)}\rangle$ enthielte $0{,}3\,|n^{(0)}\rangle$. Dann wäre bis zur ersten Ordnung
+
+$$|n\rangle = (1 + 0{,}3\lambda)\,|n^{(0)}\rangle + \dots$$
+
+Das ist nur ein anderer Vorfaktor vor $|n^{(0)}\rangle$, also eine andere Normierung. Man darf ihn weglassen.`},
+        text:R`Der Zustand ist nur bis auf Normierung und Phase festgelegt. Du darfst deshalb verlangen, dass die Korrekturen keinen Anteil längs $|n^{(0)}\rangle$ haben:
+
+$$\langle n^{(0)}|n^{(1)}\rangle = 0,\qquad \langle n^{(0)}|n^{(2)}\rangle = 0.$$
+
+Einen solchen Anteil könnte man in die Normierung stecken. Mit dieser Wahl ist $\langle n|n\rangle = 1 + O(\lambda^2)$, der Zustand also bis zur ersten Ordnung normiert. Die Korrektur $|n^{(1)}\rangle$ besteht dann nur aus den **anderen** Basiszuständen $|m^{(0)}\rangle$ mit $m \ne n$.`,
+        q:{q:R`Warum darf man $\langle n^{(0)}|n^{(1)}\rangle = 0$ verlangen?`,
+          opts:['Weil die Störung den Zustand $|n^{(0)}\\rangle$ nie verändert.', 'Weil ein Anteil längs $|n^{(0)}\\rangle$ nur Normierung und Phase ändert.', 'Weil $\\hat H\'$ keine Diagonalelemente hat.'], a:1,
+          ex:R`$(1 + c\lambda)|n^{(0)}\rangle$ beschreibt denselben Zustand wie $|n^{(0)}\rangle$. Den Faktor kann man am Ende wegnormieren.`,
+          fb:[R`Die Störung ändert den Zustand sehr wohl – aber durch Beimischung *anderer* Zustände.`, '',
+            R`$\hat H'$ darf Diagonalelemente haben; im Beispiel ist $\langle 1|\hat H'|1\rangle = 0{,}1$.`]}},
+      {id:'stoer-t1e', title:'Typischer Fehler: klein heißt kleiner Vorfaktor',
+        num:{title:'Dieselbe Kopplung, zwei Abstände', text:R`Eine Kopplung von $0{,}5\,\mathrm{eV}$ zu einem Nachbarn im Abstand $10\,\mathrm{eV}$ gibt das Verhältnis
+
+$$\frac{0{,}5}{10} = 0{,}05\qquad\text{gegen}\qquad \frac{0{,}5}{1} = 0{,}5$$
+
+bei einem Nachbarn im Abstand $1\,\mathrm{eV}$. Nur im ersten Fall ist die Störung klein.`},
+        text:R`„Klein heißt: $\hat H'$ hat einen kleinen Vorfaktor.“ Das ist ein verbreiteter Fehlschluss. Ob eine Störung klein ist, entscheidet der Vergleich mit den Niveauabständen, nicht die Größe einer Zahl allein. Die Matrixelemente $\langle m^{(0)}|\hat H'|n^{(0)}\rangle$ müssen klein gegen $|E_n^{(0)} - E_m^{(0)}|$ sein. Dieselbe Feldstärke kann für den Grundzustand des Wasserstoffs klein und für hoch angeregte, eng liegende Niveaus groß sein. Bei entarteten Niveaus ist der Abstand null; das braucht ein eigenes Verfahren (Abschnitt 4).`,
+        q:{q:R`Störung A koppelt mit $1\,\mathrm{eV}$ an einen Nachbarn $50\,\mathrm{eV}$ entfernt. Störung B koppelt mit $0{,}02\,\mathrm{eV}$ an einen Nachbarn $0{,}01\,\mathrm{eV}$ entfernt. Wo ist Störungstheorie verlässlich?`,
+          opts:[R`nur bei B, ihre Kopplung ist viel kleiner`, R`bei beiden, beide Kopplungen sind klein gegen $13{,}6\,\mathrm{eV}$`, R`nur bei A, das Verhältnis ist dort $0{,}02$`], a:2,
+          ex:R`Maßstab ist $|\langle m|\hat H'|n\rangle|/|E_n^{(0)} - E_m^{(0)}|$: bei A $1/50 = 0{,}02$, bei B $0{,}02/0{,}01 = 2$. B ist trotz der kleinen Zahl eine starke Störung.`,
+          fb:[R`Die Kopplung allein sagt nichts. Bei B ist sie doppelt so groß wie der Abstand zum Nachbarn.`,
+            R`Der Maßstab ist der Abstand zum gekoppelten Nachbarn, nicht eine typische Atomenergie.`, '']}}
+    ]},
+
+    /* ===== Abschnitt 2: erste Ordnung ===== */
+    {id:'stoer-t2', title:'Erste Ordnung: Energie und Zustand', steps:[
+      {id:'stoer-t2a', title:'Die Energie erster Ordnung',
+        pre:{from:'form', seg:'form-t2', title:'Hermitesch wirkt auch nach links', text:R`Ist $\hat A$ hermitesch, gilt $\langle\phi|\hat A\psi\rangle = \langle\hat A\phi|\psi\rangle$. Für einen Eigenzustand mit $\hat A|n\rangle = a|n\rangle$ und reellem $a$ folgt $\langle n|\hat A = a\,\langle n|$. Mini-Beispiel: $\langle n|\hat H_0|m\rangle = E_n\langle n|m\rangle$.`},
+        num:{title:'Im Zweiniveausystem', text:R`Die Diagonalelemente von $\hat H'$ sind die Korrekturen erster Ordnung:
+
+$$E_1^{(1)} = \langle 1|\hat H'|1\rangle = (1,\ 0)\begin{pmatrix}0{,}1 & 0{,}2\\ 0{,}2 & -0{,}1\end{pmatrix}\binom10 = 0{,}1.$$
+
+Erste Ordnung: $E_1 \approx 1 + 0{,}1 = 1{,}1\,\mathrm{eV}$, exakt $1{,}078\,\mathrm{eV}$.`},
+        text:R`Multipliziere die Gleichung erster Ordnung von links mit $\langle n^{(0)}|$:
+
+$$\langle n^{(0)}|\hat H_0|n^{(1)}\rangle + \langle n^{(0)}|\hat H'|n^{(0)}\rangle = E_n^{(0)}\langle n^{(0)}|n^{(1)}\rangle + E_n^{(1)}\langle n^{(0)}|n^{(0)}\rangle.$$
+
+Weil $\hat H_0$ [[lex:hermitescher-operator|hermitesch]] ist, wirkt es auch nach links: $\langle n^{(0)}|\hat H_0 = E_n^{(0)}\langle n^{(0)}|$. Der erste Term links ist deshalb gleich dem ersten Term rechts, beide fallen weg. Rechts ist $\langle n^{(0)}|n^{(0)}\rangle = 1$. Es bleibt
+
+$$E_n^{(1)} = \langle n^{(0)}|\hat H'|n^{(0)}\rangle.$$
+
+Die [[lex:stoerung-1|Korrektur erster Ordnung]] ist der Erwartungswert der Störung im *ungestörten* Zustand. Das Teilchen spürt die Störung dort, wo es sich aufhält. In einer Basis ist das ein Diagonalelement der Matrix von $\hat H'$.`,
+        q:{q:R`Wie groß ist $E_2^{(1)}$ im Zweiniveausystem?`, tr:{from:'matrix', to:'formel'},
+          opts:[R`$+0{,}2\,\mathrm{eV}$`, R`$-0{,}1\,\mathrm{eV}$`, R`$+0{,}1\,\mathrm{eV}$`], a:1,
+          ex:R`$E_2^{(1)} = \langle 2|\hat H'|2\rangle$ ist der Eintrag unten rechts, $-0{,}1\,\mathrm{eV}$.`,
+          fb:[R`$0{,}2$ ist das Nebendiagonalelement. Es koppelt die Zustände, wirkt aber erst in zweiter Ordnung auf die Energie.`, '',
+            R`$+0{,}1$ gehört zu $\langle 1|\hat H'|1\rangle$, oben links.`]}},
+      {id:'stoer-t2b', title:'Beispiel: eine Stufe in der Kastenmitte',
+        num:{title:R`$n = 2$`, text:R`Im Kasten $0 < x < L$ sitzt $\hat H' = V_0$ auf $L/4 < x < 3L/4$. Für $n = 2$ wiederholt sich $|\psi_2|^2 = \tfrac2L\sin^2(2\pi x/L)$ nach jeweils $L/2$. Der Kasten enthält zwei solche Perioden, die Mitte von $L/4$ bis $3L/4$ genau eine. Also liegt genau die Hälfte der Wahrscheinlichkeit in der Mitte:
+
+$$E_2^{(1)} = V_0\cdot\tfrac12 = \tfrac12V_0.$$`},
+        text:R`Für eine Stufe ist $E_n^{(1)} = V_0\cdot P_n(\text{Mitte})$, die Höhe der Stufe mal die Wahrscheinlichkeit, das Teilchen im ungestörten Zustand dort zu finden. Für den Grundzustand ergibt die Herleitung $V_0\left(\frac12 + \frac1\pi\right) \approx 0{,}82\,V_0$. Er hat seinen Bauch in der Mitte und spürt deshalb mehr als die halbe Stufe. Für $n = 3$ sind es nur $V_0\left(\frac12 - \frac{1}{3\pi}\right) \approx 0{,}39\,V_0$. Für große $n$ verteilt sich $|\psi_n|^2$ immer gleichmäßiger, und $E_n^{(1)}$ geht gegen $V_0/2$.`,
+        derive:{ctx:CTX.box({params:{L:'pos', m:'pos', V_0:'pos'}, defs:{'ψ_n(x)':'sqrt(2/L) sin(nπx/L)'}, ops:{"H'":'V_0 Θ(x - L/4) Θ(3L/4 - x)'}}), lines:[
           {l:"E^(1) = ⟨ψ_1|H'|ψ_1⟩", w:'Erwartungswert der Störung im ungestörten Grundzustand'},
           {l:'= 2V_0/L ∫_{L/4}^{3L/4} sin(πx/L)^2 dx', w:'Störung nur in der Mitte',
             why:{q:'Warum laufen die Grenzen nur von $L/4$ bis $3L/4$?', opts:['Außerhalb dieses Bereichs ist die Störung null.', 'Außerhalb dieses Bereichs ist $\\psi_1$ null.', 'Wegen der Symmetrie des Sinus um $L/2$.'], a:0, ex:'Der Integrand $\\psi_1^*\\hat H\'\\psi_1$ verschwindet, wo $\\hat H\' = 0$ ist. $\\psi_1$ selbst ist im ganzen Kasten ungleich null.'}},
@@ -87,81 +194,493 @@ topic({
           {l:'= V_0/L [x - L/(2π) sin(2πx/L)]_{L/4}^{3L/4}', w:'Stammfunktion'},
           {l:'= V_0/L (L/2 + L/π)', w:'$\\sin\\frac{3\\pi}{2} - \\sin\\frac\\pi2 = -2$',
             why:{q:'Woher kommt der Beitrag $L/\\pi$?', opts:['Aus $-\\frac{L}{2\\pi}(\\sin\\frac{3\\pi}{2} - \\sin\\frac\\pi2) = \\frac{L}{\\pi}$', 'Aus der Normierung $2/L$ der Kastenfunktion', 'Aus dem Integral über $x$ von $L/4$ bis $3L/4$'], a:0, ex:'Der Kosinus-Anteil verschwindet hier nicht, weil die Grenzen keine Vielfachen von $L/2$ sind. Das Integral über $1$ gibt $L/2$.'}},
-          {l:'= V_0 (1/2 + 1/π)',
+          {l:'= V_0 (1/2 + 1/π)', w:'ausgeklammert',
             why:{q:'Ist das plausibel?', opts:['Ja: Mehr als die Hälfte von $|\\psi_1|^2$ liegt in der Mitte.', 'Nein: Die Mitte ist halb so breit wie der Kasten, also $V_0/2$.', 'Nein: Die Korrektur muss kleiner als $V_0/2$ sein.'], a:0, ex:'$E_1^{(1)} = V_0\\,P(L/4 < x < 3L/4) \\approx 0{,}82\\,V_0$. Der Bauch von $\\psi_1$ liegt in der Mitte; „halbe Breite, also halbe Stufe“ gilt nur für eine gleichmäßige Dichte.'}}
         ]},
-      q:[
-        {q:'Für $\\hat H\' = \\lambda x$ im harmonischen Oszillator ist $E_n^{(1)} = $', opts:['$0$ für alle $n$', '$\\lambda\\sqrt{\\hbar/(2m\\omega)}$', '$\\lambda\\frac{\\hbar}{2m\\omega}(2n+1)$'], a:0, ex:'$|\\psi_n|^2$ ist gerade, $x$ ungerade; das Integral verschwindet. Mit Leiteroperatoren: $\\langle n|\\hat a + \\hat a^\\dagger|n\\rangle = 0$.'},
-        {q:'Die Störung $V_0$ sitzt auf $L/4 < x < 3L/4$. Welcher Zustand spürt sie in erster Ordnung am stärksten?', opts:['$n = 1$, er hat seinen Bauch in der Mitte', '$n = 2$, er hat dort seinen Knoten', 'alle gleich stark, je mit $V_0/2$'], a:0, ex:'$n = 1$: $V_0(\\frac12 + \\frac1\\pi) \\approx 0{,}82\\,V_0$; $n = 2$: $V_0/2$; $n = 3$: $V_0(\\frac12 - \\frac{1}{3\\pi}) \\approx 0{,}39\\,V_0$. Für großes $n$ geht der Wert gegen $V_0/2$.'}
-      ]},
-    {id:'stoer-t3', title:'Zweite Ordnung: Niveaus stoßen sich ab',
-      text:'**Herleitung.** Projiziere die Gleichung zweiter Ordnung auf $\\langle n^{(0)}|$. Wie in erster Ordnung heben sich die Terme mit $\\hat H_0$ und $E_n^{(0)}$ weg. Wegen $\\langle n^{(0)}|n^{(1)}\\rangle = 0$ fällt auch der Term mit $E_n^{(1)}$ weg. Übrig bleibt $E_n^{(2)} = \\langle n^{(0)}|\\hat H\'|n^{(1)}\\rangle$. Setzt man $|n^{(1)}\\rangle$ aus dem vorigen Abschnitt ein, erhält man die [[lex:stoerung-2|zweite Ordnung]]:\n\n$$E_n^{(2)} = \\sum_{m\\ne n}\\frac{\\langle n^{(0)}|\\hat H\'|m^{(0)}\\rangle\\langle m^{(0)}|\\hat H\'|n^{(0)}\\rangle}{E_n^{(0)} - E_m^{(0)}} = \\sum_{m\\ne n}\\frac{|\\langle m^{(0)}|\\hat H\'|n^{(0)}\\rangle|^2}{E_n^{(0)} - E_m^{(0)}}.$$\n\nIm letzten Schritt steht die Hermitezität von $\\hat H\'$: $\\langle n|\\hat H\'|m\\rangle = \\langle m|\\hat H\'|n\\rangle^*$.\n\n**Deutung.** Jeder Zähler ist $\\ge 0$. Das Vorzeichen eines Beitrags bestimmt der Nenner. Ein Niveau $m$ *oberhalb* von $n$ drückt $E_n$ nach unten, ein Niveau *unterhalb* drückt es nach oben: Die Niveaus „stoßen sich ab“. Für den Grundzustand liegen alle anderen Niveaus darüber, also gilt immer $E_0^{(2)} \\le 0$. Nahe Nachbarn tragen am meisten bei, weil ihr Nenner klein ist.\n\n**Gültigkeit.** Die Entwicklung ist sinnvoll, solange $|\\langle m^{(0)}|\\hat H\'|n^{(0)}\\rangle| \\ll |E_n^{(0)} - E_m^{(0)}|$ für alle $m$, die stark beitragen. Dann ist auch die Beimischung $|n^{(1)}\\rangle$ klein.\n\n**Prüfstein: das Zweiniveausystem.** Für $\\hat H = \\begin{pmatrix}E_1 & v\\\\ v & E_2\\end{pmatrix}$ mit $E_1 < E_2$ und reellem $v$ kennt man die exakten Eigenwerte:\n\n$$\\varepsilon_\\mp = \\frac{E_1 + E_2}{2} \\mp \\sqrt{\\frac{(E_2 - E_1)^2}{4} + v^2}.$$\n\nFür $|v| \\ll E_2 - E_1$ gibt die [[lex:taylor|Taylor-Entwicklung]] $\\sqrt{a^2 + v^2} \\approx a + \\frac{v^2}{2a}$ mit $a = (E_2 - E_1)/2$:\n\n$$\\varepsilon_- \\approx E_1 - \\frac{v^2}{E_2 - E_1},\\qquad \\varepsilon_+ \\approx E_2 + \\frac{v^2}{E_2 - E_1}.$$\n\nGenau das liefert die Störungstheorie mit $\\hat H_0 = \\mathrm{diag}(E_1, E_2)$ und $\\hat H\'$ = Nebendiagonale: $E_1^{(1)} = 0$ und $E_1^{(2)} = v^2/(E_1 - E_2)$. Das untere Niveau sinkt, das obere steigt um denselben Betrag. Die Herleitung unten prüft die exakte Lösung und beide Ordnungen nach.\n\n**Typische Fehlvorstellungen.** (1) „In der Summe muss man auch $m = n$ mitnehmen.“ Nein: Dieser Anteil ist durch die Wahl $\\langle n^{(0)}|n^{(1)}\\rangle = 0$ ausgeschlossen; er stünde ohnehin mit Nenner null da. (2) Das Vorzeichen des Nenners vertauschen. Kontrolle: Der Grundzustand muss sinken.',
-      derive:{ctx:STMAT({H:'(E_1, v; v, E_2)', H_1:'(0, v; v, 0)'}, {E_1:'pos', E_2:{range:['E_1 + 1', 'E_1 + 3']}, v:'real'}),
-        lines:[
+        q:{q:R`Die Störung $V_0$ sitzt auf $L/4 < x < 3L/4$. Welcher Zustand spürt sie in erster Ordnung am stärksten?`,
+          opts:[R`$n = 2$, er hat dort seinen Knoten`, R`$n = 1$, er hat seinen Bauch in der Mitte`, R`alle gleich stark, je mit $V_0/2$`], a:1,
+          ex:R`$n = 1$: $V_0(\frac12 + \frac1\pi) \approx 0{,}82\,V_0$; $n = 2$: $V_0/2$; $n = 3$: $\approx 0{,}39\,V_0$.`,
+          fb:[R`Ein Knoten in der Mitte verringert die Wahrscheinlichkeit dort. $n = 2$ bekommt genau $V_0/2$.`, '',
+            R`„Halbe Breite, halbe Stufe“ gilt nur bei gleichmäßiger Dichte. $|\psi_1|^2$ ist in der Mitte groß.`]}},
+      {id:'stoer-t2c', title:'Das Matrixelement in fünf Gestalten',
+        num:{title:'Ein Nebendiagonalelement', text:R`Für dieselbe Stufe ist
+
+$$\langle\psi_3|\hat H'|\psi_1\rangle = \frac{2V_0}{L}\int_{L/4}^{3L/4}\sin\frac{3\pi x}{L}\,\sin\frac{\pi x}{L}\,dx = -\frac{V_0}{\pi} \approx -0{,}32\,V_0,$$
+
+während $\langle\psi_2|\hat H'|\psi_1\rangle = 0$ ist: $\psi_1\psi_2$ ist antisymmetrisch um $L/2$, die Stufe symmetrisch.`},
+        text:R`Ein Matrixelement $\langle m|\hat H'|n\rangle$, gelesen „m, H Strich, n“, hat mehrere Gestalten. In der Ortsdarstellung ist es ein Integral über $\psi_m^*\,\hat H'\,\psi_n$. Als Bild ist es die Fläche unter diesem Produkt, aber nur dort, wo die Störung wirkt. Als Matrix steht es in Zeile $m$, Spalte $n$. Die Diagonalelemente verschieben die Niveaus in erster Ordnung. Die Nebendiagonalelemente mischen Zustände und wirken erst in zweiter Ordnung auf die Energie.`,
+        reps:{obj:R`Die Stufe $V_0$ in der Kastenmitte`,
+          rows:[
+            {k:'worte', text:R`Wie stark spürt der Zustand $n$ die Stufe, und wie stark koppelt sie ihn an den Zustand $m$?`},
+            {k:'dirac', tex:R`V_{mn} = \langle\psi_m|\hat H'|\psi_n\rangle`},
+            {k:'ort', tex:R`V_{mn} = \frac{2V_0}{L}\int_{L/4}^{3L/4}\sin\frac{m\pi x}{L}\,\sin\frac{n\pi x}{L}\,dx`},
+            {k:'graph', plot:{x:[0, 1], y:[-0.1, 2.1], xlab:'x/L', ylab:R`|\psi_1|^2\,L`, regions:[{x:[0.25, 0.75], lab:'Stufe'}]}, f:x => 2 * Math.sin(Math.PI * x) ** 2, lab:R`|\psi_1|^2`, f2:x => 2 * Math.sin(2 * Math.PI * x) ** 2, lab2:R`|\psi_2|^2`,
+              cap:R`Getönt der Bereich der Stufe. Die Fläche von $|\psi_1|^2$ darin ist $0{,}82$, die von $|\psi_2|^2$ genau $0{,}5$: das sind $V_{11}/V_0$ und $V_{22}/V_0$.`},
+            {k:'matrix', tex:R`\frac{V}{V_0} \doteq \begin{pmatrix}0{,}818 & 0 & -0{,}318\\ 0 & 0{,}5 & 0\\ -0{,}318 & 0 & 0{,}394\end{pmatrix}\quad(\text{Ausschnitt } m, n = 1, 2, 3)`},
+            {k:'physik', text:R`Die Diagonale verschiebt die Niveaus in erster Ordnung: $n = 1$ um $0{,}82\,V_0$, $n = 2$ um $0{,}5\,V_0$, $n = 3$ um $0{,}39\,V_0$. Die Nullen zeigen: Die Stufe mischt keine Zustände verschiedener Parität.`}
+          ],
+          links:[
+            {from:'worte', to:'dirac', rule:R`„Wie stark spürt $n$ die Stufe“ ist das Diagonalelement $m = n$; „Kopplung an $m$“ ist das Element mit $m \ne n$.`},
+            {from:'dirac', to:'ort', rule:R`Bra und Ket durch die Kastenfunktionen ersetzen, $\hat H'$ durch $V_0$ im Stufenbereich; das Skalarprodukt wird ein Integral nur über diesen Bereich.`},
+            {from:'ort', to:'graph', rule:R`Den Integranden $\psi_m\psi_n$ zeichnen, im Graphen für $m = n$ also $|\psi_n|^2$, und nur die Fläche im getönten Bereich zählen, mit Vorzeichen.`},
+            {from:'graph', to:'matrix', rule:R`Für jedes Paar $(m, n)$ diese Fläche mal $V_0$ in Zeile $m$, Spalte $n$ eintragen.`},
+            {from:'matrix', to:'physik', rule:R`Die Diagonale als Verschiebung im Niveauschema lesen; Nebendiagonalelemente gehen quadriert in die zweite Ordnung ein.`}
+          ]},
+        q:{q:R`Wie lautet $\langle\psi_2|\hat H'|\psi_4\rangle$ für diese Stufe als Integral?`, tr:{from:'dirac', to:'ort'},
+          opts:[R`$\frac{2V_0}{L}\int_0^L\sin\frac{2\pi x}{L}\sin\frac{4\pi x}{L}\,dx$`, R`$\frac{2V_0}{L}\int_{L/4}^{3L/4}\sin\frac{2\pi x}{L}\sin\frac{4\pi x}{L}\,dx$`, R`$V_0\int_{L/4}^{3L/4}\sin\frac{2\pi x}{L}\sin\frac{4\pi x}{L}\,dx$`], a:1,
+          ex:R`Integriert wird nur über den Bereich der Stufe, mit dem Normierungsfaktor $2/L$ der Kastenfunktionen. Der Wert ist $-0{,}42\,V_0$.`,
+          fb:[R`Über den ganzen Kasten wäre das Integral null: Die Kastenfunktionen sind orthogonal. Die Störung wirkt nur in der Mitte.`, '',
+            R`Der Faktor $2/L$ aus der Normierung $\psi_n = \sqrt{2/L}\sin(n\pi x/L)$ fehlt.`]}},
+      {id:'stoer-t2d', title:'Der Zustand in erster Ordnung',
+        num:{title:'Im Zweiniveausystem', text:R`Die Beimischung von $|2\rangle$ zu $|1\rangle$ ist
+
+$$\frac{\langle 2|\hat H'|1\rangle}{E_1^{(0)} - E_2^{(0)}} = \frac{0{,}2}{1 - 3} = -0{,}1.$$
+
+Also $|1\rangle + |1^{(1)}\rangle \doteq (1;\ -0{,}1)$. Der exakte Eigenvektor ist $(1;\ -0{,}110)$.`},
+        text:R`Projiziere die Gleichung erster Ordnung auf $\langle m^{(0)}|$ mit $m \ne n$. Wegen $\langle m^{(0)}|n^{(0)}\rangle = 0$ folgt $(E_m^{(0)} - E_n^{(0)})\langle m^{(0)}|n^{(1)}\rangle + \langle m^{(0)}|\hat H'|n^{(0)}\rangle = 0$. Mit der Wahl $\langle n^{(0)}|n^{(1)}\rangle = 0$ und der [[lex:vollstaendigkeit|Vollständigkeit]] der Basis ist
+
+$$|n^{(1)}\rangle = \sum_{m\ne n}\frac{\langle m^{(0)}|\hat H'|n^{(0)}\rangle}{E_n^{(0)} - E_m^{(0)}}\,|m^{(0)}\rangle.$$
+
+Die Störung mischt andere Zustände bei, umso stärker, je näher sie energetisch liegen. Bei $E_m^{(0)} = E_n^{(0)}$ wäre der Nenner null; das ist das Problem der Entartung.`,
+        q:{q:R`Im Kasten mit der Stufe in der Mitte: Welche Zustände mischt die Störung in erster Ordnung dem Grundzustand bei?`, tr:{from:'matrix', to:'dirac'},
+          opts:[R`nur $n = 2$, den nächsten Nachbarn`, R`alle $n \ge 2$ gleich stark`, R`nur ungerade $n = 3, 5, \dots$`], a:2,
+          ex:R`Beigemischt wird $|m\rangle$ nur, wenn $\langle\psi_m|\hat H'|\psi_1\rangle \ne 0$. In der Matrix ist die Spalte $1$ bei $m = 2$ null, bei $m = 3$ dagegen $-0{,}318$.`,
+          fb:[R`Der nächste Nachbar trägt hier gar nicht bei: $\langle\psi_2|\hat H'|\psi_1\rangle = 0$ aus Symmetriegründen.`,
+            R`Der Nenner $E_1 - E_m$ wächst mit $m$, und manche Zähler sind null. Gleich stark ist keiner.`, '']}},
+      {id:'stoer-t2e', title:'Symmetrie spart Arbeit',
+        pre:{from:'osz', seg:'osz-t4', title:'Matrixelemente mit Leiteroperatoren', text:R`Mit $\hat x = \sqrt{\hbar/(2m\omega)}\,(\hat a + \hat a^\dagger)$, $\hat a|n\rangle = \sqrt n|n-1\rangle$ und $\hat a^\dagger|n\rangle = \sqrt{n+1}|n+1\rangle$ ändert $\hat x$ die Quantenzahl um $\pm1$. Mini-Beispiel: $\langle 1|\hat x|0\rangle = \sqrt{\hbar/(2m\omega)}$, aber $\langle 0|\hat x|0\rangle = 0$.`},
+        num:{title:R`$\lambda x$ im Oszillator`, text:R`$|\psi_0|^2 \propto e^{-m\omega x^2/\hbar}$ ist gerade, $x$ ist ungerade. Die Beiträge bei $+x$ und $-x$ heben sich auf:
+
+$$E_0^{(1)} = \lambda\int x\,|\psi_0|^2\,dx = 0.$$
+
+Dasselbe sagen die Leiteroperatoren: $\langle 0|\hat a + \hat a^\dagger|0\rangle = 0$.`},
+        text:R`Ist $\hat H_0$ symmetrisch unter $x \to -x$, so haben die Eigenfunktionen eine feste [[lex:paritaet-auswahlregel|Parität]], und $|\psi_n|^2$ ist gerade. Für eine ungerade Störung wie $\lambda x$ ist dann $E_n^{(1)} = 0$ für alle $n$, ohne Rechnung. Allgemein verschwindet ein Matrixelement $\langle m|\hat H'|n\rangle$, wenn der Integrand $\psi_m^*\hat H'\psi_n$ ungerade ist. So erkennst du viele Nullen in der Matrix von $\hat H'$, bevor du ein Integral ausrechnest. Im Kasten spielt die Spiegelung an $x = L/2$ dieselbe Rolle.`,
+        q:{q:'Welches Matrixelement von $\\hat H\' = \\lambda x^2$ im harmonischen Oszillator ist ohne Rechnung null?',
+          opts:['$\\langle 0|\\hat H\'|0\\rangle$', '$\\langle 1|\\hat H\'|0\\rangle$', '$\\langle 2|\\hat H\'|0\\rangle$'], a:1,
+          ex:'$\\psi_1$ ist ungerade, $\\psi_0$ und $x^2$ sind gerade: Der Integrand $\\psi_1^*x^2\\psi_0$ ist ungerade, das Integral null. Mit Leiteroperatoren: $\\hat x^2$ ändert die Quantenzahl um $0$ oder $\\pm2$, nie um $1$.',
+          fb:['Hier ist der Integrand $x^2|\\psi_0|^2$ gerade und nirgends negativ; das Integral ist positiv.', '', '$\\psi_2$, $\\psi_0$ und $x^2$ sind alle gerade. Der Integrand ist gerade, und das Integral verschwindet nicht: Es ist $\\sqrt2\\,\\lambda\\hbar/(2m\\omega)$.']}},
+      {id:'stoer-t2f', title:'Das Labor: erste Ordnung gegen exakt',
+        num:{title:R`Stufe auf der linken Hälfte, $V_0 = 2E_1$`, text:R`Für eine Stufe auf $0 < x < L/2$ liegt bei jedem $n$ genau die Hälfte von $|\psi_n|^2$ links. Also
+
+$$E_n^{(1)} = \tfrac12V_0,\qquad E_1 \approx E_1 + E_1 = 2E_1.$$
+
+Das Labor diagonalisiert exakt und zeigt $1{,}766\,E_1$: Die erste Ordnung liegt um $0{,}23\,E_1$ zu hoch.`},
+        text:R`Das Labor zeigt eine verwandte Störung, die Stufe $V_0$ auf der linken Kastenhälfte. Drei Spalten von Strichen stehen nebeneinander. Grau sind die ungestörten Niveaus $n^2E_1$, also $E_n^{(0)}$. Orange ist die erste Ordnung $E_n^{(0)} + V_0/2$, das Diagonalelement $\langle n|\hat H'|n\rangle$ dazu addiert. Blau ist die exakte Lösung, numerisch diagonalisiert mit allen Nebendiagonalelementen. Der Abstand zwischen Orange und Blau ist alles, was die zweite und höhere Ordnungen beitragen. Er wächst mit $V_0$, für kleine $V_0$ etwa wie $V_0^2$.`,
+        fig:{lab:'perturb', init:{v0:2}, caption:R`Stufe $V_0$ auf der linken Kastenhälfte: grau ungestört, orange erste Ordnung $E_n^{(0)} + V_0/2$, blau exakt. Bei $V_0 = 2E_1$ liegt der blaue Grundzustand bei $1{,}766\,E_1$, der orange bei $2\,E_1$.`},
+        q:{q:R`Du stellst im Labor $V_0 = 0{,}5\,E_1$ ein. Wo liegt der orange Strich für $n = 2$?`, tr:{from:'labor', to:'formel'},
+          opts:[R`bei $4{,}25\,E_1$`, R`bei $4{,}5\,E_1$`, R`bei $2{,}25\,E_1$`], a:0,
+          ex:R`$E_2^{(0)} + V_0/2 = 4E_1 + 0{,}25\,E_1 = 4{,}25\,E_1$.`,
+          fb:['', R`Das wäre $E_2^{(0)} + V_0$. In erster Ordnung zählt nur die Hälfte, weil die Hälfte von $|\psi_2|^2$ links liegt.`,
+            R`$E_2^{(0)} = 2^2E_1 = 4E_1$, nicht $2E_1$.`]}},
+      {id:'stoer-t2g', title:'Typischer Fehler: Für die erste Ordnung brauche man den gestörten Zustand',
+        num:{title:'Nur der ungestörte Zustand', text:R`Im Zweiniveausystem genügt $|1^{(0)}\rangle \doteq (1;\ 0)$:
+
+$$E_1^{(1)} = \langle 1^{(0)}|\hat H'|1^{(0)}\rangle = 0{,}1.$$
+
+Die Beimischung $-0{,}1\,|2\rangle$ aus dem Schritt „Der Zustand in erster Ordnung“ geht erst in die Energie zweiter Ordnung ein.`},
+        text:R`„Für die erste Ordnung muss man erst die gestörte Wellenfunktion kennen.“ Das ist ein häufiges Missverständnis. Für $E_n^{(1)}$ genügt der ungestörte Zustand. Die Änderung des Zustands wirkt sich erst in der Energie zweiter Ordnung aus. Ein zweiter Fehler ist, $E_n^{(1)}$ als Wert der Störung an einer Stelle zu nehmen, etwa $V(\langle x\rangle)$. Richtig ist der Mittelwert über die ganze Verteilung, $\langle n^{(0)}|\hat H'|n^{(0)}\rangle$. Beides stimmt nur zufällig überein, etwa für eine linear wachsende Störung.`,
+        q:{q:R`Im Kasten wirkt $\hat H' = \lambda\,(x - L/2)^2$ mit $\lambda > 0$. Was gilt für $E_1^{(1)}$?`,
+          opts:[R`$E_1^{(1)} = 0$, denn am Maximum von $|\psi_1|^2$ ist die Störung null`, R`$E_1^{(1)} = \lambda\langle(x - L/2)^2\rangle > 0$ im ungestörten $\psi_1$`, R`Man muss erst den gestörten Zustand berechnen.`], a:1,
+          ex:R`Erste Ordnung ist der Mittelwert über die ganze Verteilung: $\lambda\,(\Delta x)^2 = \lambda L^2\left(\tfrac{1}{12} - \tfrac{1}{2\pi^2}\right) \approx 0{,}033\,\lambda L^2$. Der Wert an einer Stelle, hier $0$ bei $x = L/2$, ist kein Erwartungswert.`,
+          fb:[R`Das ist der Wert der Störung an einer einzigen Stelle. Überall sonst ist sie positiv, und $|\psi_1|^2$ reicht über den ganzen Kasten.`, '',
+            R`Für die erste Ordnung genügt der ungestörte Zustand. Seine Änderung wirkt erst in der zweiten Ordnung.`]}}
+    ]},
+
+    /* ===== Abschnitt 3: zweite Ordnung ===== */
+    {id:'stoer-t3', title:'Zweite Ordnung: Niveaus stoßen sich ab', steps:[
+      {id:'stoer-t3a', title:'Die Formel zweiter Ordnung',
+        num:{title:'Im Zweiniveausystem', text:R`Nur ein Zwischenzustand, $m = 2$:
+
+$$E_1^{(2)} = \frac{|\langle 2|\hat H'|1\rangle|^2}{E_1^{(0)} - E_2^{(0)}} = \frac{0{,}04}{1 - 3} = -0{,}02.$$
+
+Bis zur zweiten Ordnung $E_1 \approx 1 + 0{,}1 - 0{,}02 = 1{,}08\,\mathrm{eV}$, exakt $1{,}0780\,\mathrm{eV}$.`},
+        text:R`Projiziere die Gleichung zweiter Ordnung auf $\langle n^{(0)}|$. Wie in erster Ordnung heben sich die Terme mit $\hat H_0$ und $E_n^{(0)}$ weg. Wegen $\langle n^{(0)}|n^{(1)}\rangle = 0$ fällt auch der Term mit $E_n^{(1)}$ weg. Es bleibt $E_n^{(2)} = \langle n^{(0)}|\hat H'|n^{(1)}\rangle$. Setzt du $|n^{(1)}\rangle$ ein und benutzt $\langle n|\hat H'|m\rangle = \langle m|\hat H'|n\rangle^*$, folgt die [[lex:stoerung-2|zweite Ordnung]]
+
+$$E_n^{(2)} = \sum_{m\ne n}\frac{|\langle m^{(0)}|\hat H'|n^{(0)}\rangle|^2}{E_n^{(0)} - E_m^{(0)}}.$$
+
+Jeder Zwischenzustand $m$ trägt mit seiner Kopplung zum Quadrat bei, geteilt durch den Energieabstand.`,
+        derive:{ctx:STMAT({H_0:'(1, 0; 0, 3)', H_1:'(1/10, 1/5; 1/5, -1/10)', H:'(11/10, 1/5; 1/5, 29/10)'}, {}), lines:[
+          {l:'(1, 0) H_1 (1; 0) = 1/10', w:R`$E_1^{(1)}$: Diagonalelement`},
+          {l:'|(0, 1) H_1 (1; 0)|^2/(1 - 3) = -1/50', w:R`$E_1^{(2)}$: ein Zwischenzustand`,
+            why:{q:'Warum ist dieser Beitrag negativ?', opts:['Weil der Zwischenzustand höher liegt: $1 - 3 < 0$.', 'Weil $\\hat H\'$ das negative Element $-0{,}1$ enthält.', 'Weil die erste Ordnung $+0{,}1$ positiv ist.'], a:0, ex:'Der Zähler $0{,}04$ ist ein Betragsquadrat und positiv. Das Vorzeichen kommt allein vom Nenner.'}},
+          {l:'1 + 1/10 - 1/50 = 27/25', w:'bis zur zweiten Ordnung zusammengezählt'},
+          {l:'det(H - (2 - sqrt(85)/10) I) = 0', w:R`exakter Eigenwert $2 - \sqrt{0{,}85} \approx 1{,}0780$`,
+            why:{q:'Wie groß ist der Rest zwischen $1{,}08$ und dem exakten Wert?', opts:['etwa $0{,}002$, der Beitrag höherer Ordnungen', 'etwa $0{,}02$, so groß wie die zweite Ordnung', 'null, die zweite Ordnung ist exakt'], a:0, ex:'$1{,}08 - 1{,}0780 = 0{,}0020$. Jede Ordnung ist hier etwa zehnmal kleiner als die vorige.'}}
+        ]},
+        q:{q:R`Wie groß ist $E_2^{(2)}$, die zweite Ordnung für das obere Niveau des Zweiniveausystems?`,
+          opts:[R`$-0{,}02\,\mathrm{eV}$`, R`$+0{,}02\,\mathrm{eV}$`, R`$+0{,}04\,\mathrm{eV}$`], a:1,
+          ex:R`$\frac{|\langle 1|\hat H'|2\rangle|^2}{E_2^{(0)} - E_1^{(0)}} = \frac{0{,}04}{3 - 1} = +0{,}02$. Das obere Niveau steigt um denselben Betrag, um den das untere sinkt.`,
+          fb:[R`Für das obere Niveau liegt der Zwischenzustand darunter: Der Nenner $3 - 1$ ist positiv.`, '',
+            R`Der Nenner $E_2^{(0)} - E_1^{(0)} = 2$ fehlt.`]}},
+      {id:'stoer-t3b', title:'Deutung: Niveaus stoßen sich ab',
+        num:{title:'Ein Nachbar darunter, einer darüber', text:R`Ein Niveau hat einen Nachbarn $0{,}5\,\mathrm{eV}$ darunter und einen $2\,\mathrm{eV}$ darüber, beide mit der Kopplung $0{,}1\,\mathrm{eV}$:
+
+$$E^{(2)} = \frac{0{,}01}{+0{,}5} + \frac{0{,}01}{-2} = 0{,}020 - 0{,}005 = +0{,}015\,\mathrm{eV}.$$
+
+Der nahe Nachbar darunter gewinnt und schiebt das Niveau nach oben.`},
+        text:R`Jeder Zähler ist $\ge 0$. Das Vorzeichen eines Beitrags bestimmt der Nenner. Ein Niveau $m$ *oberhalb* von $n$ drückt $E_n$ nach unten, ein Niveau *unterhalb* drückt es nach oben: Die Niveaus „stoßen sich ab“. Nahe Nachbarn tragen am meisten bei, weil ihr Nenner klein ist. Für den Grundzustand liegen alle anderen Niveaus darüber. Also gilt immer $E_0^{(2)} \le 0$: Die zweite Ordnung senkt den Grundzustand. Im Niveauschema siehst du das als Auseinanderrücken gekoppelter Niveaus.`,
+        q:{q:R`Ein angeregtes Niveau hat je einen Nachbarn $1\,\mathrm{eV}$ darunter und $1\,\mathrm{eV}$ darüber. Zum unteren koppelt es mit $0{,}1\,\mathrm{eV}$, zum oberen mit $0{,}2\,\mathrm{eV}$. Was ergibt die zweite Ordnung?`,
+          opts:[R`$+0{,}03\,\mathrm{eV}$, das Niveau steigt`, R`$0$, gleiche Abstände heben sich auf`, R`$-0{,}03\,\mathrm{eV}$, das Niveau sinkt`], a:2,
+          ex:R`$\frac{0{,}01}{+1} + \frac{0{,}04}{-1} = -0{,}03\,\mathrm{eV}$. Bei gleichen Abständen entscheidet die stärkere Kopplung, hier die nach oben: Das obere Niveau drückt nach unten.`,
+          fb:[R`Das Vorzeichen ist vertauscht. Ein Nachbar *oberhalb* hat den negativen Nenner $E_n - E_m = -1\,\mathrm{eV}$ und drückt nach unten.`,
+            R`Die Nenner sind gleich groß, aber die Zähler nicht: $0{,}04 \ne 0{,}01$.`, '']}},
+      {id:'stoer-t3c', title:'Prüfstein: das Zweiniveausystem exakt',
+        pre:{from:'m-eigen', seg:'me-t3', title:R`Eigenwerte einer $2\times2$-Matrix`, text:R`Für $\begin{pmatrix}a & v\\ v & d\end{pmatrix}$ ist $\det(A - \varepsilon\mathbb 1) = (a - \varepsilon)(d - \varepsilon) - v^2 = 0$, also $\varepsilon = \tfrac{a + d}{2} \pm \sqrt{\tfrac{(d - a)^2}{4} + v^2}$. Mini-Beispiel: $a = d = 0$, $v = 1$ gibt $\varepsilon = \pm1$.`},
+        num:{title:R`Nur Kopplung, $v = 0{,}2$`, text:R`Ohne Diagonalanteil der Störung, $E_1 = 1$, $E_2 = 3$:
+
+$$\begin{gathered}\varepsilon_- = 2 - \sqrt{1 + 0{,}04} \approx 0{,}98020,\\ E_1 + \frac{v^2}{E_1 - E_2} = 1 - 0{,}02 = 0{,}98.\end{gathered}$$
+
+Die zweite Ordnung trifft auf $2\cdot10^{-4}$ genau.`},
+        text:R`Für $\hat H = \begin{pmatrix}E_1 & v\\ v & E_2\end{pmatrix}$ mit $E_1 < E_2$ und reellem $v$ kennst du die exakten Eigenwerte
+
+$$\varepsilon_\mp = \frac{E_1 + E_2}{2} \mp \sqrt{\frac{(E_2 - E_1)^2}{4} + v^2}.$$
+
+Für $|v| \ll E_2 - E_1$ gibt die [[lex:taylor|Taylor-Entwicklung]] $\sqrt{a^2 + v^2} \approx a + \frac{v^2}{2a}$ mit $a = (E_2 - E_1)/2$ genau $\varepsilon_- \approx E_1 - \frac{v^2}{E_2 - E_1}$ und $\varepsilon_+ \approx E_2 + \frac{v^2}{E_2 - E_1}$. Genau das liefert auch die Störungstheorie mit $\hat H_0 = \mathrm{diag}(E_1, E_2)$ und der Kopplung als Störung: $E_1^{(1)} = 0$ und $E_1^{(2)} = v^2/(E_1 - E_2)$. Das untere Niveau sinkt, das obere steigt um denselben Betrag. Die Herleitung prüft die exakte Lösung und beide Ordnungen.`,
+        derive:{ctx:STMAT({H:'(E_1, v; v, E_2)', H_1:'(0, v; v, 0)'}, {E_1:'pos', E_2:{range:['E_1 + 1', 'E_1 + 3']}, v:'real'}), lines:[
           {l:'ε = (E_1 + E_2)/2 - sqrt((E_2 - E_1)^2/4 + v^2)', w:'exakter unterer Eigenwert'},
           {l:'det(H - ε I) = 0', w:'Probe',
-            why:{q:'Warum genügt diese Zeile als Probe?', opts:['Eigenwerte sind genau die Nullstellen von $\\det(H - \\varepsilon\\mathbb 1)$.', 'Weil $H$ hermitesch ist, ist jede reelle Zahl Eigenwert.', 'Weil $\\det H = E_1E_2 - v^2$ für jedes $v$ gilt.'], a:0, ex:'$\\det(H - \\varepsilon\\mathbb 1) = 0$ heißt: $H - \\varepsilon\\mathbb 1$ ist nicht invertierbar, es gibt einen Eigenvektor.'}},
-          {l:'(1, 0) H_1 (1; 0) = 0', w:'$E_1^{(1)} = 0$: Störung nur auf der Nebendiagonale'},
-          {l:'|(0, 1) H_1 (1; 0)|^2/(E_1 - E_2) = -v^2/(E_2 - E_1)', w:'$E_1^{(2)}$, nur ein Zwischenzustand',
-            why:{q:'Warum ist dieser Beitrag negativ?', opts:['Der einzige Zwischenzustand liegt höher.', 'Weil die Kopplung $v$ negativ sein kann.', 'Weil die erste Ordnung hier null ist.'], a:0, ex:'Der Zähler $v^2$ ist positiv, der Nenner negativ. Das obere Niveau drückt das untere nach unten.'}},
-          {l:'ε ≈ E_1 - v^2/(E_2 - E_1)', w:'Taylor für $|v| \\ll E_2 - E_1$: wird nicht als Gleichheit geprüft'}
+            why:{q:'Warum genügt diese Zeile als Probe?', opts:['Weil Eigenwerte genau die Nullstellen von $\\det(H - \\varepsilon\\mathbb 1)$ sind.', 'Weil $H$ hermitesch ist, ist jede reelle Zahl Eigenwert.', 'Weil $\\det H = E_1E_2 - v^2$ für jedes $v$ gilt.'], a:0, ex:'$\\det(H - \\varepsilon\\mathbb 1) = 0$ heißt: $H - \\varepsilon\\mathbb 1$ ist nicht invertierbar, es gibt einen Eigenvektor.'}},
+          {l:'(1, 0) H_1 (1; 0) = 0', w:R`$E_1^{(1)} = 0$: Störung nur auf der Nebendiagonale`},
+          {l:'|(0, 1) H_1 (1; 0)|^2/(E_1 - E_2) = -v^2/(E_2 - E_1)', w:R`$E_1^{(2)}$, nur ein Zwischenzustand`,
+            why:{q:'Warum ist dieser Beitrag negativ?', opts:['Weil der einzige Zwischenzustand höher liegt.', 'Weil die Kopplung $v$ negativ sein kann.', 'Weil die erste Ordnung hier null ist.'], a:0, ex:'Der Zähler $v^2$ ist positiv, der Nenner negativ. Das obere Niveau drückt das untere nach unten.'}},
+          {l:'ε ≈ E_1 - v^2/(E_2 - E_1)', w:R`Taylor für $|v| \ll E_2 - E_1$: wird nicht als Gleichheit geprüft`}
         ]},
-      q:[
-        {q:'Ein angeregtes Niveau hat einen Nachbarn knapp darunter und einen weit darüber; beide koppeln gleich stark. Wohin verschiebt die zweite Ordnung das Niveau?', opts:['nach oben, der nahe Nachbar darunter überwiegt', 'nach unten, die zweite Ordnung ist immer negativ', 'gar nicht, die Beiträge heben sich auf'], a:0, ex:'Gleiche Zähler, aber der kleine positive Nenner (Nachbar darunter) gibt den größeren, positiven Beitrag. Nur für den Grundzustand ist $E^{(2)} \\le 0$ garantiert.'},
-        {q:'Warum ist $E_0^{(2)} \\le 0$ für jeden Grundzustand?', opts:['Alle Nenner $E_0^{(0)} - E_m^{(0)}$ sind negativ, alle Zähler $\\ge 0$.', 'Weil die erste Ordnung im Grundzustand immer null ist.', 'Weil jede Störung die Energie grundsätzlich senkt.'], a:0, ex:'Im Grundzustand liegen alle anderen Niveaus höher. Die erste Ordnung kann dagegen beliebiges Vorzeichen haben.'}
-      ]},
-    {id:'stoer-t4', title:'Entartete Störungstheorie',
-      text:'**Das Problem.** Haben zwei oder mehr Zustände dieselbe ungestörte Energie, versagen die Formeln: In $|n^{(1)}\\rangle$ und $E_n^{(2)}$ stünde $E_n^{(0)} - E_m^{(0)} = 0$ im Nenner. Der tiefere Grund: Im entarteten Unterraum ist *jede* Linearkombination ein Eigenzustand von $\\hat H_0$. Welche davon beim Einschalten der Störung stetig weiterlebt, legt erst die Störung fest. Man muss diese **richtigen Zustände nullter Ordnung** zuerst finden.\n\n**Herleitung.** Das Niveau $E^{(0)}$ sei $g$-fach entartet, mit orthonormaler Basis $|1\\rangle, \\dots, |g\\rangle$ des Unterraums. Ansatz für den Zustand nullter Ordnung: $|\\phi^{(0)}\\rangle = \\sum_{j=1}^g c_j|j\\rangle$. Die Gleichung erster Ordnung lautet wie vorher, nur umgestellt:\n\n$$(\\hat H_0 - E^{(0)})|\\phi^{(1)}\\rangle = (E^{(1)} - \\hat H\')|\\phi^{(0)}\\rangle.$$\n\nProjiziere auf ein $\\langle i|$ aus dem Unterraum. Links steht $\\langle i|(\\hat H_0 - E^{(0)}) = 0$, weil $|i\\rangle$ zu $E^{(0)}$ gehört und $\\hat H_0$ hermitesch ist. Also muss auch rechts null herauskommen:\n\n$$\\sum_{j=1}^g W_{ij}c_j = E^{(1)}c_i,\\qquad W_{ij} = \\langle i|\\hat H\'|j\\rangle.$$\n\nDas ist ein [[lex:eigenwertproblem|Eigenwertproblem]] für die $g\\times g$-Matrix $W$.\n\n**Ergebnis.** Die Eigenwerte von $W$ sind die Korrekturen erster Ordnung, die Eigenvektoren die richtigen Zustände nullter Ordnung ([[lex:entartete-stoerung|entartete Störungstheorie]]). Sind die Eigenwerte verschieden, spaltet das Niveau auf: Die Störung hebt die Entartung ganz oder teilweise auf. In der Eigenbasis ist $W$ diagonal. Dann verschwinden die gefährlichen Matrixelemente zwischen entarteten Zuständen, und die nicht entarteten Formeln für höhere Ordnungen sind wieder anwendbar.\n\n**Abkürzung über Symmetrie.** Vertauscht ein hermitescher Operator $\\hat A$ mit $\\hat H_0$ und mit $\\hat H\'$ und hat er im Unterraum verschiedene Eigenwerte, dann ist $W$ in der Eigenbasis von $\\hat A$ schon diagonal. Beim Wasserstoff im Feld $\\mathcal E\\hat z$ ist das $\\hat L_z$: Nur Zustände mit gleichem $m$ koppeln.\n\n**Beispiel: linearer [[lex:stark-effekt|Stark-Effekt]].** Das Niveau $n = 2$ des Wasserstoffs ist ohne Spin vierfach entartet ($2s$ und $2p$ mit $m = 0, \\pm1$). Mit $\\hat H\' = e\\mathcal E\\hat z$ koppelt nur $\\langle 2s|\\hat z|2p_0\\rangle$; sein Betrag ist $3a_0$. Mit $w = 3e\\mathcal Ea_0$ ist im Unterraum $\\{|2s\\rangle, |2p_0\\rangle\\}$, bis auf ein Vorzeichen, das von der Phasenwahl abhängt,\n\n$$W = \\begin{pmatrix}0 & w\\\\ w & 0\\end{pmatrix}\\ \\Rightarrow\\ E^{(1)} = \\pm w,\\qquad |\\phi_\\pm\\rangle = \\tfrac{1}{\\sqrt2}\\big(|2s\\rangle \\pm |2p_0\\rangle\\big).$$\n\nDie Zustände $2p_{\\pm1}$ bleiben in erster Ordnung unverschoben. Die Verschiebung ist *linear* in $\\mathcal E$, weil die Mischungen $|\\phi_\\pm\\rangle$ ein festes Dipolmoment haben.\n\n**Typische Fehlvorstellung.** „Man nimmt einfach $\\langle 2s|\\hat H\'|2s\\rangle$ und $\\langle 2p_0|\\hat H\'|2p_0\\rangle$.“ Beide sind aus Paritätsgründen null. Man fände fälschlich gar keine Verschiebung – entscheidend ist die Nebendiagonale von $W$.',
-      derive:{ctx:STMAT({W:'(0, w; w, 0)'}, {w:'pos'}),
-        lines:[
-          {l:'det(W - w I) = 0', w:'$+w$ ist Eigenwert'},
-          {l:'det(W + w I) = 0', w:'$-w$ ist Eigenwert'},
-          {l:'W (1; 1)/sqrt(2) = w (1; 1)/sqrt(2)', w:'richtiger Zustand zu $+w$',
-            why:{q:'Was ist $\\frac{1}{\\sqrt2}\\binom11$ physikalisch?', opts:['die Mischung $\\frac{1}{\\sqrt2}(|2s\\rangle + |2p_0\\rangle)$', 'der unveränderte Zustand $|2s\\rangle$', 'der Zustand $|2p_{+1}\\rangle$'], a:0, ex:'Die Komponenten beziehen sich auf die Basis $|2s\\rangle, |2p_0\\rangle$. Die Störung wählt die Mischungen, nicht die ursprünglichen Basiszustände.'}},
-          {l:'W (1; -1)/sqrt(2) = -w (1; -1)/sqrt(2)', w:'richtiger Zustand zu $-w$'},
+        q:{q:R`Für $E_1 = 1$, $E_2 = 3$ und $v = 0{,}5$: Wie groß ist die zweite Ordnung $E_1^{(2)}$?`,
+          opts:[R`$-0{,}25$`, R`$-0{,}125$`, R`$-0{,}5$`], a:1,
+          ex:R`$-v^2/(E_2 - E_1) = -0{,}25/2 = -0{,}125$. Exakt ist $\varepsilon_- - E_1 = 1 - \sqrt{1{,}25} \approx -0{,}118$; bei so großem $v$ ist die Näherung schon spürbar ungenau.`,
+          fb:[R`Der Nenner $E_2 - E_1 = 2$ fehlt.`, '',
+            R`Die Kopplung geht quadriert ein: $v^2 = 0{,}25$, nicht $v$.`]}},
+      {id:'stoer-t3d', title:'Matrix, Formel, Niveauschema',
+        num:{title:R`$v = 1$`, text:R`Bei großer Kopplung versagt die Reihe. Für $E_1 = 1$, $E_2 = 3$:
+
+$$\varepsilon_- = 2 - \sqrt2 \approx 0{,}586,\qquad 1 - \frac{1^2}{2} = 0{,}5.$$
+
+Die Abweichung ist $0{,}086$, rund ein Fünftel der exakten Verschiebung $-0{,}414$.`},
+        text:R`Das Zweiniveausystem lässt sich in vier Gestalten lesen. Die Matrix enthält ungestörte Energien und Kopplung. Die Formel gibt die exakten Eigenwerte und ihre Näherung. Der Graph zeigt beide über der Kopplung $v$: Für kleine $v$ liegen die Kurven aufeinander, für große laufen sie auseinander. Im Niveauschema siehst du dasselbe als zwei Niveaus, die sich abstoßen, wenn man die Kopplung einschaltet. Die Tafel verbindet diese Gestalten und sagt, wie du von einer zur nächsten kommst.`,
+        reps:{obj:R`Das Zweiniveausystem mit $E_1 = 1$, $E_2 = 3$ und Kopplung $v$`,
+          rows:[
+            {k:'matrix', tex:R`\hat H \doteq \begin{pmatrix}1 & v\\ v & 3\end{pmatrix} = \underbrace{\begin{pmatrix}1 & 0\\ 0 & 3\end{pmatrix}}_{\hat H_0} + \underbrace{\begin{pmatrix}0 & v\\ v & 0\end{pmatrix}}_{\hat H'}`},
+            {k:'formel', tex:R`\varepsilon_- = 2 - \sqrt{1 + v^2}\ \approx\ 1 - \frac{v^2}{2}\qquad(|v| \ll 2)`},
+            {k:'graph', plot:{x:[0, 1.5], y:[-0.2, 1.05], abs:true, yticks:[{y:0.5, lab:'0{,}5'}, {y:1, lab:'1'}], xlab:'v', ylab:R`\varepsilon_-`}, f:v => 2 - Math.sqrt(1 + v * v), lab:R`\text{exakt}`, f2:v => 1 - v * v / 2, lab2:R`\text{2. Ordnung}`,
+              cap:R`Tieferer Eigenwert über der Kopplung $v$: durchgezogen exakt, gestrichelt zweite Ordnung. Bis $v \approx 0{,}3$ fallen beide Kurven zusammen, bei $v = 1$ liegen sie $0{,}09$ auseinander.`},
+            {k:'physik', text:R`Eingeschaltete Kopplung schiebt die Niveaus auseinander: das untere nach unten, das obere um denselben Betrag nach oben. Je größer der Abstand $E_2 - E_1$, desto kleiner die Verschiebung.`}
+          ],
+          links:[
+            {from:'matrix', to:'formel', rule:R`Diagonale als $E_n^{(0)}$, Nebendiagonale als Kopplung lesen. Exakt: $\det(\hat H - \varepsilon\mathbb 1) = 0$ lösen. Genähert: $v^2$ durch den Abstand teilen.`},
+            {from:'formel', to:'graph', rule:R`Beide Ausdrücke über $v$ auftragen. Wo die Kurven sich trennen, endet der Gültigkeitsbereich der Näherung.`},
+            {from:'graph', to:'physik', rule:R`Den Abstand der Kurve von der Linie $\varepsilon = 1$ als Verschiebung des unteren Niveaus im Niveauschema lesen.`}
+          ]},
+        q:{q:R`Im Graphen fallen exakte Kurve und zweite Ordnung für kleine $v$ zusammen und trennen sich für große $v$. Was ist der Grund?`, tr:{from:'graph', to:'formel'},
+          opts:[R`Die Taylor-Entwicklung der Wurzel gilt nur für $v^2 \ll 1$.`, R`Für große $v$ wird die Matrix nicht mehr hermitesch.`, R`Für große $v$ liefert die exakte Formel komplexe Werte.`], a:0,
+          ex:R`$\sqrt{1 + v^2} \approx 1 + v^2/2$ gilt nur für kleine $v^2$, hier also für $|v|$ klein gegen den halben Abstand $1$.`,
+          fb:['', R`Die Matrix ist für jedes reelle $v$ symmetrisch und damit hermitesch.`,
+            R`$\sqrt{1 + v^2}$ ist für jedes reelle $v$ reell. Die exakten Eigenwerte sind immer reell.`]}},
+      {id:'stoer-t3e', title:'Typischer Fehler: Vorzeichen des Nenners und der Term m = n',
+        num:{title:'Mit vertauschtem Nenner', text:R`Wer im Zweiniveausystem $E_m^{(0)} - E_n^{(0)}$ statt $E_n^{(0)} - E_m^{(0)}$ schreibt, erhält
+
+$$\frac{0{,}04}{3 - 1} = +0{,}02$$
+
+für den Grundzustand, das untere Niveau. Er stiege also. Das widerspricht der Regel, dass die zweite Ordnung den Grundzustand immer senkt.`},
+        text:R`Zwei Fehler sind häufig. Erstens: das Vorzeichen des Nenners vertauschen. Kontrolle: Der Grundzustand muss in zweiter Ordnung sinken. Zweitens: in der Summe auch $m = n$ mitnehmen. Dieser Anteil ist durch die Wahl $\langle n^{(0)}|n^{(1)}\rangle = 0$ ausgeschlossen, und er stünde ohnehin mit Nenner null da. Ein dritter Fehler ist, in den Zähler das Matrixelement selbst statt seines Betragsquadrats zu schreiben. Dann könnte ein negatives Matrixelement das Vorzeichen umdrehen, was nicht sein darf.`,
+        q:{q:R`Jemand berechnet für einen Grundzustand $E_0^{(2)} = +0{,}03\,\mathrm{eV}$. Was ist sicher falsch?`,
+          opts:[R`Das Vorzeichen: Für den Grundzustand ist $E_0^{(2)} \le 0$.`, R`Der Betrag: Die zweite Ordnung ist immer kleiner als $0{,}01\,\mathrm{eV}$.`, R`Nichts; das Vorzeichen hängt von der Störung ab.`], a:0,
+          ex:R`Alle Nenner $E_0^{(0)} - E_m^{(0)}$ sind negativ, alle Zähler $\ge 0$. Ein positives Ergebnis zeigt einen Vorzeichenfehler.`,
+          fb:['', R`Eine allgemeine Grenze für den Betrag gibt es nicht. Sicher ist nur das Vorzeichen.`,
+            R`Das Vorzeichen der Störung geht quadriert ein. Für den Grundzustand bestimmt allein der negative Nenner das Vorzeichen.`]}}
+    ]},
+
+    /* ===== Abschnitt 4: entartete Störungstheorie ===== */
+    {id:'stoer-t4', title:'Entartete Störungstheorie', steps:[
+      {id:'stoer-t4a', title:'Das Problem: ein Nenner null',
+        num:{title:'Zwei gleiche Niveaus', text:R`Mit $\hat H_0 \doteq \mathrm{diag}(1, 1)$ und der Kopplung $0{,}2$ gäbe die Formel zweiter Ordnung
+
+$$\frac{0{,}04}{1 - 1} = \frac{0{,}04}{0}.$$
+
+Exakt hat $\begin{pmatrix}1 & 0{,}2\\ 0{,}2 & 1\end{pmatrix}$ aber die harmlosen Eigenwerte $1 \pm 0{,}2$.`},
+        text:R`Haben zwei oder mehr Zustände dieselbe ungestörte Energie, versagen die bisherigen Formeln: In $|n^{(1)}\rangle$ und $E_n^{(2)}$ stünde $E_n^{(0)} - E_m^{(0)} = 0$ im Nenner. Der tiefere Grund: Im entarteten Unterraum ist *jede* Linearkombination ein Eigenzustand von $\hat H_0$. Welche davon beim Einschalten der Störung stetig weiterlebt, legt erst die Störung fest. Du musst diese **richtigen Zustände nullter Ordnung** zuerst finden. Im Beispiel sind es $\tfrac{1}{\sqrt2}(1;\ \pm1)$, nicht die Basisvektoren.`,
+        q:{q:R`Warum versagt die Formel zweiter Ordnung bei Entartung?`,
+          opts:['Weil $\\langle m|\\hat H\'|n\\rangle$ dann besonders groß ist.', 'Weil ein Nenner $E_n^{(0)} - E_m^{(0)}$ null wird.', 'Weil entartete Zustände nicht orthogonal sind, $\\langle m|n\\rangle \\ne 0$.'], a:1,
+          ex:R`Bei $E_m^{(0)} = E_n^{(0)}$ und $\langle m|\hat H'|n\rangle \ne 0$ divergiert der Beitrag. Die richtigen Zustände nullter Ordnung beseitigen das Problem.`,
+          fb:[R`Die Störung kann beliebig klein sein; der Nenner ist trotzdem null.`, '',
+            R`Man kann entartete Zustände immer orthonormal wählen. Das Problem ist der Nenner.`]}},
+      {id:'stoer-t4b', title:R`Die Matrix $W$ im entarteten Unterraum`,
+        pre:{from:'m-eigen', seg:'me-t3', title:'Eigenwerte und Eigenvektoren', text:R`Eigenwerte sind die Nullstellen von $\det(A - \lambda\mathbb 1)$; Eigenvektoren lösen $(A - \lambda\mathbb 1)v = 0$. Mini-Beispiel: $\begin{pmatrix}0&1\\1&0\end{pmatrix}$ hat $\lambda = \pm1$ mit $v = \tfrac{1}{\sqrt2}(1;\ \pm1)$.`},
+        num:{title:'Das Beispiel diagonalisiert', text:R`$W \doteq \begin{pmatrix}0 & 0{,}2\\ 0{,}2 & 0\end{pmatrix}$ hat
+
+$$E^{(1)} = \pm0{,}2,\qquad |\phi_\pm\rangle = \tfrac{1}{\sqrt2}(|1\rangle \pm |2\rangle).$$
+
+Das Niveau bei $1$ spaltet in $0{,}8$ und $1{,}2$ auf, hier sogar exakt.`},
+        text:R`Das Niveau $E^{(0)}$ sei $g$-fach entartet, mit orthonormaler Basis $|1\rangle, \dots, |g\rangle$ des Unterraums. Ansatz: $|\phi^{(0)}\rangle = \sum_jc_j|j\rangle$. Projiziere die Gleichung erster Ordnung auf ein $\langle i|$ aus dem Unterraum. Der Term mit $\hat H_0 - E^{(0)}$ fällt weg, und es bleibt
+
+$$\sum_{j=1}^gW_{ij}c_j = E^{(1)}c_i,\qquad W_{ij} = \langle i|\hat H'|j\rangle.$$
+
+Das ist ein [[lex:eigenwertproblem|Eigenwertproblem]] für die $g\times g$-Matrix $W$ ([[lex:entartete-stoerung|entartete Störungstheorie]]). Ihre Eigenwerte sind die Korrekturen erster Ordnung, ihre Eigenvektoren die richtigen Zustände nullter Ordnung.`,
+        derive:{ctx:STMAT({W:'(0, w; w, 0)'}, {w:'pos'}), lines:[
+          {l:'det(W - w I) = 0', w:R`$+w$ ist Eigenwert`},
+          {l:'det(W + w I) = 0', w:R`$-w$ ist Eigenwert`},
+          {l:'W (1; 1)/sqrt(2) = w (1; 1)/sqrt(2)', w:R`richtiger Zustand zu $+w$`,
+            why:{q:'Was ist $\\frac{1}{\\sqrt2}\\binom11$ physikalisch?', opts:['eine Mischung beider Basiszustände mit gleichem Gewicht', 'der unveränderte erste Basiszustand', 'ein Zustand außerhalb des entarteten Unterraums'], a:0, ex:'Die Komponenten beziehen sich auf die Basis des Unterraums. Die Störung wählt die Mischungen, nicht die ursprünglichen Basiszustände.'}},
+          {l:'W (1; -1)/sqrt(2) = -w (1; -1)/sqrt(2)', w:R`richtiger Zustand zu $-w$`},
           {l:'tr(W) = 0', w:'Summe der Korrekturen',
             why:{q:'Was sagt $\\mathrm{tr}\\,W = 0$ über die Aufspaltung?', opts:['Die Summe der Korrekturen ist null.', 'Jede der beiden Korrekturen ist null.', 'Das Niveau spaltet gar nicht auf.'], a:0, ex:'Die Spur ist die Summe der Eigenwerte: $+w + (-w) = 0$. Die Aufspaltung ist symmetrisch um $E^{(0)}$.'}}
         ]},
-      q:[
-        {q:'Ein Niveau ist dreifach entartet. Wie viele Korrekturen erster Ordnung gibt es, mit Vielfachheit gezählt?', opts:['drei, die Eigenwerte einer $3\\times3$-Matrix', 'eine, den Mittelwert von $\\hat H\'$', 'keine, die Formel versagt hier'], a:0, ex:'$W$ ist $3\\times3$ und hat drei Eigenwerte. Manche können zusammenfallen; dann bleibt eine Restentartung.'},
-        {q:'Im Unterraum ist $W = \\begin{pmatrix}\\beta&0\\\\0&\\beta\\end{pmatrix}$. Was folgt?', opts:['beide um $\\beta$ verschoben, keine Aufspaltung', 'Aufspaltung in $E^{(0)} \\pm \\beta$', 'erst die Basis wechseln, dann rechnen'], a:0, ex:'$W = \\beta\\mathbb 1$ ist in jeder Basis diagonal; beide Zustände bekommen $\\beta$. Die Entartung bleibt in erster Ordnung bestehen.'}
-      ]},
-    {id:'stoer-t5', title:'Das Variationsprinzip',
-      text:'**Aussage.** Für jeden normierten Zustand $|\\psi\\rangle$ gilt\n\n$$\\langle\\psi|\\hat H|\\psi\\rangle \\ge E_0,$$\n\nmit der exakten Grundzustandsenergie $E_0$. Der Erwartungswert der Energie in einem beliebigen Versuchszustand ist also eine **obere Schranke** für $E_0$ ([[lex:variationsprinzip|Variationsprinzip]]).\n\n**Beweis.** Entwickle $|\\psi\\rangle$ nach den unbekannten exakten Eigenzuständen: $|\\psi\\rangle = \\sum_n c_n|n\\rangle$ mit $\\sum_n|c_n|^2 = 1$ (Thema 6, [[lex:entwicklung|Entwicklung nach Eigenfunktionen]]). Dann ist\n\n$$\\langle\\psi|\\hat H|\\psi\\rangle = \\sum_n|c_n|^2E_n \\ge \\sum_n|c_n|^2E_0 = E_0.$$\n\nIm Schritt „$\\ge$“ steht nur $E_n \\ge E_0$ für alle $n$. Gleichheit gilt genau dann, wenn $|\\psi\\rangle$ nur aus Grundzuständen besteht.\n\n**Verfahren.** Man wählt eine Familie von Versuchsfunktionen $\\psi_b$ mit einem oder mehreren Parametern $b$. Sie soll zu den bekannten Eigenschaften passen: Randbedingungen, Symmetrie, keine Knoten im Grundzustand. Dann berechnet man $\\langle H\\rangle(b)$ und minimiert: $\\frac{d}{db}\\langle H\\rangle = 0$. Das Minimum ist die beste Schranke innerhalb der Familie.\n\n**Beispiel: Kasten mit Parabel.** Im Kasten $0 < x < L$ verschwindet $\\psi(x) = \\sqrt{30/L^5}\\,x(L - x)$ an beiden Wänden, ist normiert und knotenfrei. Die Herleitung unten gibt $\\langle H\\rangle = 5\\hbar^2/(mL^2)$. Exakt ist die Grundzustandsenergie (im Kasten heißt sie $E_1$, weil die Zählung dort bei $n = 1$ beginnt) $E_1 = \\pi^2\\hbar^2/(2mL^2) \\approx 4{,}935\\,\\hbar^2/(mL^2)$. Die Schranke liegt nur 1,3 % zu hoch, obwohl die Parabel kein Sinus ist.\n\n**Warum die Energie so gut ist.** Weicht der Versuchszustand um einen Anteil der Größe $\\varepsilon$ vom Grundzustand ab, so ist $|c_n|^2$ von der Ordnung $\\varepsilon^2$ für $n \\ne 0$. Der Fehler der Energie ist also nur von der Ordnung $\\varepsilon^2$. Andere Erwartungswerte wie $\\langle x^2\\rangle$ haben meist schon einen Fehler der Ordnung $\\varepsilon$. Die Energie ist gut, die Wellenfunktion oft schlechter.\n\n**Zusammenhang mit der Störungstheorie.** Nimmt man den ungestörten Grundzustand als Versuchszustand, so ist $\\langle 0^{(0)}|\\hat H|0^{(0)}\\rangle = E_0^{(0)} + E_0^{(1)}$. Die erste Ordnung ist also immer eine obere Schranke für den Grundzustand – passend zu $E_0^{(2)} \\le 0$.\n\n**Typische Fehlvorstellung.** „Das Minimum über $b$ ist die exakte Grundzustandsenergie.“ Nur wenn die Familie den exakten Grundzustand enthält, wie der Gauß-Ansatz beim Oszillator. Sonst ist es eine Schranke, und wie weit sie danebenliegt, sagt das Verfahren allein nicht.',
-      derive:{ctx:CTX.box({defs:{'ψ(x)':'sqrt(30/L^5) x (L - x)'}}),
-        lines:[
+        q:{q:R`Im Unterraum ist $W = \begin{pmatrix}\beta&0\\0&\beta\end{pmatrix}$. Was folgt?`,
+          opts:[R`Aufspaltung in $E^{(0)} \pm \beta$`, R`erst die Basis wechseln, dann rechnen`, R`beide um $\beta$ verschoben, keine Aufspaltung`], a:2,
+          ex:R`$W = \beta\mathbb 1$ ist in jeder Basis diagonal; beide Zustände bekommen $\beta$. Die Entartung bleibt in erster Ordnung bestehen.`,
+          fb:[R`$\pm\beta$ wären die Eigenwerte von $\begin{pmatrix}0&\beta\\ \beta&0\end{pmatrix}$. Hier sind beide Eigenwerte $\beta$.`,
+            R`$\beta\mathbb 1$ ist in jeder Basis gleich; ein Basiswechsel ändert nichts.`, '']}},
+      {id:'stoer-t4c', title:'Abkürzung über Symmetrie',
+        num:{title:R`Wasserstoff $n = 2$ im Feld $\mathcal E\hat z$`, text:R`Die vier Zustände $|2s\rangle$, $|2p_0\rangle$, $|2p_{+1}\rangle$, $|2p_{-1}\rangle$ geben eine $4\times4$-Matrix $W$ mit 16 Einträgen. Weil $\hat z$ mit $\hat L_z$ vertauscht, koppeln nur gleiche $m$. Weil $\hat z$ die Parität umkehrt, sind alle Diagonalelemente null. Übrig bleiben
+
+$$W_{2s,\,2p_0} = W_{2p_0,\,2s},$$
+
+zwei von 16 Einträgen.`},
+        text:R`Vertauscht ein hermitescher Operator $\hat A$ mit $\hat H_0$ und mit $\hat H'$, und hat er im Unterraum verschiedene Eigenwerte, dann ist $W$ in der Eigenbasis von $\hat A$ schon diagonal oder zerfällt in kleine Blöcke. Beim Wasserstoff im Feld $\mathcal E\hat z$ ist das $\hat L_z$: Nur Zustände mit gleichem $m$ koppeln. Die Parität streicht zusätzlich alle Diagonalelemente. So wird aus einer $4\times4$-Matrix ein $2\times2$-Block. Die Symmetrie sagt dir also, welche Integrale du gar nicht erst ausrechnen musst.`,
+        q:{q:R`Welche Matrixelemente $\langle 2,l',m'|\hat z|2,l,m\rangle$ können im Niveau $n = 2$ von null verschieden sein?`,
+          opts:[R`nur solche mit $m' = m$ und $l' \ne l$`, R`alle mit $l' = l$`, R`nur die Diagonalelemente`], a:0,
+          ex:R`$\hat z$ vertauscht mit $\hat L_z$, also $m' = m$. Es ist ungerade, also müssen die Paritäten $(-1)^l$ verschieden sein: $l' \ne l$.`,
+          fb:['', R`Gleiches $l$ heißt gleiche Parität; dann ist der Integrand von $\langle\dots|\hat z|\dots\rangle$ ungerade und das Integral null.`,
+            R`Gerade die Diagonalelemente verschwinden alle wegen der Parität.`]}},
+      {id:'stoer-t4d', title:'Der lineare Stark-Effekt in fünf Gestalten',
+        num:{title:R`Ein starkes Laborfeld`, text:R`Mit $|\langle 2s|\hat z|2p_0\rangle| = 3a_0$ und $\mathcal E = 10^7\,\mathrm{V/m}$ ist
+
+$$w = 3e\mathcal Ea_0 = 3\cdot10^7\,\mathrm{V/m}\cdot0{,}529\cdot10^{-10}\,\mathrm m\cdot e \approx 1{,}6\cdot10^{-3}\,\mathrm{eV}.$$
+
+Das Niveau $E_2 = -3{,}40\,\mathrm{eV}$ spaltet in $E_2 \pm 1{,}6\,\mathrm{meV}$ und das unverschobene $E_2$ auf.`},
+        text:R`Das Niveau $n = 2$ des Wasserstoffs ist ohne Spin vierfach entartet. Mit $\hat H' = e\mathcal E\hat z$ koppelt nur $\langle 2s|\hat z|2p_0\rangle$. Im Unterraum $\{|2s\rangle, |2p_0\rangle\}$ ist $W$ bis auf ein Vorzeichen, das von der Phasenwahl abhängt, eine Matrix mit $w$ außerhalb der Diagonale. Die Zustände $2p_{\pm1}$ bleiben in erster Ordnung unverschoben. Die Verschiebung $\pm w$ ist *linear* in $\mathcal E$, weil die Mischungen $|\phi_\pm\rangle$ ein festes Dipolmoment haben. Die Tafel verbindet Matrix, Zustände, Niveauschema und Spektrum.`,
+        reps:{obj:R`Wasserstoff $n = 2$ im Feld $\mathcal E\hat z$`,
+          rows:[
+            {k:'worte', text:R`Das Feld mischt $2s$ und $2p_0$ zu zwei Zuständen, deren Ladungswolken nach oben bzw. unten verschoben sind. $2p_{\pm1}$ bleiben unberührt.`},
+            {k:'matrix', tex:R`\begin{gathered}W \doteq \begin{pmatrix}0 & w & 0 & 0\\ w & 0 & 0 & 0\\ 0 & 0 & 0 & 0\\ 0 & 0 & 0 & 0\end{pmatrix}\\ \text{in der Basis } |2s\rangle, |2p_0\rangle, |2p_{+1}\rangle, |2p_{-1}\rangle,\\ w = 3e\mathcal Ea_0\end{gathered}`},
+            {k:'dirac', tex:R`|\phi_\pm\rangle = \tfrac{1}{\sqrt2}\left(|2s\rangle \pm |2p_0\rangle\right):\ E^{(1)} = \pm w;\qquad |2p_{\pm1}\rangle:\ E^{(1)} = 0`},
+            {k:'graph', plot:{x:[0, 1], y:[-3.4, 3.4], abs:true, yticks:[{y:-3.18, lab:'-3{,}2'}, {y:3.18, lab:'3{,}2'}], xlab:R`\mathcal E/\mathcal E_{\max}`, ylab:R`(E - E_2)/\text{meV}`}, f:x => 1.59 * x * 2, lab:R`|\phi_+\rangle`, f2:x => -1.59 * x * 2, lab2:R`|\phi_-\rangle`,
+              cap:R`Niveauschema über der Feldstärke bis $\mathcal E_{\max} = 2\cdot10^7\,\mathrm{V/m}$: zwei Geraden $\pm w$; die beiden $2p_{\pm1}$ bleiben auf der waagerechten Achse $E = E_2$. Der Fächer öffnet sich linear.`},
+            {k:'physik', text:R`Die Linie Lyman-α ($n = 2 \to 1$) spaltet im Feld in drei Komponenten auf, um $\pm w$ verschoben und unverschoben; ihr Abstand wächst proportional zu $\mathcal E$.`}
+          ],
+          links:[
+            {from:'worte', to:'matrix', rule:R`„Nur $2s$ und $2p_0$ koppeln“ heißt: in Zeile $2s$, Spalte $2p_0$ und gespiegelt $w$ eintragen, sonst überall $0$.`},
+            {from:'matrix', to:'dirac', rule:R`Die Matrix diagonalisieren: Der $2\times2$-Block gibt $\pm w$ mit $\tfrac{1}{\sqrt2}(1;\ \pm1)$, der Rest ist schon diagonal mit $0$.`},
+            {from:'dirac', to:'graph', rule:R`Jeden Eigenwert als Linie über der Feldstärke zeichnen; $w \propto \mathcal E$ gibt Geraden durch den Ursprung.`},
+            {from:'graph', to:'physik', rule:R`Bei festem $\mathcal E$ senkrecht schneiden: Die Schnittpunkte sind die Niveaus, ihre Abstände zum Niveau $n = 1$ die Linien im Spektrum.`}
+          ]},
+        q:{q:R`Wie viele verschiedene Energien hat das Niveau $n = 2$ im Feld in erster Ordnung, und wie oft kommt jede vor?`, tr:{from:'matrix', to:'physik'},
+          opts:[R`vier verschiedene, je einmal`, R`zwei: $E_2 + w$ und $E_2 - w$, je doppelt`, R`drei: $E_2 + w$, $E_2 - w$ einfach, $E_2$ doppelt`], a:2,
+          ex:R`Die Eigenwerte von $W$ sind $+w$, $-w$, $0$, $0$. Die Entartung ist nur teilweise aufgehoben.`,
+          fb:[R`Zwei der vier Eigenwerte sind gleich: $2p_{+1}$ und $2p_{-1}$ bleiben beide bei $E_2$.`,
+            R`$\pm w$ gehören nur zum $2\times2$-Block. Die $2p_{\pm1}$-Zustände haben den Eigenwert $0$.`, '']}},
+      {id:'stoer-t4e', title:'Typischer Fehler: nur die Diagonalelemente nehmen',
+        num:{title:'Was die Diagonale allein liefert', text:R`$\langle 2s|e\mathcal E\hat z|2s\rangle = 0$ und $\langle 2p_0|e\mathcal E\hat z|2p_0\rangle = 0$, beide aus Paritätsgründen. Wer nur sie nimmt, findet
+
+$$E^{(1)} = 0$$
+
+für alle vier Zustände, also keine Aufspaltung. Gemessen wird eine Aufspaltung um $\pm w$.`},
+        text:R`„Man nimmt einfach $\langle 2s|\hat H'|2s\rangle$ und $\langle 2p_0|\hat H'|2p_0\rangle$, wie im nicht entarteten Fall.“ Das ist der typische Fehler bei Entartung. Beide Diagonalelemente sind null, und man fände fälschlich gar keine Verschiebung. Entscheidend ist die Nebendiagonale von $W$. Die Diagonalelemente geben die richtigen Korrekturen nur, wenn $W$ in der gewählten Basis schon diagonal ist. Ob das so ist, siehst du erst, wenn du alle Einträge von $W$ im entarteten Unterraum aufgestellt hast.`,
+        q:{q:'Für welches $W$ im entarteten Unterraum darfst du die Diagonalelemente direkt als Korrekturen $E^{(1)}$ nehmen?',
+          opts:['$W = \\begin{pmatrix}0 & w\\\\ w & 0\\end{pmatrix}$', '$W = \\begin{pmatrix}0{,}3 & 0\\\\ 0 & -0{,}1\\end{pmatrix}$', '$W = \\begin{pmatrix}0{,}2 & 0{,}1\\\\ 0{,}1 & 0{,}2\\end{pmatrix}$'], a:1,
+          ex:'Nur bei einem diagonalen $W$ sind die Diagonalelemente schon die Eigenwerte: $E^{(1)} = 0{,}3$ und $-0{,}1$. Sonst mischt die Nebendiagonale die Basiszustände, und man muss $W$ diagonalisieren.',
+          fb:['Die Diagonale ist null, die Nebendiagonale nicht. Die richtigen Korrekturen sind die Eigenwerte $\\pm w$, wie im Beispiel.', '', 'Auch eine kleine Nebendiagonale mischt entartete Zustände vollständig. Die Eigenwerte sind $0{,}3$ und $0{,}1$, nicht zweimal $0{,}2$.']}}
+    ]},
+
+    /* ===== Abschnitt 5: Variationsprinzip ===== */
+    {id:'stoer-t5', title:'Das Variationsprinzip', steps:[
+      {id:'stoer-t5a', title:'Eine obere Schranke für jeden Versuch',
+        num:{title:'Zwei Versuche im Zweiniveausystem', text:R`$\hat H \doteq \begin{pmatrix}1{,}1 & 0{,}2\\ 0{,}2 & 2{,}9\end{pmatrix}$, exakt $E_0 = 1{,}0780$. Der Versuch $(1;\ 0)$ gibt $\langle H\rangle = 1{,}1$. Der Versuch $(1;\ -0{,}1)$, normiert, gibt
+
+$$\langle H\rangle = \frac{1{,}1 - 0{,}04 + 0{,}029}{1{,}01} \approx 1{,}0782.$$
+
+Beide liegen über $E_0$, der zweite nur um $0{,}0002$.`},
+        text:R`Für jeden normierten Zustand $|\psi\rangle$ gilt
+
+$$\langle\psi|\hat H|\psi\rangle \ge E_0,$$
+
+mit der exakten Grundzustandsenergie $E_0$. Der Erwartungswert der Energie in einem beliebigen Versuchszustand ist also eine **obere Schranke** für $E_0$ ([[lex:variationsprinzip|Variationsprinzip]]). Das gilt, ohne dass du $E_0$ oder die exakten Eigenzustände kennst. Je besser der Versuch, desto näher liegt die Schranke an $E_0$. Ein tieferer Wert ist also immer der bessere.`,
+        derive:{ctx:STMAT({H:'(11/10, 1/5; 1/5, 29/10)'}, {}), lines:[
+          {l:'(1, -1/10) H (1; -1/10) = 1089/1000', w:'Zeile mal Matrix mal Spalte, noch nicht normiert'},
+          {l:'(1, -1/10) (1; -1/10) = 101/100', w:'Normquadrat des Versuchs',
+            why:{q:'Wozu braucht man diese Zeile?', opts:['Weil $\\langle H\\rangle = \\langle\\psi|\\hat H|\\psi\\rangle/\\langle\\psi|\\psi\\rangle$ für einen nicht normierten Versuch gilt.', 'Weil der Versuch orthogonal zum Grundzustand sein muss, $\\langle 0|\\psi\\rangle = 0$.', 'Weil das Normquadrat $\\langle\\psi|\\psi\\rangle$ die Energie zweiter Ordnung ist.'], a:0, ex:'$1{,}089/1{,}01 \\approx 1{,}0782$. Ohne Division käme $1{,}089$ heraus, eine zu hohe Schranke.'}},
+          {l:'det(H - (2 - sqrt(85)/10) I) = 0', w:'exakte Grundzustandsenergie zum Vergleich'}
+        ]},
+        q:{q:R`Zwei Ansätze für ein Atom liefern $\langle H\rangle = -12{,}9\,\mathrm{eV}$ und $-13{,}4\,\mathrm{eV}$. Welcher liegt näher an der exakten Grundzustandsenergie?`,
+          opts:[R`$-12{,}9\,\mathrm{eV}$, weil Schranken von oben kommen`, R`ohne $E_0$ lässt sich das nicht sagen`, R`$-13{,}4\,\mathrm{eV}$, weil beide über $E_0$ liegen`], a:2,
+          ex:R`Beide sind obere Schranken: $E_0 \le -13{,}4\,\mathrm{eV}$. Der tiefere Wert ist also näher dran.`,
+          fb:[R`Gerade weil beide von oben kommen, ist der tiefere näher am exakten Wert.`,
+            R`Man braucht $E_0$ nicht: Beide liegen darüber, also ist der tiefere sicher näher.`, '']}},
+      {id:'stoer-t5b', title:'Der Beweis in zwei Zeilen',
+        pre:{from:'form', seg:'form-t3', title:'Erwartungswert in der Eigenbasis', text:R`Entwickelst du $|\psi\rangle = \sum_nc_n|a_n\rangle$ nach der Eigenbasis von $\hat A$, ist $\langle A\rangle = \sum_na_n|c_n|^2$ mit $\sum_n|c_n|^2 = 1$. Mini-Beispiel: Gewichte $0{,}9$ und $0{,}1$ bei den Werten $1$ und $4$ geben $\langle A\rangle = 1{,}3$.`},
+        num:{title:'Gewichte und Energien', text:R`Ein Versuchszustand bestehe zu $90\,\%$ aus dem Grundzustand ($E_0 = 1$) und zu $10\,\%$ aus dem ersten angeregten ($E_1 = 4$):
+
+$$\langle H\rangle = 0{,}9\cdot1 + 0{,}1\cdot4 = 1{,}3 \ge 1 = E_0.$$
+
+Jedes Gewicht bei einem höheren Niveau hebt den Mittelwert an.`},
+        text:R`Entwickle $|\psi\rangle$ nach den unbekannten exakten Eigenzuständen: $|\psi\rangle = \sum_nc_n|n\rangle$ mit $\sum_n|c_n|^2 = 1$ (Thema 6, [[lex:entwicklung|Entwicklung nach Eigenfunktionen]]). Dann ist
+
+$$\langle\psi|\hat H|\psi\rangle = \sum_n|c_n|^2E_n \ge \sum_n|c_n|^2E_0 = E_0.$$
+
+Im Schritt „$\ge$“ steht nur $E_n \ge E_0$ für alle $n$. Gleichheit gilt genau dann, wenn $|\psi\rangle$ nur aus Grundzuständen besteht. Du brauchst die $E_n$ und $c_n$ also nie auszurechnen; es genügt, dass es sie gibt.`,
+        q:{q:'Für welches Spektrum $E_1, E_2, E_3, \\dots$ ließe sich der Beweis **nicht** führen?',
+          opts:['$E_n = -13{,}6\\,\\mathrm{eV}/n^2$', '$E_n = n^2E_1$ mit $E_1 > 0$', '$E_n = -n\\cdot 1\\,\\mathrm{eV}$'], a:2,
+          ex:'Der Schritt „$\\ge$“ braucht einen tiefsten Wert $E_0$ mit $E_n \\ge E_0$ für alle $n$. Bei $E_n = -n\\cdot 1\\,\\mathrm{eV}$ gibt es keinen: Unter jedem Niveau liegt noch ein tieferes. Negative Energien wie $-13{,}6\\,\\mathrm{eV}/n^2$ stören nicht, solange es ein tiefstes Niveau gibt, hier $-13{,}6\\,\\mathrm{eV}$.',
+          fb:['Negative Energien sind kein Problem: Das tiefste Niveau ist $E_1 = -13{,}6\\,\\mathrm{eV}$, und alle anderen liegen darüber.', 'Hier ist $E_1$ das tiefste Niveau; der Beweis geht genauso.', '']}},
+      {id:'stoer-t5c', title:'Das Verfahren: eine Familie und ihr Minimum',
+        num:{title:'Gauß-Ansatz für Wasserstoff', text:R`Ein Versuch $\psi \propto e^{-\alpha r^2}$ mit dem Parameter $\alpha$ hat nicht die richtige Form am Kern. Minimiert über $\alpha$ ergibt sich
+
+$$\langle H\rangle_{\min} = -\frac{8}{3\pi}\cdot13{,}6\,\mathrm{eV} \approx -11{,}5\,\mathrm{eV},$$
+
+eine obere Schranke für den exakten Wert $-13{,}6\,\mathrm{eV}$, $15\,\%$ zu hoch.`},
+        text:R`Man wählt eine Familie von Versuchsfunktionen $\psi_b$ mit einem oder mehreren Parametern $b$. Sie soll zu den bekannten Eigenschaften passen: Randbedingungen, Symmetrie, keine Knoten im Grundzustand. Dann berechnet man $\langle H\rangle(b)$ und minimiert, also $\frac{d}{db}\langle H\rangle = 0$. Das Minimum ist die beste Schranke innerhalb der Familie. Eine gute Familie trifft die Form des Grundzustands gut; der Gauß-Ansatz für Wasserstoff verfehlt die Spitze am Kern und liegt deshalb deutlich daneben.`,
+        q:{q:R`Ein Ansatz $\psi_b$ gibt $\langle H\rangle(b) = 2b + 8/b$ in eV, für $b > 0$. Welche Schranke liefert er?`,
+          opts:[R`$8\,\mathrm{eV}$ bei $b = 2$`, R`$10\,\mathrm{eV}$ bei $b = 1$`, R`$0$, weil $8/b$ gegen null geht`], a:0,
+          ex:R`$\frac{d}{db}(2b + 8/b) = 2 - 8/b^2 = 0$ gibt $b = 2$ und $\langle H\rangle = 4 + 4 = 8\,\mathrm{eV}$.`,
+          fb:['', R`$b = 1$ ist nicht das Minimum: $\langle H\rangle(2) = 8$ ist kleiner.`,
+            R`Für großes $b$ wächst $2b$; das Minimum liegt dazwischen.`]}},
+      {id:'stoer-t5d', title:'Beispiel: Kasten mit einer Parabel',
+        num:{title:'Die Parabel normiert', text:R`$\psi = N\,x(L - x)$ verschwindet an beiden Wänden. Mit $\int_0^Lx^2(L - x)^2dx = L^5/30$ ist
+
+$$N = \sqrt{30/L^5}.$$
+
+Die Herleitung gibt $\langle H\rangle = 5\,\hbar^2/(mL^2)$; exakt ist $E_1 = \pi^2\hbar^2/(2mL^2) \approx 4{,}935\,\hbar^2/(mL^2)$.`},
+        text:R`Im Kasten $0 < x < L$ ist $\psi(x) = \sqrt{30/L^5}\,x(L - x)$ ein guter Versuch: Er verschwindet an beiden Wänden, ist normiert und knotenfrei. Weil im Kasten $V = 0$ ist, bleibt nur die kinetische Energie. Die Herleitung rechnet sie aus. Die Schranke liegt nur $1{,}3\,\%$ über $E_1$, obwohl die Parabel kein Sinus ist. Im Kasten heißt die Grundzustandsenergie $E_1$, weil die Zählung dort bei $n = 1$ beginnt.`,
+        derive:{ctx:CTX.box({defs:{'ψ(x)':'sqrt(30/L^5) x (L - x)'}}), lines:[
           {l:"⟨H⟩ = -ħ^2/(2m) ∫_0^L ψ ψ'' dx", w:'im Kasten ist $V = 0$'},
-          {l:"ψ'' = -2 sqrt(30/L^5)", w:'zweimal ableiten',
-            why:{q:'Warum ist $\\psi\'\'$ konstant?', opts:['$\\psi$ ist ein Polynom zweiten Grades in $x$.', 'Weil $\\psi$ eine Eigenfunktion von $\\hat H$ ist.', 'Weil $\\psi$ an den Wänden verschwindet.'], a:0, ex:'$x(L - x) = Lx - x^2$ hat die zweite Ableitung $-2$. Wäre $\\psi$ Eigenfunktion, müsste $\\psi\'\' \\propto \\psi$ sein – das ist hier nicht so.'}},
-          {l:'⟨H⟩ = ħ^2/m sqrt(30/L^5) ∫_0^L ψ dx', w:'Konstante vor das Integral'},
-          {l:'= ħ^2/m · 30/L^5 ∫_0^L x (L - x) dx'},
+          {l:"ψ'' = -2 sqrt(30/L^5)", w:'zweimal abgeleitet',
+            why:{q:'Warum ist $\\psi\'\'$ konstant?', opts:['Weil $\\psi$ ein Polynom zweiten Grades in $x$ ist.', 'Weil $\\psi$ eine Eigenfunktion von $\\hat H$ ist.', 'Weil $\\psi$ an den Wänden verschwindet.'], a:0, ex:'$x(L - x) = Lx - x^2$ hat die zweite Ableitung $-2$. Wäre $\\psi$ Eigenfunktion, müsste $\\psi\'\' \\propto \\psi$ sein – das ist hier nicht so.'}},
+          {l:'⟨H⟩ = ħ^2/m sqrt(30/L^5) ∫_0^L ψ dx', w:'Konstante vor das Integral',
+            why:{q:'Woher kommt das Pluszeichen?', opts:['$-\\frac{\\hbar^2}{2m}\\cdot(-2) = +\\frac{\\hbar^2}{m}$', 'aus der Normierung von $\\psi$', 'weil die kinetische Energie im Kasten negativ ist'], a:0, ex:'Die Konstante $\\psi\'\' = -2\\sqrt{30/L^5}$ wird vor das Integral gezogen; zusammen mit $-\\hbar^2/(2m)$ gibt das $+\\frac{\\hbar^2}{m}\\sqrt{30/L^5}$.'}},
+          {l:'= ħ^2/m · 30/L^5 ∫_0^L x (L - x) dx', w:'ψ eingesetzt'},
           {l:'= ħ^2/m · 30/L^5 · L^3/6', w:'$\\int_0^L x(L-x)dx = \\frac{L^3}{2} - \\frac{L^3}{3}$'},
-          {l:'= 5ħ^2/(m L^2)',
+          {l:'= 5ħ^2/(m L^2)', w:'vereinfacht',
             why:{q:'Was folgt aus dem Vergleich mit $E_1 = \\pi^2\\hbar^2/(2mL^2) \\approx 4{,}93\\,\\hbar^2/(mL^2)$?', opts:['Die Schranke liegt wie erwartet knapp über $E_1$.', 'Die Rechnung ist falsch, das Ergebnis muss unter $E_1$ liegen.', 'Die Parabel ist der exakte Grundzustand.'], a:0, ex:'$5 > \\pi^2/2$: eine obere Schranke, 1,3 % zu hoch. Ein Ergebnis unter $E_1$ würde einen Rechenfehler anzeigen.'}}
         ]},
-      q:[
-        {q:'Zwei Ansätze liefern $\\langle H\\rangle = -12{,}9\\,$eV und $-13{,}4\\,$eV. Welcher liegt näher an der exakten Grundzustandsenergie?', opts:['$-13{,}4\\,$eV, weil beide über $E_0$ liegen', '$-12{,}9\\,$eV, weil Schranken von oben kommen', 'ohne $E_0$ lässt sich das nicht sagen'], a:0, ex:'Beide sind obere Schranken: $E_0 \\le -13{,}4\\,$eV. Der tiefere Wert ist also näher dran.'},
-        {q:'Der Gauß-Ansatz $e^{-bx^2}$ liefert beim harmonischen Oszillator genau $\\hbar\\omega/2$. Warum?', opts:['Die Familie enthält den exakten Grundzustand.', 'Das Variationsprinzip liefert immer den exakten Wert.', 'Gauß-Funktionen sind Eigenfunktionen jedes $\\hat H$.'], a:0, ex:'Für $b = m\\omega/(2\\hbar)$ ist $e^{-bx^2}$ genau $\\psi_0$. Bei anderen Potentialen gibt derselbe Ansatz nur eine Schranke.'}
-      ]},
-    {id:'stoer-t6', title:'Anwendungen: anharmonischer Oszillator und Stark-Effekt',
-      text:'**Anharmonischer Oszillator.** Ein Molekülpotential ist nur nahe dem Minimum eine Parabel. Die nächsten Glieder der [[lex:taylor|Taylor-Reihe]] sind $\\kappa x^3$ und $\\lambda x^4$. Mit $\\hat x = \\sqrt{\\hbar/(2m\\omega)}\\,(\\hat a + \\hat a^\\dagger)$ ([[lex:leiteroperatoren|Leiteroperatoren]], Thema 7) werden die Matrixelemente zu reinem Abzählen.\n\n*Quartischer Term, erste Ordnung.* $(\\hat a + \\hat a^\\dagger)^4$ besteht aus Produkten von vier Faktoren. Zum Diagonalelement $\\langle n|\\dots|n\\rangle$ tragen nur die sechs Anordnungen mit zwei $\\hat a$ und zwei $\\hat a^\\dagger$ bei. Ergebnis (Herleitung unten):\n\n$$E_n^{(1)} = \\lambda\\Big(\\frac{\\hbar}{2m\\omega}\\Big)^2(6n^2 + 6n + 3).$$\n\nFür $\\lambda > 0$ wird die Feder bei großen Auslenkungen steifer. Höhere Niveaus steigen stärker, die Abstände wachsen mit $n$.\n\n*Kubischer Term.* $\\hat x^3$ ist ungerade, also ist $E_n^{(1)} = 0$ ([[lex:paritaet-auswahlregel|Parität]]). Erst die zweite Ordnung trägt bei. $\\hat x^3|0\\rangle$ enthält nur $|1\\rangle$ und $|3\\rangle$; für den Grundzustand folgt\n\n$$E_0^{(2)} = -\\frac{11\\,\\kappa^2}{\\hbar\\omega}\\Big(\\frac{\\hbar}{2m\\omega}\\Big)^3.$$\n\nAllgemein ist $E_n^{(2)} = -\\frac{\\kappa^2}{\\hbar\\omega}\\left(\\frac{\\hbar}{2m\\omega}\\right)^3(30n^2 + 30n + 11)$. Höhere Niveaus sinken stärker, die Abstände werden mit $n$ kleiner. Bei realen Molekülpotentialen überwiegt meist dieser Effekt. Man sieht ihn in Schwingungsspektren zweiatomiger Moleküle: Der erste Oberton liegt etwas unter dem Doppelten der Grundschwingung ([[lex:anharmonischer-oszillator|anharmonischer Oszillator]]).\n\n**Stark-Effekt, qualitativ.** Ein Atom im homogenen Feld $\\mathcal E\\hat z$ hat die Störung $\\hat H\' = e\\mathcal E\\hat z$ (Elektronenladung $-e$). Der Grundzustand des Wasserstoffs hat gerade Parität. Also ist $E^{(1)} = e\\mathcal E\\langle z\\rangle = 0$: Das Atom hat kein festes Dipolmoment. Die zweite Ordnung ist negativ und quadratisch in $\\mathcal E$. Man schreibt sie als $E^{(2)} = -\\frac12\\alpha\\mathcal E^2$. Das Feld *induziert* ein Dipolmoment $\\alpha\\mathcal E$; $\\alpha$ heißt Polarisierbarkeit, für Wasserstoff exakt $\\alpha = 4\\pi\\varepsilon_0\\cdot\\frac92a_0^3$. Das ist der **quadratische** [[lex:stark-effekt|Stark-Effekt]]. Niveaus mit Entartung zwischen Zuständen verschiedener Parität, wie $2s$ und $2p$, zeigen dagegen den **linearen** Stark-Effekt aus dem Abschnitt zur Entartung.\n\n**Typische Fehlvorstellung.** „Die Energie eines Atoms im Feld ändert sich wie die eines Dipols, also linear in $\\mathcal E$.“ Das gilt nur bei Entartung zwischen Zuständen verschiedener Parität. Ein nicht entarteter Zustand fester Parität hat kein permanentes Dipolmoment; der Effekt beginnt quadratisch.',
-      derive:{ctx:STOSC(),
-        lines:[
-          {l:'⟨n|x^4|n⟩ = (ħ/(2mω))^2 ⟨n|(a + a†)^4|n⟩', w:'$\\hat x = \\sqrt{\\hbar/(2m\\omega)}\\,(\\hat a + \\hat a^\\dagger)$'},
-          {l:'⟨n|(a + a†)^4|n⟩ = 6n^2 + 6n + 3', w:'sechs Anordnungen mit zwei $\\hat a$ und zwei $\\hat a^\\dagger$',
+        q:{q:R`Jemand erhält mit einem Ansatz im Kasten $\langle H\rangle = 4{,}8\,\hbar^2/(mL^2)$. Was schließt du?`,
+          opts:['ein besserer Ansatz, denn $4{,}8 < 5$ liegt tiefer als die Parabel', 'ein Rechenfehler, denn das liegt unter $E_1$', 'ein Ansatz mit Knoten, denn der senkt $\\langle H\\rangle$ unter $E_1$'], a:1,
+          ex:R`$E_1 \approx 4{,}935\,\hbar^2/(mL^2)$. Kein normierter Zustand kann darunter liegen.`,
+          fb:[R`Besser heißt näher von oben. $4{,}8$ liegt unter dem exakten Wert, das ist unmöglich.`, '',
+            R`Ein Knoten würde $\langle H\rangle$ erhöhen, nicht unter $E_1$ drücken.`]}},
+      {id:'stoer-t5e', title:'Warum die Energie so genau ist',
+        num:{title:R`Ein Fehler $\varepsilon$ im Zustand`, text:R`Der Versuch $(1;\ -0{,}1)$ weicht vom exakten Eigenvektor $(1;\ -0{,}110)$ um $\varepsilon \approx 0{,}01$ ab. Die Energie liegt aber nur
+
+$$1{,}0782 - 1{,}0780 = 0{,}0002 \approx 2\varepsilon^2$$
+
+zu hoch, von der Ordnung $\varepsilon^2$. Der Versuch $(1;\ 0)$ mit $\varepsilon \approx 0{,}11$ liegt $0{,}022$ zu hoch.`},
+        text:R`Weicht der Versuchszustand um einen Anteil der Größe $\varepsilon$ vom Grundzustand ab, so ist $|c_n|^2$ von der Ordnung $\varepsilon^2$ für $n \ne 0$. Der Fehler der Energie ist also nur von der Ordnung $\varepsilon^2$. Andere Erwartungswerte wie $\langle x^2\rangle$ haben meist schon einen Fehler der Ordnung $\varepsilon$. Die Energie ist gut, die Wellenfunktion oft schlechter. Nimmt man den ungestörten Grundzustand als Versuch, ist $\langle 0^{(0)}|\hat H|0^{(0)}\rangle = E_0^{(0)} + E_0^{(1)}$. Die erste Ordnung ist also immer eine obere Schranke, passend zu $E_0^{(2)} \le 0$.`,
+        q:{q:R`Warum ist $E_0^{(0)} + E_0^{(1)}$ immer eine obere Schranke für den Grundzustand?`,
+          opts:['Weil die erste Ordnung $E_0^{(1)}$ immer positiv ist.', 'Weil sie $\\langle H\\rangle$ im Versuch $|0^{(0)}\\rangle$ ist.', 'Weil die Störung $\\hat H\'$ den Grundzustand immer anhebt.'], a:1,
+          ex:R`$\langle 0^{(0)}|\hat H_0 + \hat H'|0^{(0)}\rangle = E_0^{(0)} + E_0^{(1)}$. Nach dem Variationsprinzip ist das $\ge E_0$.`,
+          fb:[R`$E_0^{(1)}$ kann negativ sein. Die Schranke folgt aus dem Variationsprinzip, nicht aus einem Vorzeichen.`, '',
+            R`Eine Störung kann den Grundzustand auch senken. Trotzdem liegt die erste Ordnung nie darunter.`]}},
+      {id:'stoer-t5f', title:'Typischer Fehler: Das Minimum sei die exakte Energie',
+        num:{title:'Zwei Familien', text:R`Für den Oszillator enthält die Gauß-Familie $e^{-bx^2}$ den exakten Grundzustand: Das Minimum ist exakt $\hbar\omega/2$. Für Wasserstoff enthält sie ihn nicht:
+
+$$-11{,}5\,\mathrm{eV} > -13{,}6\,\mathrm{eV}.$$
+
+Dasselbe Verfahren, einmal exakt, einmal $15\,\%$ daneben.`},
+        text:R`„Das Minimum über $b$ ist die exakte Grundzustandsenergie.“ Das gilt nur, wenn die Familie den exakten Grundzustand enthält, wie der Gauß-Ansatz beim Oszillator. Sonst ist es eine Schranke, und wie weit sie danebenliegt, sagt das Verfahren allein nicht. Ein zweiter Fehler ist, das Variationsprinzip auf angeregte Zustände anzuwenden. Für sie gilt die Schranke nur, wenn der Versuch orthogonal zu allen tieferen Zuständen ist, etwa durch Symmetrie.`,
+        q:{q:R`Der Gauß-Ansatz $e^{-bx^2}$ liefert beim harmonischen Oszillator genau $\hbar\omega/2$. Warum?`,
+          opts:[R`Das Variationsprinzip liefert immer den exakten Wert.`, R`Gauß-Funktionen sind Eigenfunktionen jedes $\hat H$.`, R`Die Familie enthält den exakten Grundzustand.`], a:2,
+          ex:R`Für $b = m\omega/(2\hbar)$ ist $e^{-bx^2}$ genau $\psi_0$. Bei anderen Potentialen gibt derselbe Ansatz nur eine Schranke.`,
+          fb:[R`Im Wasserstoff liefert derselbe Ansatz $-11{,}5\,\mathrm{eV}$ statt $-13{,}6\,\mathrm{eV}$.`,
+            R`Gauß-Funktionen sind nur für das Parabelpotential Eigenfunktionen.`, '']}}
+    ]},
+
+    /* ===== Abschnitt 6: Anwendungen ===== */
+    {id:'stoer-t6', title:'Anwendungen: anharmonischer Oszillator und Stark-Effekt', steps:[
+      {id:'stoer-t6a', title:'Quartischer Term in erster Ordnung',
+        pre:{from:'osz', seg:'osz-t4', title:'Leiteroperatoren', text:R`$\hat x = \sqrt{\hbar/(2m\omega)}\,(\hat a + \hat a^\dagger)$ mit $\hat a|n\rangle = \sqrt n|n-1\rangle$ und $\hat a^\dagger|n\rangle = \sqrt{n+1}|n+1\rangle$. Mini-Beispiel: $(\hat a + \hat a^\dagger)|0\rangle = |1\rangle$ und $(\hat a + \hat a^\dagger)^2|0\rangle = |0\rangle + \sqrt2|2\rangle$.`},
+        num:{title:R`$n = 0$ und $n = 1$`, text:R`Abgezählt mit Leiteroperatoren ist $\langle n|(\hat a + \hat a^\dagger)^4|n\rangle = 6n^2 + 6n + 3$:
+
+$$n = 0:\ 3,\qquad n = 1:\ 15.$$
+
+Also $E_0^{(1)} = 3\lambda\left(\frac{\hbar}{2m\omega}\right)^2$ und $E_1^{(1)} = 15\lambda\left(\frac{\hbar}{2m\omega}\right)^2$: Das höhere Niveau steigt fünfmal so stark.`},
+        text:R`Ein Molekülpotential ist nur nahe dem Minimum eine Parabel. Die nächsten Glieder der [[lex:taylor|Taylor-Reihe]] sind $\kappa x^3$ und $\lambda x^4$. Mit den [[lex:leiteroperatoren|Leiteroperatoren]] werden die Matrixelemente zu reinem Abzählen. $(\hat a + \hat a^\dagger)^4$ besteht aus Produkten von vier Faktoren. Zum Diagonalelement tragen nur die sechs Anordnungen mit zwei $\hat a$ und zwei $\hat a^\dagger$ bei. Ergebnis:
+
+$$E_n^{(1)} = \lambda\Big(\frac{\hbar}{2m\omega}\Big)^2(6n^2 + 6n + 3).$$
+
+Für $\lambda > 0$ wird die Feder bei großen Auslenkungen steifer, und die Abstände wachsen mit $n$.`,
+        derive:{ctx:STOSC(), lines:[
+          {l:'⟨n|x^4|n⟩ = (ħ/(2mω))^2 ⟨n|(a + a†)^4|n⟩', w:R`$\hat x = \sqrt{\hbar/(2m\omega)}\,(\hat a + \hat a^\dagger)$`},
+          {l:'⟨n|(a + a†)^4|n⟩ = 6n^2 + 6n + 3', w:R`sechs Anordnungen mit zwei $\hat a$ und zwei $\hat a^\dagger$`,
             why:{q:'Welche Anordnung trägt zum Diagonalelement bei?', opts:['$\\hat a\\hat a\\hat a^\\dagger\\hat a^\\dagger$: zweimal hoch, zweimal runter', '$\\hat a^\\dagger\\hat a^\\dagger\\hat a^\\dagger\\hat a$: dreimal hoch, einmal runter', '$\\hat a\\hat a\\hat a\\hat a$: viermal hinunter'], a:0, ex:'Nur wenn $n$ am Ende wieder $n$ ist, bleibt $\\langle n|\\dots|n\\rangle \\ne 0$. Das verlangt gleich viele $\\hat a$ wie $\\hat a^\\dagger$.'}},
-          {l:'⟨0|x^4|0⟩ = 3 (ħ/(2mω))^2', w:'$n = 0$'},
+          {l:'⟨0|x^4|0⟩ = 3 (ħ/(2mω))^2', w:R`$n = 0$ eingesetzt`}
+        ]},
+        q:{q:R`Um wie viel wächst der Abstand $E_1 - E_0$ durch $\lambda\hat x^4$ in erster Ordnung?`,
+          opts:[R`um $3\lambda\left(\tfrac{\hbar}{2m\omega}\right)^2$`, R`um $12\lambda\left(\tfrac{\hbar}{2m\omega}\right)^2$`, R`gar nicht, beide Niveaus steigen gleich`], a:1,
+          ex:R`$E_1^{(1)} - E_0^{(1)} = (15 - 3)\,\lambda\left(\tfrac{\hbar}{2m\omega}\right)^2 = 12\lambda\left(\tfrac{\hbar}{2m\omega}\right)^2$.`,
+          fb:[R`$3$ ist $E_0^{(1)}$ allein. Gefragt ist die Differenz $15 - 3$.`, '',
+            R`Die Korrektur hängt über $6n^2 + 6n + 3$ von $n$ ab; höhere Niveaus steigen stärker.`]}},
+      {id:'stoer-t6b', title:'Kubischer Term: erst die zweite Ordnung',
+        num:{title:R`$\hat x^3|0\rangle$`, text:R`Dreimal $\hat a + \hat a^\dagger$ auf $|0\rangle$ angewandt:
+
+$$(\hat a + \hat a^\dagger)^3|0\rangle = \sqrt6\,|3\rangle + 3\,|1\rangle.$$
+
+Nur $|1\rangle$ und $|3\rangle$ kommen vor. Kein $|0\rangle$, also $E_0^{(1)} = 0$, und in der zweiten Ordnung nur zwei Summanden.`},
+        text:R`$\hat x^3$ ist ungerade, also ist $E_n^{(1)} = 0$ ([[lex:paritaet-auswahlregel|Parität]]). Erst die zweite Ordnung trägt bei. Für den Grundzustand folgt mit den beiden Zwischenzuständen
+
+$$E_0^{(2)} = -\frac{11\,\kappa^2}{\hbar\omega}\Big(\frac{\hbar}{2m\omega}\Big)^3.$$
+
+Allgemein ist $E_n^{(2)} = -\frac{\kappa^2}{\hbar\omega}\left(\frac{\hbar}{2m\omega}\right)^3(30n^2 + 30n + 11)$. Alle Niveaus sinken, höhere stärker; die Abstände werden mit $n$ kleiner. Das Vorzeichen von $\kappa$ spielt keine Rolle, weil es quadriert eingeht.`,
+        derive:{ctx:STOSC(), lines:[
           {l:'⟨n|x^3|n⟩ = 0', w:'Parität',
-            why:{q:'Warum verschwindet das?', opts:['$\\hat x^3$ ändert $n$ um $\\pm1$ oder $\\pm3$, nie um $0$.', 'Weil $\\hat x^3$ kein hermitescher Operator ist.', 'Weil $\\langle n|\\hat x|n\\rangle^3 = 0$ ist.'], a:0, ex:'Eine ungerade Zahl von Leiteroperatoren kann nicht zu $n$ zurückführen. $\\hat x^3$ ist hermitesch; und $\\langle x^3\\rangle$ ist nicht dasselbe wie $\\langle x\\rangle^3$.'}},
-          {l:'|⟨1|x^3|0⟩|^2 = 9 (ħ/(2mω))^3', w:'$(\\hat a + \\hat a^\\dagger)^3|0\\rangle = \\sqrt6|3\\rangle + 3|1\\rangle$'},
-          {l:'|⟨3|x^3|0⟩|^2 = 6 (ħ/(2mω))^3'},
-          {l:'Σ_{k=1}^{3} |⟨k|x^3|0⟩|^2/(0 - k ħω) = -11/(ħω) (ħ/(2mω))^3', w:'$E_0^{(2)}/\\kappa^2$ mit $E_0^{(0)} - E_k^{(0)} = -k\\hbar\\omega$',
+            why:{q:'Warum verschwindet das?', opts:['Weil $\\hat x^3$ den Wert $n$ nur um $\\pm1$ oder $\\pm3$ ändert.', 'Weil $\\hat x^3$ kein hermitescher Operator ist.', 'Weil $\\langle n|\\hat x|n\\rangle^3 = 0$ ist.'], a:0, ex:'Eine ungerade Zahl von Leiteroperatoren kann nicht zu $n$ zurückführen. $\\hat x^3$ ist hermitesch; und $\\langle x^3\\rangle$ ist nicht dasselbe wie $\\langle x\\rangle^3$.'}},
+          {l:'|⟨1|x^3|0⟩|^2 = 9 (ħ/(2mω))^3', w:R`Koeffizient $3$ von $|1\rangle$, quadriert`},
+          {l:'|⟨3|x^3|0⟩|^2 = 6 (ħ/(2mω))^3', w:R`Koeffizient $\sqrt6$ von $|3\rangle$, quadriert`},
+          {l:'Σ_{k=1}^{3} |⟨k|x^3|0⟩|^2/(0 - k ħω) = -11/(ħω) (ħ/(2mω))^3', w:R`$E_0^{(2)}/\kappa^2$ mit $E_0^{(0)} - E_k^{(0)} = -k\hbar\omega$`,
             why:{q:'Warum genügen $k = 1, 2, 3$?', opts:['$\\hat x^3|0\\rangle$ enthält nur $|1\\rangle$ und $|3\\rangle$.', 'Höhere $k$ sind wegen des großen Nenners klein.', 'Die Summe bricht nach drei Gliedern immer ab.'], a:0, ex:'Alle anderen Matrixelemente sind exakt null, auch $k = 2$. Die Summe ist damit exakt: $9/(-1) + 6/(-3) = -11$ in Einheiten von $(\\hbar/2m\\omega)^3/(\\hbar\\omega)$.'}}
         ]},
-      q:[
-        {q:'Für $\\hat H\' = \\kappa\\hat x^3$ im Oszillator ist $E_n^{(1)}$ …', opts:['null für alle $n$, wegen der Parität', 'positiv für $\\kappa > 0$, steigt mit $n$', 'proportional zu $(2n + 1)$, wie bei $x^2$'], a:0, ex:'$\\langle n|\\hat x^3|n\\rangle = 0$. Der kubische Term wirkt erst in zweiter Ordnung, und dort senkt er alle Niveaus.'},
-        {q:'Warum zeigt der Grundzustand des Wasserstoffs keinen linearen Stark-Effekt?', opts:['Er ist nicht entartet und hat gerade Parität: $\\langle z\\rangle = 0$.', 'Das Feld wirkt nur auf angeregte Zustände des Atoms.', 'Er ist kugelsymmetrisch, also ist $\\hat H\' = 0$.'], a:0, ex:'$\\hat H\' = e\\mathcal E\\hat z$ ist nicht null; nur sein Erwartungswert verschwindet. Die zweite Ordnung bleibt.'}
-      ]}
+        q:{q:R`Für $\hat H' = \kappa\hat x^3$ im Oszillator ist $E_n^{(1)}$ …`,
+          opts:[R`positiv für $\kappa > 0$, wächst mit $n$`, R`null für alle $n$, wegen der Parität`, R`proportional zu $(2n + 1)$, wie bei $x^2$`], a:1,
+          ex:R`$\langle n|\hat x^3|n\rangle = 0$. Der kubische Term wirkt erst in zweiter Ordnung, und dort senkt er alle Niveaus.`,
+          fb:[R`Bei $\kappa > 0$ ist $\kappa x^3$ für $x > 0$ positiv, für $x < 0$ negativ; im symmetrischen $|\psi_n|^2$ heben sich beide Seiten auf.`, '',
+            R`$2n + 1$ gehört zu $\langle x^2\rangle$. $x^3$ ist ungerade.`]}},
+      {id:'stoer-t6c', title:'Molekülschwingungen: der Oberton',
+        num:{title:'Chlorwasserstoff', text:R`Die Grundschwingung von HCl liegt bei $2886\,\mathrm{cm^{-1}}$, der erste Oberton bei $5668\,\mathrm{cm^{-1}}$. Harmonisch erwartet man
+
+$$2\cdot2886\,\mathrm{cm^{-1}} = 5772\,\mathrm{cm^{-1}}.$$
+
+Der Oberton liegt $104\,\mathrm{cm^{-1}}$ tiefer: Die Niveaus rücken nach oben zusammen.`},
+        text:R`Bei realen Molekülpotentialen überwiegt meist der Effekt des kubischen Terms. Das Potential ist auf der Seite großer Abstände flacher, weil die Bindung dort aufreißt. Die höheren Schwingungsniveaus sinken stärker als die tieferen, die Abstände werden mit $n$ kleiner. Man sieht das in Schwingungsspektren zweiatomiger Moleküle: Der erste Oberton, der Übergang $0 \to 2$, liegt etwas unter dem Doppelten der Grundschwingung ([[lex:anharmonischer-oszillator|anharmonischer Oszillator]]). Aus der Abweichung bestimmt man die Anharmonizität der Bindung.`,
+        q:{q:R`Aus den HCl-Werten $2886\,\mathrm{cm^{-1}}$ ($0 \to 1$) und $5668\,\mathrm{cm^{-1}}$ ($0 \to 2$): Wie weit liegen die Niveaus $n = 1$ und $n = 2$ auseinander?`, tr:{from:'physik', to:'formel'},
+          opts:[R`$2886\,\mathrm{cm^{-1}}$, wie die Grundschwingung`, R`$2834\,\mathrm{cm^{-1}}$, die Hälfte des Obertons`, R`$2782\,\mathrm{cm^{-1}}$`], a:2,
+          ex:R`$E_2 - E_1 = (E_2 - E_0) - (E_1 - E_0) = 5668 - 2886 = 2782\,\mathrm{cm^{-1}}$. Der obere Abstand ist um $104\,\mathrm{cm^{-1}}$ kleiner als der untere: Die Niveaus rücken zusammen.`,
+          fb:[R`Gleiche Abstände gälten nur harmonisch. Der Oberton zeigt gerade, dass sie verschieden sind.`,
+            R`Die Hälfte des Obertons ist der *mittlere* Abstand der Niveaus $0$, $1$, $2$, nicht der obere.`, '']}},
+      {id:'stoer-t6d', title:'Der quadratische Stark-Effekt',
+        num:{title:R`Wasserstoff in $10^7\,\mathrm{V/m}$`, text:R`Mit der Polarisierbarkeit $\alpha = 4\pi\varepsilon_0\cdot\tfrac92a_0^3 \approx 7{,}4\cdot10^{-41}\,\mathrm{C\,m^2/V}$ ist
+
+$$E^{(2)} = -\tfrac12\alpha\mathcal E^2 \approx -2{,}3\cdot10^{-8}\,\mathrm{eV}.$$
+
+Das ist rund $70\,000$-mal kleiner als die lineare Aufspaltung $w \approx 1{,}6\cdot10^{-3}\,\mathrm{eV}$ bei $n = 2$ im selben Feld.`},
+        text:R`Ein Atom im Feld $\mathcal E\hat z$ hat die Störung $\hat H' = e\mathcal E\hat z$, mit der Elektronenladung $-e$. Der Grundzustand des Wasserstoffs ist nicht entartet und hat gerade Parität. Also ist $E^{(1)} = e\mathcal E\langle z\rangle = 0$: Das Atom hat kein festes Dipolmoment. Die zweite Ordnung ist negativ und quadratisch in $\mathcal E$, geschrieben $E^{(2)} = -\frac12\alpha\mathcal E^2$. Das Feld *induziert* ein Dipolmoment $\alpha\mathcal E$; $\alpha$ heißt Polarisierbarkeit. Das ist der **quadratische** [[lex:stark-effekt|Stark-Effekt]].`,
+        reps:{obj:R`Wasserstoff im Feld: Grundzustand gegen $n = 2$`,
+          rows:[
+            {k:'worte', text:R`Der Grundzustand wird erst durch das Feld verformt und dann verschoben. Die Zustände $\phi_\pm$ bei $n = 2$ haben schon ohne Feld ein Dipolmoment.`},
+            {k:'formel', tex:R`1s:\ E^{(1)} = 0,\ E^{(2)} = -\tfrac12\alpha\mathcal E^2\qquad n = 2:\ E^{(1)} = \pm3e\mathcal Ea_0`},
+            {k:'graph', plot:{x:[0, 1], y:[-1.1, 1.1], xlab:R`\mathcal E/\mathcal E_0`, ylab:R`\Delta E\ \text{(schematisch)}`}, f:x => -x * x, lab:R`1s`, f2:x => x, lab2:R`n = 2,\ \phi_+`,
+              cap:R`Schema, nicht maßstäblich: Der Grundzustand sinkt wie eine Parabel, der Zustand $\phi_+$ steigt wie eine Gerade. Für kleine Felder ist die Gerade viel steiler.`},
+            {k:'physik', text:R`Bei $\mathcal E = 10^7\,\mathrm{V/m}$ sinkt $1s$ um $2{,}3\cdot10^{-8}\,\mathrm{eV}$, die $n = 2$-Komponenten verschieben sich um $\pm1{,}6\cdot10^{-3}\,\mathrm{eV}$. Doppeltes Feld: vierfache bzw. doppelte Verschiebung.`}
+          ],
+          links:[
+            {from:'worte', to:'formel', rule:R`„Erst verformt“ heißt: Die erste Ordnung ist null, erst die zweite trägt bei, mit $\mathcal E^2$. „Schon ein Dipol“ heißt: erste Ordnung, linear in $\mathcal E$.`},
+            {from:'formel', to:'graph', rule:R`$E^{(2)} \propto -\mathcal E^2$ als nach unten offene Parabel, $E^{(1)} \propto \mathcal E$ als Gerade durch den Ursprung zeichnen.`},
+            {from:'graph', to:'physik', rule:R`An der Krümmung bzw. Steigung ablesen, wie die Verschiebung mit dem Feld wächst; die Zahlenwerte aus der Formel einsetzen.`}
+          ]},
+        q:{q:R`Bei $10^7\,\mathrm{V/m}$ sinkt der Grundzustand um $2{,}3\cdot10^{-8}\,\mathrm{eV}$. Um wie viel sinkt er bei $3\cdot10^7\,\mathrm{V/m}$?`, tr:{from:'formel', to:'physik'},
+          opts:[R`um $6{,}9\cdot10^{-8}\,\mathrm{eV}$`, R`um $2{,}1\cdot10^{-7}\,\mathrm{eV}$`, R`um $4{,}0\cdot10^{-8}\,\mathrm{eV}$`], a:1,
+          ex:R`$E^{(2)} = -\frac12\alpha\mathcal E^2$ wächst quadratisch: dreifaches Feld, neunfache Verschiebung, $9\cdot2{,}3\cdot10^{-8}\,\mathrm{eV} \approx 2{,}1\cdot10^{-7}\,\mathrm{eV}$.`,
+          fb:[R`Das ist das Dreifache. Linear wächst nur die Verschiebung bei Entartung wie bei $n = 2$; der Grundzustand verschiebt sich quadratisch.`, '',
+            R`Das ist der Faktor $\sqrt3$, ein Wachstum mit $\sqrt{\mathcal E}$. Das kommt hier nicht vor.`]}},
+      {id:'stoer-t6e', title:'Typischer Fehler: Jedes Atom verschiebe sich linear im Feld',
+        num:{title:R`Zwei Felder für $1s$`, text:R`Bei $\mathcal E = 10^7\,\mathrm{V/m}$ ist $E^{(2)} \approx -2{,}3\cdot10^{-8}\,\mathrm{eV}$, bei $2\cdot10^7\,\mathrm{V/m}$
+
+$$E^{(2)} \approx -9{,}3\cdot10^{-8}\,\mathrm{eV},$$
+
+das Vierfache, nicht das Doppelte. Ein festes Dipolmoment gäbe dagegen eine lineare Verschiebung.`},
+        text:R`„Die Energie eines Atoms im Feld ändert sich wie die eines Dipols, also linear in $\mathcal E$.“ Das gilt nur bei Entartung zwischen Zuständen verschiedener Parität, wie $2s$ und $2p$. Ein nicht entarteter Zustand fester Parität hat kein permanentes Dipolmoment; der Effekt beginnt quadratisch. Ein zweiter Fehler lautet: „Weil $\langle z\rangle = 0$ ist, ist die Störung null.“ $\hat H' = e\mathcal E\hat z$ ist nicht null; nur sein Erwartungswert im ungestörten Zustand verschwindet. Die Nebendiagonalelemente zu $2p$, $3p$, … bleiben und geben die zweite Ordnung.`,
+        q:{q:R`Warum zeigt der Grundzustand des Wasserstoffs keinen linearen Stark-Effekt?`,
+          opts:[R`Das Feld wirkt nur auf angeregte Zustände des Atoms.`, R`Er ist kugelsymmetrisch, also ist $\hat H' = 0$.`, R`Er ist nicht entartet und hat gerade Parität: $\langle z\rangle = 0$.`], a:2,
+          ex:R`$\hat H' = e\mathcal E\hat z$ ist nicht null; nur sein Erwartungswert verschwindet. Die zweite Ordnung bleibt.`,
+          fb:[R`Das Feld wirkt auf jeden Zustand. Im Grundzustand beginnt die Verschiebung nur erst bei $\mathcal E^2$.`,
+            R`Die Störung $e\mathcal E\hat z$ ist ein Operator ungleich null. Null ist nur $\langle 1s|\hat z|1s\rangle$.`, '']}}
+    ]}
   ],
   example:{
     title:'Stufe auf der linken Hälfte des Kastens',
@@ -211,6 +730,14 @@ topic({
   },
   lab:{type:'perturb', title:'Erste Ordnung gegen exakte Lösung',
     text:'Kasten mit Stufe $V_0$ auf der linken Hälfte. Grau: ungestörte Niveaus $n^2E_1$, orange: erste Ordnung $n^2E_1 + V_0/2$, blau: exakt (numerisch diagonalisiert). Verändere $V_0$.',
+    map:[
+      {sym:R`V_0`, ctl:'Stärke V₀ / E₁', says:R`Höhe der Stufe auf der linken Hälfte, in Einheiten von $E_1$. In der Formel ist $\hat H' = V_0$ für $0 < x < L/2$. Mit $V_0$ wächst die erste Ordnung linear, der Abstand zur exakten Lösung etwa wie $V_0^2$.`},
+      {sym:R`E_n^{(0)} = n^2E_1`, ctl:'ungestört', says:R`Graue Striche: die Niveaus des leeren Kastens, $1$, $4$ und $9\,E_1$. Sie hängen nicht von $V_0$ ab.`},
+      {sym:R`E_n^{(0)} + \langle n|\hat H'|n\rangle = n^2E_1 + \tfrac12V_0`, ctl:'1. Ordnung', says:R`Orange Striche: ungestörte Energie plus Diagonalelement der Störung. Weil bei jedem $n$ die Hälfte von $|\psi_n|^2$ links liegt, rücken alle drei um dasselbe $V_0/2$ nach oben.`},
+      {sym:R`E_n`, ctl:'exakt', says:R`Blaue Striche: die Eigenwerte der vollen Matrix $n^2E_1\,\delta_{mn} + V_{mn}$ mit 40 Basiszuständen, numerisch diagonalisiert. Der Abstand zu Orange ist die Summe aller höheren Ordnungen.`},
+      {sym:R`E/E_1`, ctl:'E / E₁', says:R`Senkrechte Achse: Energie in Einheiten der ungestörten Grundzustandsenergie $E_1 = \pi^2\hbar^2/(2mL^2)$.`},
+      {sym:R`E_{\text{exakt}} \approx E_1 + \tfrac12V_0 - \tfrac{V_0^2}{16E_1}`, ctl:'Grundzustand exakt', says:R`Die Anzeige vergleicht den exakten Grundzustand mit der ersten Ordnung. Die zweite Ordnung ist hier genau $-V_0^2/(16E_1)$: Nur gerade $m$ koppeln an $n = 1$, und die Summe $\sum_m|V_{m1}|^2/(E_1 - m^2E_1)$ lässt sich geschlossen ausrechnen. Bei $V_0 = 0{,}5\,E_1$ gibt das $1{,}2344\,E_1$, wie die Anzeige; bei $V_0 = 2E_1$ nur noch $1{,}75$ statt $1{,}766\,E_1$.`}
+    ],
     predict:{q:'Gleich erhöhst du die Stufe von $V_0 = 0$ bis $8E_1$. Wo liegt die exakte Grundzustandsenergie (blau) im Vergleich zur ersten Ordnung $E_1 + V_0/2$ (orange)?', opts:['immer darunter, mit wachsendem Abstand', 'genau darauf, für jedes $V_0$', 'erst darunter, für großes $V_0$ darüber'], a:0, ex:'$E_1 + V_0/2 = \\langle\\psi_1|\\hat H|\\psi_1\\rangle$ ist nach dem Variationsprinzip eine obere Schranke für jedes $V_0$. Die zweite Ordnung ist negativ und wächst wie $V_0^2$.'},
     questions:[
       {q:'Stelle $V_0 = 2E_1$ ein. Wo liegt die exakte Grundzustandsenergie?', opts:['etwas unter der ersten Ordnung', 'genau auf der ersten Ordnung', 'darüber'], a:0, ex:'$E_1 + V_0/2 = \\langle\\psi_1|\\hat H|\\psi_1\\rangle$ ist nach dem Variationsprinzip eine obere Schranke. Die zweite Ordnung ist negativ.'},
@@ -435,3 +962,4 @@ lexe('variationsprinzip', 'Variationsprinzip', 'Für jeden normierten Zustand gi
 lexe('stark-effekt', 'Stark-Effekt', 'Verschiebung von Energieniveaus im elektrischen Feld $\\mathcal E\\hat z$, Störung $\\hat H\' = e\\mathcal E\\hat z$ (Elektron). Nicht entarteter Zustand fester Parität: $E^{(1)} = 0$, quadratischer Effekt $E^{(2)} = -\\frac12\\alpha\\mathcal E^2$ (Polarisierbarkeit $\\alpha$; Wasserstoff-Grundzustand $\\alpha = 4\\pi\\varepsilon_0\\cdot\\frac92a_0^3$). Entartung verschiedener Parität (Wasserstoff $n = 2$: $2s$, $2p_0$): linearer Effekt $\\pm3e\\mathcal Ea_0$.', {topic:'stoer'});
 lexe('anharmonischer-oszillator', 'Anharmonischer Oszillator', '$V = \\frac12m\\omega^2x^2 + \\kappa x^3 + \\lambda x^4$. Mit $\\hat x = \\sqrt{\\hbar/(2m\\omega)}(\\hat a + \\hat a^\\dagger)$: $E_n^{(1)} = \\lambda\\left(\\frac{\\hbar}{2m\\omega}\\right)^2(6n^2 + 6n + 3)$ für den quartischen Term; der kubische Term gibt $E_n^{(1)} = 0$ und $E_n^{(2)} = -\\frac{\\kappa^2}{\\hbar\\omega}\\left(\\frac{\\hbar}{2m\\omega}\\right)^3(30n^2 + 30n + 11)$. Folge: Die Niveauabstände hängen von $n$ ab (Obertöne in Molekülspektren).', {topic:'stoer'});
 lexe('paritaet-auswahlregel', 'Parität und verschwindende Matrixelemente', 'Ist $V(-x) = V(x)$, so sind die nicht entarteten Eigenfunktionen gerade oder ungerade. Dann gilt $\\langle m|\\hat O|n\\rangle = 0$, wenn der Integrand $\\psi_m^*\\,\\hat O\\,\\psi_n$ insgesamt ungerade ist. Beispiele: $\\langle n|\\hat x|n\\rangle = 0$, $\\langle n|\\hat x^3|n\\rangle = 0$; $\\hat x$ verbindet nur Zustände verschiedener Parität. Im Kasten $0 < x < L$ gilt das Gleiche bezogen auf die Mitte $x = L/2$.', {topic:'stoer'});
+})();

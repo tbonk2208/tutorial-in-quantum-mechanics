@@ -605,8 +605,68 @@ const SKUI = (() => {
     return wrap;
   }
 
+  /* ---------- Statischer Graph (Darstellungstafel k:'graph', Schritt-Feld plot; didaktik/UMBAU2.md, Abschnitt 2) ----------
+     g wie SKETCH.graph: {plot, f, f2?, lab?, lab2?, cap?}. Rahmen und Beschriftungen wie bei Skizzen (drawFrame, layoutLabels),
+     f durchgezogen (--c2), f2 gestrichelt (--c1). Keine Eingabe: Wischen über den Graphen scrollt die Seite. */
+  const STATIC = new Set();
+  function staticGraph(g, o){
+    o = o || {};
+    const fig = h('figure', {class:'sk-static' + (o.cls ? ' ' + o.cls : '')});
+    if (!ready() || typeof SKETCH.graph !== 'function'){ fig.append(h('p', {class:'small muted'}, 'Der Graph lässt sich in dieser Fassung nicht zeichnen.')); return fig; }
+    const G = SKETCH.graph(g || {});
+    const plot = G.plot, spec = {kind:'curve', draw:'f', plot};
+    const tx = s => plainT('$' + String(s || '') + '$');
+    const alt = 'Graph' + (plot.ylab ? ' von ' + tx(plot.ylab) : '') + (plot.xlab ? ' über ' + tx(plot.xlab) : '') + (G.curves.length > 1 ? ', zwei Kurven' : '') + (g && g.cap ? ': ' + plainT(g.cap) : '');
+    const wrap = h('div', {class:'sk-wrap sk-static-w'});
+    const cvEl = h('canvas', {class:'sk-cv sk-static-cv', role:'img', 'aria-label':alt});
+    const labEl = h('div', {class:'sk-lab', 'aria-hidden':'true'});
+    wrap.append(cvEl, labEl); fig.append(wrap);
+    if (G.curves.length > 1 || G.curves.some(c => c.lab)){
+      const lg = h('div', {class:'sk-legend sk-static-lg'});
+      for (const c of G.curves) lg.append(h('span', {class:'lg ' + (c.key === 'f' ? 'lg-m' : 'lg-2'), html:c.lab ? txtLab(c.lab) : c.key === 'f' ? 'erste Kurve' : 'zweite Kurve'}));
+      fig.append(lg);
+    }
+    if (g && g.cap) fig.append(h('figcaption', {class:'small muted', html:inl(g.cap)}));
+    const cv = {opt:{spec, plot}, M:null, w:0, h:0, eY:null};
+    let lastW = -1, lastH = -1;
+    const draw = force => {
+      const W = wrap.clientWidth; if (!W) return;
+      const H = Math.max(o.minH || 170, Math.min(o.maxH || 300, Math.round(W / 2)));
+      if (!force && Math.abs(W - lastW) < 1 && H === lastH) return;
+      lastW = W; lastH = H;
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      cvEl.style.height = H + 'px';
+      cvEl.width = Math.round(W * dpr); cvEl.height = Math.round(H * dpr);
+      const c = cvEl.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.clearRect(0, 0, W, H); c.fillStyle = css('--sheet') || '#fff'; c.fillRect(0, 0, W, H);
+      cv.w = W; cv.h = H; cv.eY = null; cv.M = SKETCH.map(spec, W, H);
+      drawFrame(c, cv);
+      const M = cv.M, I = M.inner;
+      c.save(); c.beginPath(); c.rect(I.l - 1, I.t - 1, I.w + 2, I.h + 2); c.clip();
+      c.lineCap = 'round'; c.lineJoin = 'round';
+      for (const cu of G.curves){
+        c.strokeStyle = cu.key === 'f' ? (css('--c2') || '#1f6db0') : (css('--c1') || '#cf2f4c');
+        c.lineWidth = cu.key === 'f' ? 2.6 : 2.2; c.setLineDash(cu.key === 'f' ? [] : [7, 5]);
+        c.beginPath(); let pen = false;
+        for (const p of cu.pts){ if (!isFinite(p[1])){ pen = false; continue; } const P = M.px(p[0], Math.max(plot.y[0] - plot.y[1], Math.min(2 * plot.y[1] - plot.y[0], p[1]))); if (pen) c.lineTo(P[0], P[1]); else { c.moveTo(P[0], P[1]); pen = true; } }
+        c.stroke();
+      }
+      c.setLineDash([]); c.restore();
+      layoutLabels(cv, labEl, false);
+    };
+    fig.redraw = () => draw(true);
+    try { const ro = new ResizeObserver(() => { if (!fig.isConnected){ return; } draw(false); }); ro.observe(wrap); fig.__ro = ro; } catch(e){}
+    STATIC.add(fig);
+    requestAnimationFrame(() => draw(false));
+    return fig;
+  }
+  /* hell/dunkel umgeschaltet: statische Graphen neu zeichnen (Farben kommen aus den CSS-Variablen) */
+  const redrawStatic = () => { for (const f of [...STATIC]){ if (!f.isConnected){ if (f.__ro) f.__ro.disconnect(); STATIC.delete(f); continue; } f.redraw(); } };
+  try { new MutationObserver(redrawStatic).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme', 'data-size']}); } catch(e){}
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawStatic); } catch(e){}
+
   /* ---------- Verwaltung ---------- */
   function dropCtx(suf){ SK.dropSuffix(suf); SCR.dropSuffix(suf); }
   function resetAll(){ SK.reset(); SCR.reset(); }
-  return {ready, sketchBox, scratchBox, score, hasInk, firstMsg:(spec, ev) => firstMsg(spec, ev), byId, eachSpec, errSolved, dropCtx, resetAll, SketchCanvas, plotOf, _sk:SK, _scr:SCR};
+  return {ready, sketchBox, scratchBox, staticGraph, redrawStatic, score, hasInk, firstMsg:(spec, ev) => firstMsg(spec, ev), byId, eachSpec, errSolved, dropCtx, resetAll, SketchCanvas, plotOf, _sk:SK, _scr:SCR};
 })();

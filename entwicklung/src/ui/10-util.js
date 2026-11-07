@@ -29,18 +29,33 @@ function md(text){
     return '<p>' + inl(b) + '</p>';
   }).join('');
 }
+/* Anführungszeichen und Satzzeichen direkt an einer Inline-Formel („$x$“, ($x$), $x$., $x$-Achse) nicht abtrennen:
+   Hülle .nbx (nowrap) um Zeichen und Formel; in der Formel bleibt Umbrechen erlaubt (.nbx>.katex normal),
+   nur ihr letzter Teil (.base) steht in .nbt (nowrap), denn Chromium entscheidet den Umbruch vor dem schließenden
+   Zeichen nach dem Element davor. */
+const GLUE_RE = /((?:[„“‚‘«»(\[]|&quot;|&#39;)+)?\u0000(\d+)\u0000((?:[“”‘’«»)\].,;:!?…\-]|&quot;|&#39;)+)?/g;
+const nwLast = q => { const e = q.length - 14, i = q.lastIndexOf('<span class="base">'); return i > 0 && q.slice(e) === '</span></span>' ? q.slice(0, i) + '<span class="nbt">' + q.slice(i, e) + '</span>' + q.slice(e) : q; };
 function inl(s){
-  const parts = []; let i = 0;
+  const parts = [], kind = [];
+  const put = (html, k) => { parts.push(html); kind.push(k); return '\u0000' + (parts.length - 1) + '\u0000'; };
   // Formeln zuerst herauslösen
-  s = s.replace(/\$\$([\s\S]+?)\$\$/g, (m, t) => { parts.push(texHTML(t, true)); return '\u0000' + (parts.length - 1) + '\u0000'; });
-  s = s.replace(/\$([^$]+?)\$/g, (m, t) => { parts.push(texHTML(t, false)); return '\u0000' + (parts.length - 1) + '\u0000'; });
-  s = s.replace(/`([^`]+)`/g, (m, t) => { parts.push('<code class="inp-ex">' + escH(t) + '</code>'); return '\u0000' + (parts.length - 1) + '\u0000'; });
+  s = s.replace(/\$\$([\s\S]+?)\$\$/g, (m, t) => put(texHTML(t, true), 'd'));
+  s = s.replace(/\$([^$]+?)\$/g, (m, t) => put(texHTML(t, false), 'i'));
+  s = s.replace(/`([^`]+)`/g, (m, t) => put('<code class="inp-ex">' + escH(t) + '</code>', 'c'));
   s = escH(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\s][^*]*?)\*/g, '$1<i>$2</i>')
     .replace(/\[\[lex:([\w-]+)\|([^\]]+)\]\]/g, '<a href="#/lex/$1" class="lexlink" data-lex="$1">$2</a>')
     .replace(/(^|[\s(])(https?:\/\/[^\s<]*[^\s<.,;:)])/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>')
     .replace(/\n/g, '<br>');
+  s = s.replace(GLUE_RE, (m, a, k, z) => {
+    if (kind[+k] !== 'i' || (!a && !z)) return m;
+    if (z) parts[+k] = nwLast(parts[+k]);
+    /* vor einem Bindestrich trennt Chromium trotz nowrap; ein Wortverbinder (U+2060) verhindert das („$N$-mal“) */
+    return '<span class="nbx">' + (a || '') + '\u0000' + k + '\u0000' + (z ? (z[0] === '-' ? '\u2060' : '') + z : '') + '</span>';
+  });
   return s.replace(/\u0000(\d+)\u0000/g, (m, k) => parts[+k]);
 }
+/* Herleitungs- bzw. Musterzeile: Formel in eigenem Scrollkasten (.drl), damit breite Zeilen die Seite nicht verbreitern */
+const drlHTML = (src, ctx) => '<span class="drl">' + lineHTML(src, ctx) + '</span>';
 /* Zeile der Eingabesprache als Formel */
 function lineHTML(src, ctx){
   try { return texHTML(texLine(parseLine(src, ctx && ctx.pctx ? ctx.pctx : ctx || {}))); }

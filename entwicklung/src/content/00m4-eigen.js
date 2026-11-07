@@ -1,5 +1,6 @@
 /* ===== Mathe M4: Lineare Operatoren und Eigenwerte ===== */
 (function(){
+const R = String.raw;
 const MAT = (extra) => {
   const e = extra || {};
   const r = Object.assign({rep:'mat', coords:['t'], params:{}}, e, {mat:{preset:'spin', mats:Object.assign({}, e.mats || {})}}); delete r.mats; return r;
@@ -34,88 +35,603 @@ topic({
     reveal:'Die Eigenvektoren von $H$ sind $|{\\pm}\\rangle = (|L\\rangle \\pm |R\\rangle)/\\sqrt2$ mit den Energien $E_0 \\mp \\Delta$. Der Startzustand ist ihre Überlagerung, $|L\\rangle = (|{+}\\rangle + |{-}\\rangle)/\\sqrt2$. Jeder Anteil bekommt seine eigene Phase $e^{-iEt/\\hbar}$, und es folgt\n\n$$P_R(t) = |\\langle R|\\psi(t)\\rangle|^2 = \\sin^2(\\Delta t/\\hbar).$$\n\nDas System pendelt mit der Frequenz $2\\Delta/h$ hin und her. Beim Ammoniak-Molekül liegt diese Inversionsfrequenz bei etwa $24\\,$GHz; das nutzt der Ammoniak-Maser.\n\nDer Schlüssel ist das Eigenwertproblem der Matrix $H$. Wie man es löst und warum es für hermitesche Matrizen immer gutartig ausgeht, zeigt der Lerntext. Abschnitt 6 erklärt die Zeitentwicklung; in der Übung „Zwei-Niveau-System“ (Schritt 6) rechnest du sie selbst aus.'
   },
   teach:[
-    {id:'me-t1', title:'Matrizen als lineare Abbildungen – die Reihenfolge zählt',
-      text:'Eine $n\\times n$-Matrix $A$ macht aus einem Vektor $v$ einen neuen Vektor $Av$. Diese Abbildung ist **linear**: $A(\\alpha u + \\beta v) = \\alpha Au + \\beta Av$. Deshalb genügt es zu wissen, was $A$ mit den Basisvektoren macht. Die $j$-te Spalte von $A$ ist das Bild des $j$-ten Basisvektors $e_j$. In der Quantenmechanik sind Zustände Vektoren und Messgrößen lineare Operatoren; für Spin ½ (Thema 10) sind das genau $2\\times2$-Matrizen.\n\nWendet man erst $B$ und dann $A$ an, ergibt sich die Matrix $AB$ mit\n\n$$(AB)_{ij} = \\sum_k A_{ik}B_{kj}.$$\n\nDie rechte Matrix wirkt zuerst. Im Allgemeinen ist $AB \\ne BA$. Ein Bild dazu: Erst um $90^\\circ$ drehen und dann an der $x$-Achse spiegeln ergibt etwas anderes als umgekehrt. Den Unterschied misst der **[[lex:kommutator|Kommutator]]**\n\n$$[A, B] = AB - BA.$$\n\nIst er null, heißen $A$ und $B$ vertauschbar.\n\nDie wichtigsten Beispiele sind die [[lex:pauli|Pauli-Matrizen]] $\\sigma_x = \\begin{pmatrix}0&1\\\\1&0\\end{pmatrix}$, $\\sigma_y = \\begin{pmatrix}0&-i\\\\i&0\\end{pmatrix}$ und $\\sigma_z = \\begin{pmatrix}1&0\\\\0&-1\\end{pmatrix}$. Die Rechnung unten zeigt $[\\sigma_x, \\sigma_y] = 2i\\sigma_z$; zyklisch vertauscht gilt dasselbe. Deshalb kann man die Spinkomponenten nicht gleichzeitig scharf messen (Thema 10).\n\nRechenregeln, die du ständig brauchst: $[A, B] = -[B, A]$, $[A, A] = 0$ und die Produktregel $[A, BC] = [A, B]C + B[A, C]$.\n\n**Eine Überraschung.** Für die [[lex:spur-determinante|Spur]] $\\operatorname{tr}A = \\sum_i A_{ii}$ gilt $\\operatorname{tr}(AB) = \\sum_{i,k}A_{ik}B_{ki} = \\operatorname{tr}(BA)$. Also hat jeder Kommutator endlicher Matrizen die Spur null. Die Gleichung $[X, P] = i\\hbar\\,\\mathbb 1$ kann deshalb für keine $n\\times n$-Matrizen gelten, denn rechts steht die Spur $i\\hbar n \\ne 0$. Ort und Impuls brauchen einen unendlichdimensionalen Raum (M5, Thema 6).',
-      derive:{ctx:MAT({}), lines:[
-        {l:'[σ_x, σ_y] = σ_x σ_y - σ_y σ_x', w:'Definition des Kommutators'},
-        {l:'= (i, 0; 0, -i) - (-i, 0; 0, i)', w:'beide Produkte: Zeile mal Spalte', why:{q:'Wie entsteht der Eintrag oben links von $\\sigma_x\\sigma_y$?', opts:['Erste Zeile von $\\sigma_x$ mal erste Spalte von $\\sigma_y$: $0\\cdot0 + 1\\cdot i = i$', 'Aus den beiden Einträgen oben links: $0\\cdot 0 = 0$', 'Erste Spalte von $\\sigma_x$ mal erste Zeile von $\\sigma_y$: $0$'], a:0, ex:'Matrizen multipliziert man nicht eintragsweise: $(\\sigma_x\\sigma_y)_{11} = \\sum_k(\\sigma_x)_{1k}(\\sigma_y)_{k1} = 0\\cdot 0 + 1\\cdot i = i$.'}},
-        {l:'= (2i, 0; 0, -2i)'},
-        {l:'= 2i σ_z', why:{q:'Was zeigt das Ergebnis?', opts:['$\\sigma_x$ und $\\sigma_y$ vertauschen nicht; der Kommutator ist $2i\\sigma_z$.', '$\\sigma_x$ und $\\sigma_y$ vertauschen, denn der Kommutator ist diagonal.', 'Der Kommutator ist ein Vielfaches von $\\mathbb 1$, nämlich $2i\\,\\mathbb 1$.'], a:0, ex:'$2i\\sigma_z \\ne 0$, also $\\sigma_x\\sigma_y \\ne \\sigma_y\\sigma_x$. Das Ergebnis ist spurlos wie jeder Kommutator von Matrizen und deshalb kein Vielfaches von $\\mathbb 1$.'}}
-      ]},
-      q:[
-        {q:'Es gilt $\\sigma_x\\sigma_y = i\\sigma_z$. Was ist dann $\\sigma_y\\sigma_x$?', opts:['$-i\\sigma_z$', '$i\\sigma_z$', '$\\mathbb 1$'], a:0, ex:'Aus $\\sigma_x\\sigma_y - \\sigma_y\\sigma_x = 2i\\sigma_z$ folgt $\\sigma_y\\sigma_x = i\\sigma_z - 2i\\sigma_z = -i\\sigma_z$. Die Pauli-Matrizen antivertauschen.'},
-        {q:'Es gilt $[A, B] = 0$ und $[A, C] = 0$. Was folgt für $[A, BC]$?', opts:['$[A, BC] = 0$', '$[A, BC] = BC$', 'Darüber lässt sich nichts sagen.'], a:0, ex:'Produktregel: $[A, BC] = [A, B]C + B[A, C] = 0 + 0$.'}
-      ]},
-    {id:'me-t2', title:'Adjungieren: hermitesche und unitäre Matrizen',
-      text:'In der QM tauchen fast nur zwei Sorten von Matrizen auf. Um sie zu erkennen, braucht man die **[[lex:adjungierte|Adjungierte]]**\n\n$$A^\\dagger = (A^T)^*,\\qquad (A^\\dagger)_{ij} = A_{ji}^*.$$\n\nMan transponiert also und konjugiert jeden Eintrag. Aus einem Spaltenvektor (Ket $|v\\rangle$) wird so die konjugierte Zeile (Bra $\\langle v|$). Deshalb ist das [[lex:skalarprodukt|Skalarprodukt]] aus M3 einfach $\\langle u|v\\rangle = u^\\dagger v = \\sum_k u_k^*v_k$.\n\nDie wichtigste Eigenschaft folgt direkt aus den Komponenten:\n\n$$\\langle u|Av\\rangle = \\sum_{i,j}u_i^*A_{ij}v_j = \\sum_{i,j}\\big(A_{ij}^*u_i\\big)^*v_j = \\langle A^\\dagger u|v\\rangle.$$\n\n$A^\\dagger$ ist also die Matrix, die man im Skalarprodukt nach links schieben darf. Außerdem gilt $(AB)^\\dagger = B^\\dagger A^\\dagger$ – die Reihenfolge dreht sich um, wie beim Transponieren.\n\n**Hermitesch** heißt $A^\\dagger = A$. Dann sind die Diagonaleinträge reell, und gegenüberliegende Einträge sind konjugiert: $A_{21} = A_{12}^*$. Hermitesche Matrizen stellen Messgrößen dar. Achtung: Reelle Einträge sind dafür weder nötig noch hinreichend. $\\sigma_y$ hat imaginäre Einträge und ist hermitesch, wie die Rechnung unten zeigt. $\\begin{pmatrix}1&2\\\\0&1\\end{pmatrix}$ ist reell und nicht hermitesch. Erst die Bedingung $A^\\dagger = A$ entscheidet.\n\n**[[lex:unitaer|Unitär]]** heißt $U^\\dagger U = \\mathbb 1$, also $U^{-1} = U^\\dagger$. Unitäre Matrizen erhalten Skalarprodukte:\n\n$$\\langle Uu|Uv\\rangle = \\langle u|U^\\dagger Uv\\rangle = \\langle u|v\\rangle.$$\n\nLängen und Winkel bleiben also erhalten. Gleichwertig: Die Spalten von $U$ bilden eine Orthonormalbasis. Beispiele sind Drehmatrizen, Basiswechsel zwischen Orthonormalbasen und die Zeitentwicklung $e^{-iHt/\\hbar}$ (Abschnitt 6). Weil die Norm erhalten bleibt, bleibt auch die Gesamtwahrscheinlichkeit $1$.\n\nEine Matrix kann beides sein: $\\sigma_y$ ist hermitesch und wegen $\\sigma_y^2 = \\mathbb 1$ auch unitär. Bei **antihermiteschen** Matrizen gilt $A^\\dagger = -A$; dann ist $iA$ hermitesch, denn $(iA)^\\dagger = -iA^\\dagger = iA$. Dasselbe Muster kehrt in M5 bei $d/dx$ und $-i\\,d/dx$ wieder.',
-      derive:{ctx:MAT({}), lines:[
-        {l:'σ_y† = (0, -i; i, 0)', w:'transponiert: (0, i; −i, 0), dann konjugiert', why:{q:'Warum ändert sich $\\sigma_y$ beim Adjungieren nicht?', opts:['Transponieren vertauscht $-i$ und $i$, Konjugieren dreht beide Vorzeichen zurück.', 'Weil die Diagonale null ist, ändert Adjungieren nie etwas.', 'Weil $\\sigma_y$ rein imaginär ist, gilt sogar $\\sigma_y^\\dagger = -\\sigma_y$.'], a:0, ex:'$\\sigma_y^T = \\begin{pmatrix}0&i\\\\-i&0\\end{pmatrix}$, konjugiert $\\begin{pmatrix}0&-i\\\\i&0\\end{pmatrix} = \\sigma_y$. Die Bedingung $A_{21} = A_{12}^*$ ist erfüllt: $i = (-i)^*$.'}},
-        {l:'= σ_y', w:'also hermitesch'},
-        {l:'σ_y† σ_y = (0, -i; i, 0)(0, -i; i, 0)'},
-        {l:'= I', w:'also auch unitär', why:{q:'Was folgt aus $\\sigma_y^\\dagger\\sigma_y = \\mathbb 1$?', opts:['$\\sigma_y$ ist unitär und erhält alle Längen.', '$\\sigma_y$ ist nicht hermitesch, sonst wäre das Produkt $\\sigma_y$.', '$\\sigma_y$ hat nur den einen Eigenwert $1$.'], a:0, ex:'$U^\\dagger U = \\mathbb 1$ ist die Definition von unitär. Hermitesch und unitär zugleich heißt $\\sigma_y^2 = \\mathbb 1$; die Eigenwerte sind $+1$ und $-1$.'}}
-      ]},
-      q:[
-        {q:'Welche Matrix ist hermitesch?', opts:['$\\begin{pmatrix}2 & 1+i\\\\ 1-i & 0\\end{pmatrix}$', '$\\begin{pmatrix}2 & 1+i\\\\ 1+i & 0\\end{pmatrix}$', '$\\begin{pmatrix}2i & 1\\\\ 1 & 0\\end{pmatrix}$'], a:0, ex:'Hermitesch verlangt eine reelle Diagonale und $A_{21} = A_{12}^*$. Die zweite Matrix ist nur symmetrisch ($A_{21} = A_{12}$), die dritte hat einen imaginären Diagonaleintrag.'},
-        {q:'$U$ ist unitär und $\\langle u|v\\rangle = 2 - i$. Was ist $\\langle Uu|Uv\\rangle$?', opts:['$2 - i$', '$2 + i$', '$|2 - i|^2 = 5$'], a:0, ex:'$\\langle Uu|Uv\\rangle = \\langle u|U^\\dagger Uv\\rangle = \\langle u|v\\rangle$. Unitäre Matrizen erhalten Skalarprodukte, nicht nur Normen.'}
-      ]},
-    {id:'me-t3', title:'Eigenwerte und Eigenvektoren',
-      text:'Die meisten Vektoren werden von einer Matrix gedreht und gestreckt. Manche Richtungen werden aber nur gestreckt:\n\n$$Av = \\lambda v,\\qquad v \\ne 0.$$\n\nDann heißt $v$ **Eigenvektor** und $\\lambda$ **[[lex:eigenwertproblem|Eigenwert]]**. Im Bild daneben macht eine symmetrische Matrix aus dem Einheitskreis eine Ellipse. Die Eigenvektoren zeigen entlang der Halbachsen, und die Eigenwerte sind die Streckfaktoren. In der QM sind die Eigenwerte einer Observablen ihre möglichen Messwerte (Thema 6).\n\n**Wie man sie findet.** $Av = \\lambda v$ heißt $(A - \\lambda\\mathbb 1)v = 0$. Eine Lösung $v \\ne 0$ gibt es genau dann, wenn $A - \\lambda\\mathbb 1$ nicht invertierbar ist, also wenn\n\n$$\\det(A - \\lambda\\mathbb 1) = 0.$$\n\nDie linke Seite ist das **[[lex:charakteristisches-polynom|charakteristische Polynom]]** vom Grad $n$. Es hat in $\\mathbb C$ genau $n$ Nullstellen, wenn man mehrfache mitzählt. Für $2\\times2$ lautet es\n\n$$\\lambda^2 - (\\operatorname{tr}A)\\,\\lambda + \\det A = 0.$$\n\nDaraus folgt eine schnelle Kontrolle: Die Summe der Eigenwerte ist die Spur, ihr Produkt die Determinante.\n\nDie Herleitung unten löst das Problem für eine reelle symmetrische Matrix $\\begin{pmatrix}a&b\\\\b&d\\end{pmatrix}$ allgemein. Das Ergebnis\n\n$$\\lambda_\\pm = \\frac{a+d}{2} \\pm \\sqrt{\\left(\\frac{a-d}{2}\\right)^2 + b^2}$$\n\nzeigt zweierlei. Die Wurzel ist reell, also auch beide Eigenwerte. Und der Abstand $\\lambda_+ - \\lambda_-$ ist mindestens $2|b|$: Eine Kopplung $b$ schiebt die Niveaus auseinander. Das ist die Niveauabstoßung der Störungstheorie (Thema 11).\n\n**Eigenvektoren.** Setze einen Eigenwert in $(A - \\lambda\\mathbb 1)v = 0$ ein. Bei $2\\times2$ sagen beide Zeilen dasselbe, eine genügt. Für $\\sigma_x$ mit $\\lambda = 1$ heißt die erste Zeile $-v_1 + v_2 = 0$, also $v \\propto (1, 1)^T$. Ein Eigenvektor ist nur bis auf einen Faktor bestimmt. In der QM normiert man ihn auf $v^\\dagger v = 1$; eine Phase $e^{i\\alpha}$ bleibt trotzdem frei. Hat ein Eigenwert mehrere linear unabhängige Eigenvektoren, heißt er **[[lex:entarteter-eigenwert|entartet]]**.',
-      fig:{lab:'eigen', init:{a:1.5, b:0.6, d:0.5}, caption:'Bild des Einheitskreises unter $A = \\begin{pmatrix}a&b\\\\b&d\\end{pmatrix}$. Die gestrichelten Eigenrichtungen sind die Halbachsen der Ellipse, die Pfeile haben die Längen $|\\lambda_\\pm|$.'},
-      derive:{ctx:MAT({params:{a:'real', d:'real', b:'pos'}, mats:{A:'(a, b; b, d)'}, unknowns:{λ:{ref:'(a + d)/2 + sqrt(((a - d)/2)^2 + b^2)', alt:['(a + d)/2 - sqrt(((a - d)/2)^2 + b^2)'], kind:'real'}}}), lines:[
-        {l:'det(A - λ I) = 0', w:'nichttriviale Lösung von (A − λ𝟙)v = 0'},
-        {l:'(a - λ)(d - λ) - b^2 = 0', why:{q:'Woher kommt $-b^2$?', opts:['Von $ad - bc$ mit den Nebendiagonaleinträgen $b$ und $b$.', 'Von $\\lambda$, das man auch von $b$ abziehen muss.', 'Vom Quadrat der Spur $a + d$.'], a:0, ex:'$\\lambda$ steht nur auf der Diagonale. Die Nebendiagonale liefert $-b\\cdot b$.'}},
-        {l:'λ^2 - (a + d) λ + a d - b^2 = 0', w:'ausmultipliziert: Spur und Determinante'},
-        {l:'(λ - (a + d)/2)^2 = ((a + d)/2)^2 - a d + b^2', w:'quadratische Ergänzung'},
-        {l:'(λ - (a + d)/2)^2 = ((a - d)/2)^2 + b^2', why:{q:'Warum gilt $\\left(\\frac{a+d}{2}\\right)^2 - ad = \\left(\\frac{a-d}{2}\\right)^2$?', opts:['Beide Seiten sind gleich $\\frac{a^2 - 2ad + d^2}{4}$.', 'Weil hier $a = d$ vorausgesetzt ist.', 'Das gilt nur für positive $a$ und $d$.'], a:0, ex:'$\\frac{a^2 + 2ad + d^2}{4} - ad = \\frac{a^2 - 2ad + d^2}{4}$. Rechts steht eine Summe von Quadraten, sie ist nie negativ.'}},
-        {l:'λ = (a + d)/2 + sqrt(((a - d)/2)^2 + b^2)', w:'größerer Eigenwert λ₊; mit Minus vor der Wurzel λ₋', why:{q:'Warum sind beide Eigenwerte reell?', opts:['Unter der Wurzel steht eine Summe von Quadraten reeller Zahlen.', 'Weil $b > 0$ vorausgesetzt ist.', 'Weil $a + d$ reell ist; die Wurzel spielt keine Rolle.'], a:0, ex:'$\\left(\\frac{a-d}{2}\\right)^2 + b^2 \\ge 0$. Das ist der $2\\times 2$-Fall des allgemeinen Satzes über hermitesche Matrizen (Abschnitt 4).'}}
-      ]},
-      q:[
-        {q:'Eine $2\\times2$-Matrix hat Spur $2$ und Determinante $-3$. Welche Eigenwerte hat sie?', opts:['$3$ und $-1$', '$-3$ und $1$', '$2$ und $-3$'], a:0, ex:'Gesucht sind zwei Zahlen mit Summe $2$ und Produkt $-3$: $\\lambda^2 - 2\\lambda - 3 = (\\lambda - 3)(\\lambda + 1)$.'},
-        {q:'Welcher Vektor ist ein Eigenvektor von $\\begin{pmatrix}3&0\\\\0&-1\\end{pmatrix}$ zum Eigenwert $-1$?', opts:['$(0, 5)^T$', '$(1, 0)^T$', '$(1, -1)^T$'], a:0, ex:'Bei einer Diagonalmatrix sind die Basisvektoren Eigenvektoren. $(0, 5)^T$ ist ein Vielfaches von $(0, 1)^T$ und damit ebenfalls Eigenvektor; normiert wäre es $(0, 1)^T$.'}
-      ]},
-    {id:'me-t4', title:'Warum hermitesche Matrizen so gutartig sind',
-      text:'Für hermitesche Matrizen gilt ein Satz, auf dem die ganze Quantenmechanik ruht. Die Beweise sind kurz und benutzen nur $\\langle u|Av\\rangle = \\langle A^\\dagger u|v\\rangle$.\n\n**1. Die Eigenwerte sind reell.** Sei $Av = \\lambda v$ mit $v \\ne 0$. Dann ist $\\langle v|Av\\rangle = \\lambda\\langle v|v\\rangle$. Wegen $A = A^\\dagger$ ist aber auch $\\langle v|Av\\rangle = \\langle Av|v\\rangle = \\lambda^*\\langle v|v\\rangle$; hier wird $\\lambda$ aus dem ersten Argument gezogen und dabei konjugiert. Da $\\langle v|v\\rangle > 0$, folgt $\\lambda = \\lambda^*$.\n\n**2. Eigenvektoren zu verschiedenen Eigenwerten sind orthogonal.** Sei $Av_1 = \\lambda_1v_1$ und $Av_2 = \\lambda_2v_2$. Dann ist $\\langle v_1|Av_2\\rangle = \\lambda_2\\langle v_1|v_2\\rangle$ und ebenso $\\langle Av_1|v_2\\rangle = \\lambda_1\\langle v_1|v_2\\rangle$, denn $\\lambda_1$ ist reell. Beide Ausdrücke sind gleich, also $(\\lambda_1 - \\lambda_2)\\langle v_1|v_2\\rangle = 0$. Für $\\lambda_1 \\ne \\lambda_2$ ist $\\langle v_1|v_2\\rangle = 0$.\n\n**3. Es gibt eine Orthonormalbasis aus Eigenvektoren** (Spektralsatz). Aussage 2 allein reicht dafür nicht. Man muss zeigen, dass es **genug** Eigenvektoren gibt. Beweisskizze: Das charakteristische Polynom hat in $\\mathbb C$ eine Nullstelle $\\lambda$, also hat $A$ einen normierten Eigenvektor $v$. Steht $w$ senkrecht auf $v$, dann auch $Aw$, denn $\\langle v|Aw\\rangle = \\langle Av|w\\rangle = \\lambda\\langle v|w\\rangle = 0$ (mit reellem $\\lambda$). $A$ bildet also das orthogonale Komplement von $v$ in sich ab, einen Raum der Dimension $n - 1$, und ist dort wieder hermitesch. Dort findet man den nächsten Eigenvektor, und so weiter (Induktion über die Dimension). Nach $n$ Schritten hat man $n$ orthonormale Eigenvektoren, auch wenn Eigenwerte mehrfach vorkommen. Bei Entartung ist die Basis nicht eindeutig: Im Eigenraum darf man jede Orthonormalbasis wählen, etwa mit [[lex:gram-schmidt|Gram-Schmidt]] (M3).\n\nDie Rechnung unten prüft alle drei Aussagen an einer Matrix mit komplexen Einträgen.\n\n**Was ohne Hermitezität schiefgehen kann.** Die reelle Drehmatrix um $90^\\circ$, $\\begin{pmatrix}0&-1\\\\1&0\\end{pmatrix}$, hat die Eigenwerte $\\pm i$: Keine Richtung der Ebene bleibt fest. Die Matrix $N = \\begin{pmatrix}1&1\\\\0&1\\end{pmatrix}$ hat den doppelten Eigenwert $1$. Aus $(N - \\mathbb 1)v = (v_2, 0)^T = 0$ folgt aber $v_2 = 0$. Es gibt also nur die Eigenvektoren $c\\,(1, 0)^T$ und keine Eigenbasis; $N$ ist [[lex:nicht-diagonalisierbar|nicht diagonalisierbar]]. Genau der Schritt aus der Beweisskizze scheitert: $(0, 1)^T$ steht senkrecht auf dem Eigenvektor $(1, 0)^T$, aber $N(0, 1)^T = (1, 1)^T$ nicht mehr. Reelle Einträge schützen davor nicht, Hermitezität schon. Umgekehrt ist Hermitezität für reelle Eigenwerte hinreichend, aber nicht notwendig: $N$ hat den reellen Eigenwert $1$. Antihermitesche Matrizen ($A^\\dagger = -A$, Abschnitt 2) haben rein imaginäre Eigenwerte, denn $iA$ ist hermitesch.\n\n**Eine typische Fehlvorstellung** lautet: „Hermitesch heißt immer, es gibt eine Eigenbasis.“ Für endliche Matrizen stimmt das. In Funktionenräumen gibt es aber hermitesche Operatoren ohne eine einzige normierbare Eigenfunktion (M5). Der Spektralsatz für Matrizen überträgt sich nicht ohne Weiteres auf unendliche Dimension.',
-      derive:{ctx:MAT({mats:{H:'(3, 2i; -2i, 0)'}, states:{v:'(2i; 1)', w:'(1; 2i)'}, unknowns:{λ:{ref:'4', alt:['-1'], kind:'real'}}}), lines:[
-        {l:'det(H - λ I) = 0', w:'H = (3, 2i; −2i, 0) ist hermitesch'},
-        {l:'(3 - λ)(0 - λ) - (2i)(-2i) = 0', why:{q:'Was ergibt $(2i)(-2i)$?', opts:['$-4i^2 = 4$', '$4i^2 = -4$', '$-4i$'], a:0, ex:'$(2i)(-2i) = -4i^2 = +4$. Hier liegt die häufigste Fehlerquelle.'}},
-        {l:'λ^2 - 3λ - 4 = 0', w:'Spur 3, Determinante −4'},
-        {l:'(λ - 4)(λ + 1) = 0', w:'Eigenwerte 4 und −1, beide reell'},
-        {l:'H v = (3 · 2i + 2i; -2i · 2i)', w:'v = (2i; 1)'},
-        {l:'= (8i; 4)'},
-        {l:'= 4 v', why:{q:'Wie findet man $v = (2i, 1)^T$?', opts:['Erste Zeile von $(H - 4\\mathbb 1)v = 0$: $-v_1 + 2iv_2 = 0$, also $v_1 = 2iv_2$.', 'Man nimmt die erste Spalte von $H$ und teilt durch den Eigenwert.', 'Man rät; ein systematisches Verfahren dafür gibt es nicht.'], a:0, ex:'Mit $v_2 = 1$ ist $v_1 = 2i$. Die zweite Zeile, $-2iv_1 - 4v_2 = 4 - 4 = 0$, ist automatisch erfüllt.'}},
-        {l:'H w = -w', w:'w = (1; 2i) zum Eigenwert −1'},
-        {l:'⟨v|w⟩ = (-2i)(1) + (1)(2i)', w:'Bra: konjugierte Zeile (−2i, 1)'},
-        {l:'= 0', why:{q:'Warum musste hier $0$ herauskommen?', opts:['Bei hermiteschem $H$ sind Eigenvektoren zu verschiedenen Eigenwerten orthogonal.', 'Weil $v$ und $w$ beide normiert sind und deshalb senkrecht stehen.', 'Weil die Spur von $H$ gleich der Summe der beiden Eigenwerte ist.'], a:0, ex:'Das ist Aussage 2. Normiert sind $v/\\sqrt5$ und $w/\\sqrt5$; zusammen bilden sie eine Orthonormalbasis des $\\mathbb C^2$.'}}
-      ]},
-      q:[
-        {q:'Eine hermitesche $3\\times3$-Matrix hat die Eigenwerte $2$, $2$ und $5$. Wie viele orthonormale Eigenvektoren hat sie insgesamt?', opts:['$3$', '$2$', 'Das hängt von der Matrix ab.'], a:0, ex:'Der Spektralsatz garantiert eine Orthonormalbasis aus Eigenvektoren, auch bei Entartung. Zum Eigenwert $2$ gehört eine ganze Ebene, aus der man zwei orthonormale Vektoren wählt.'},
-        {q:'Die Matrix $\\begin{pmatrix}2&1\\\\0&2\\end{pmatrix}$ ist …', opts:['nicht diagonalisierbar: nur eine Eigenrichtung', 'diagonalisierbar, weil sie reell ist', 'diagonalisierbar mit den Eigenwerten $2$ und $1$'], a:0, ex:'Der Eigenwert $2$ ist doppelt, und $(A - 2\\mathbb 1)v = (v_2, 0)^T = 0$ liefert nur $v \\propto (1, 0)^T$. Die Matrix ist nicht hermitesch, der Spektralsatz greift nicht.'}
-      ]},
-    {id:'me-t5', title:'Diagonalisieren und Spektralzerlegung',
-      text:'Sind $|1\\rangle, \\dots, |n\\rangle$ orthonormale Eigenvektoren von $A$ zu $\\lambda_1, \\dots, \\lambda_n$, dann schreibt man sie als Spalten in eine Matrix $U$. Diese ist unitär, weil die Spalten eine Orthonormalbasis bilden. Spaltenweise gilt $AU = UD$ mit $D = \\operatorname{diag}(\\lambda_1, \\dots, \\lambda_n)$. Daraus folgt\n\n$$A = UDU^\\dagger,\\qquad D = U^\\dagger AU.$$\n\nDas ist die **[[lex:diagonalisierung|Diagonalisierung]]**. $U^\\dagger$ rechnet die Komponenten eines Vektors in die Eigenbasis um, dort wirkt $A$ nur als Streckung, und $U$ rechnet zurück.\n\nGleichwertig und in der QM üblicher ist die **Spektralzerlegung**\n\n$$A = \\sum_n\\lambda_n\\,|n\\rangle\\langle n|.$$\n\nJedes $P_n = |n\\rangle\\langle n|$ ist ein [[lex:projektion|Projektor]] auf eine Eigenrichtung, und $\\sum_nP_n = \\mathbb 1$. Für einen Vektor mit den Komponenten $c_n = \\langle n|v\\rangle$ heißt das\n\n$$Av = \\sum_n\\lambda_n c_n|n\\rangle.$$\n\nIn der Eigenbasis wird also jede Komponente mit ihrem Eigenwert multipliziert. Genau so rechnet man in Thema 3 und 6 mit Entwicklungskoeffizienten. Die Herleitung unten führt das für $A = \\begin{pmatrix}2&1\\\\1&2\\end{pmatrix}$ durch. Wegen $A = 2\\,\\mathbb 1 + \\sigma_x$ hat $A$ dieselben Eigenvektoren wie $\\sigma_x$ (Abschnitt 3), nämlich $|{\\pm x}\\rangle = (1, \\pm1)^T/\\sqrt2$, mit den Eigenwerten $2 \\pm 1$, also $3$ und $1$.\n\n**Vertauschende Matrizen.** Gilt $[A, B] = 0$ für hermitesche $A$ und $B$, dann haben sie eine [[lex:gemeinsame-eigenbasis|gemeinsame Eigenbasis]]. Der Kern des Arguments: Aus $Av = \\lambda v$ folgt $A(Bv) = BAv = \\lambda(Bv)$. $B$ bildet also jeden Eigenraum von $A$ in sich ab. Ist der Eigenwert nicht entartet, muss $Bv$ ein Vielfaches von $v$ sein: $v$ ist auch Eigenvektor von $B$. Ist er entartet, diagonalisiert man $B$ innerhalb des Eigenraums.\n\nDaraus folgt eine häufig falsch zitierte Aussage. „Vertauschbar“ heißt nicht, dass *jeder* Eigenvektor von $A$ auch einer von $B$ ist. Das extreme Gegenbeispiel ist $A = \\mathbb 1$: Sie vertauscht mit allem, und jeder Vektor ist ihr Eigenvektor, auch $(1, 0)^T$. Für $B = \\sigma_x$ ist $(1, 0)^T$ aber kein Eigenvektor. Gemeinsam ist nur eine passend gewählte Basis, hier $|{\\pm x}\\rangle$. In der QM heißt das: Vertauschende Observable sind gemeinsam scharf messbar (Thema 6 und 8).',
-      derive:{ctx:MAT({mats:{A:'(2, 1; 1, 2)', U:'(1, 1; 1, -1)/sqrt(2)'}}), lines:[
-        {l:'A |+x⟩ = 3 |+x⟩', w:'A = 2·𝟙 + σ_x: Eigenvektoren von σ_x (Abschnitt 3); ebenso A|−x⟩ = |−x⟩'},
-        {l:'U = (1, 1; 1, -1)/sqrt(2)', w:'Spalten: |+x⟩ und |−x⟩', why:{q:'Warum ist $U$ unitär?', opts:['Seine Spalten sind normiert und zueinander orthogonal.', 'Weil alle seine Einträge den gleichen Betrag $1/\\sqrt2$ haben.', 'Weil $U$ reell und symmetrisch ist, also hermitesch.'], a:0, ex:'$U^\\dagger U$ enthält genau die Skalarprodukte der Spalten: $\\langle{+x}|{+x}\\rangle = 1$, $\\langle{+x}|{-x}\\rangle = 0$ und so weiter.'}},
-        {l:'U† A U = (3, 0; 0, 1)', w:'in der Eigenbasis diagonal'},
-        {l:'A = 3 |+x⟩⟨+x| + 1 |-x⟩⟨-x|', w:'Spektralzerlegung', why:{q:'Was bedeutet diese Zeile?', opts:['$A$ streckt den Anteil längs $|{+x}\\rangle$ um $3$, den längs $|{-x}\\rangle$ um $1$.', '$A$ ist die Summe seiner beiden Eigenwerte $3$ und $1$.', '$A$ hat nur zwei von null verschiedene Einträge.'], a:0, ex:'$|n\\rangle\\langle n|$ projiziert auf die Eigenrichtung. Ausmultipliziert: $\\frac32\\begin{pmatrix}1&1\\\\1&1\\end{pmatrix} + \\frac12\\begin{pmatrix}1&-1\\\\-1&1\\end{pmatrix} = \\begin{pmatrix}2&1\\\\1&2\\end{pmatrix}$.'}}
-      ]},
-      q:[
-        {q:'$A$ und $B$ sind hermitesch, $[A, B] = 0$, und alle Eigenwerte von $A$ sind verschieden. Was folgt?', opts:['Jeder Eigenvektor von $A$ ist auch Eigenvektor von $B$.', 'Jeder Eigenvektor von $B$ ist auch einer von $A$, nicht umgekehrt.', '$A$ und $B$ haben dieselben Eigenwerte.'], a:0, ex:'Ohne Entartung ist jeder Eigenraum von $A$ eindimensional, und $B$ bildet ihn in sich ab: $Bv = \\mu v$. Die Eigenwerte $\\mu$ von $B$ können ganz andere sein. Umgekehrt muss nicht jeder Eigenvektor von $B$ einer von $A$ sein, wenn $B$ entartet ist.'},
-        {q:'$A = 2|1\\rangle\\langle1| - |2\\rangle\\langle2|$ mit orthonormalen $|1\\rangle, |2\\rangle$. Was ist $A(|1\\rangle + |2\\rangle)$?', opts:['$2|1\\rangle - |2\\rangle$', '$|1\\rangle + |2\\rangle$', '$(2 - 1)(|1\\rangle + |2\\rangle)$'], a:0, ex:'Jede Komponente wird mit ihrem Eigenwert multipliziert: $2\\cdot 1$ bei $|1\\rangle$, $(-1)\\cdot 1$ bei $|2\\rangle$.'}
-      ]},
-    {id:'me-t6', title:'Funktionen von Matrizen und Zeitentwicklung',
-      text:'Die Lösung der Schrödingergleichung $i\\hbar\\frac{d}{dt}|\\psi\\rangle = H|\\psi\\rangle$ mit zeitunabhängigem $H$ ist\n\n$$|\\psi(t)\\rangle = e^{-iHt/\\hbar}|\\psi(0)\\rangle.$$\n\nDazu braucht man [[lex:matrixfunktion|Funktionen von Matrizen]]. Definiert sind sie über die Potenzreihe, etwa $e^A = \\sum_{k=0}^\\infty A^k/k!$. Ausrechnen will man diese Reihe aber nicht.\n\n**Über die Eigenbasis.** Aus $A = UDU^\\dagger$ und $U^\\dagger U = \\mathbb 1$ folgt $A^2 = UDU^\\dagger UDU^\\dagger = UD^2U^\\dagger$ und ebenso $A^k = UD^kU^\\dagger$. Damit gilt für jede Potenzreihe\n\n$$f(A) = U f(D)U^\\dagger = \\sum_n f(\\lambda_n)\\,|n\\rangle\\langle n|.$$\n\n$f$ wirkt also auf die Eigenwerte, die Eigenvektoren bleiben. Die Herleitung unten prüft das für $A^2$ und $e^{itA}$. Achtung: $f(A)$ ist **nicht** die Matrix der Werte $f(A_{ij})$. Nur für Diagonalmatrizen stimmt das auf der Diagonale.\n\n**Zeitentwicklung.** Für einen Eigenvektor $|n\\rangle$ von $H$ mit Eigenwert $E_n$ ist $e^{-iHt/\\hbar}|n\\rangle = e^{-iE_nt/\\hbar}|n\\rangle$. Er bekommt nur eine Phase und ist deshalb stationär. Ein allgemeiner Zustand $\\sum_nc_n|n\\rangle$ entwickelt sich zu $\\sum_nc_ne^{-iE_nt/\\hbar}|n\\rangle$. Weil $H$ hermitesch ist, ist $e^{-iHt/\\hbar}$ unitär: $(e^{-iHt/\\hbar})^\\dagger = e^{iHt/\\hbar}$. Die Norm bleibt also $1$.\n\nDas löst die Frage vom Anfang. In der Doppelmulde ist $|L\\rangle = (|{+}\\rangle + |{-}\\rangle)/\\sqrt2$ eine Überlagerung der Eigenvektoren $|{\\pm}\\rangle = (|L\\rangle \\pm |R\\rangle)/\\sqrt2$ zu $E_0 \\mp \\Delta$. Die beiden Phasen laufen verschieden schnell, und die Wahrscheinlichkeit rechts ist $\\sin^2(\\Delta t/\\hbar)$.\n\n**Ein Sonderfall** ohne Diagonalisieren: Gilt $\\sigma^2 = \\mathbb 1$, wie für alle Pauli-Matrizen, dann zerfällt die Reihe in gerade und ungerade Potenzen:\n\n$$e^{i\\theta\\sigma} = \\cos\\theta\\,\\mathbb 1 + i\\sin\\theta\\,\\sigma.$$\n\n**Vorsicht bei Summen.** $e^{A+B} = e^Ae^B$ gilt, wenn $[A, B] = 0$. Sonst ist es im Allgemeinen falsch; schon die Terme zweiter Ordnung unterscheiden sich um $\\frac12[A, B]$. Für $H = E_0\\mathbb 1 - \\Delta\\sigma_x$ darf man trennen, weil $\\mathbb 1$ mit allem vertauscht.',
-      derive:{ctx:MAT({mats:{A:'(2, 1; 1, 2)'}}), lines:[
-        {l:'A^2 = 9 |+x⟩⟨+x| + 1 |-x⟩⟨-x|', w:'f(λ) = λ² auf die Eigenwerte 3 und 1', why:{q:'Warum stehen hier $9$ und $1$?', opts:['$A^2 = UD^2U^\\dagger$: Die Eigenwerte $3$ und $1$ werden quadriert.', 'Man quadriert die Einträge $2$ und $1$ der Matrix $A$.', 'Weil $\\operatorname{tr}A^2 = 9 + 1$ sein muss.'], a:0, ex:'$f(A) = \\sum_nf(\\lambda_n)|n\\rangle\\langle n|$ mit $f(\\lambda) = \\lambda^2$. Die Eigenvektoren ändern sich nicht.'}},
-        {l:'= (5, 4; 4, 5)', w:'ausmultipliziert'},
-        {l:'A A = (5, 4; 4, 5)', w:'Kontrolle durch direktes Multiplizieren'},
-        {l:'e^(i t A) = e^(3 i t) |+x⟩⟨+x| + e^(i t) |-x⟩⟨-x|', w:'$f(\\lambda) = e^{it\\lambda}$', why:{q:'Warum ist $e^{itA}$ unitär?', opts:['Eigenwerte $e^{3it}$, $e^{it}$ vom Betrag $1$ in einer Orthonormalbasis', 'Weil $A$ nur reelle Einträge hat und symmetrisch ist.', 'Weil jede Exponentialfunktion einer Matrix unitär ist.'], a:0, ex:'Das liegt an der Hermitezität von $A$: Reelle Eigenwerte $\\lambda_n$ ergeben $|e^{it\\lambda_n}| = 1$. Für $e^A$ selbst gilt das nicht, es hat die Eigenwerte $e^3$ und $e$.'}},
-        {l:'= (e^(3 i t) + e^(i t), e^(3 i t) - e^(i t); e^(3 i t) - e^(i t), e^(3 i t) + e^(i t))/2', w:'ausmultipliziert'}
-      ]},
-      q:[
-        {q:'$H|n\\rangle = E_n|n\\rangle$. Was ist $e^{-iHt/\\hbar}|n\\rangle$?', opts:['$e^{-iE_nt/\\hbar}|n\\rangle$', '$|n\\rangle$, weil $|n\\rangle$ stationär ist', '$(1 - iE_nt/\\hbar)|n\\rangle$'], a:0, ex:'$f(H)|n\\rangle = f(E_n)|n\\rangle$. Stationär heißt: nur eine Phase, die keine Messgröße ändert, nicht „gar keine Änderung“. Die dritte Option ist nur die erste Ordnung der Reihe.'},
-        {q:'Was ist $e^{i\\pi\\sigma_z/2}$?', opts:['$i\\sigma_z$', '$\\mathbb 1$', '$\\begin{pmatrix}e^{i\\pi/2}&1\\\\1&e^{-i\\pi/2}\\end{pmatrix}$'], a:0, ex:'$\\cos\\frac\\pi2\\,\\mathbb 1 + i\\sin\\frac\\pi2\\,\\sigma_z = i\\sigma_z = \\operatorname{diag}(i, -i)$. Die dritte Option nimmt fälschlich die Funktion jedes Eintrags: $e^0 = 1$ neben der Diagonale.'}
-      ]}
+    /* ===== Abschnitt 1: Matrix als Zahlenschema und als Abbildung, Produkt, Kommutator ===== */
+    {id:'me-t1', title:'Matrizen als lineare Abbildungen – die Reihenfolge zählt', steps:[
+      {id:'me-t1a', title:'Eine Matrix macht aus Vektoren Vektoren',
+        num:{title:'Zeile mal Spalte', text:R`Für $A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}$ und $v = (1;\ 0)$ rechnest du Zeile mal Spalte:
+
+$$Av = \begin{pmatrix}2\cdot1 + 1\cdot0\\ 1\cdot1 + 2\cdot0\end{pmatrix} = \begin{pmatrix}2\\ 1\end{pmatrix}.$$
+
+Ebenso ist $A\,(0;\ 1) = (1;\ 2)$ und $A\,(1;\ 1) = (3;\ 3)$.`},
+        text:R`Eine $n\times n$-Matrix ist zunächst ein Zahlenschema mit $n$ Zeilen und $n$ Spalten. Sie ist aber mehr: eine Vorschrift, die aus jedem Vektor $v$ einen neuen Vektor $Av$ macht. Man nennt das eine **Abbildung**. Den $i$-ten Eintrag von $Av$ bekommst du, indem du die $i$-te Zeile von $A$ Eintrag für Eintrag mit der Spalte $v$ multiplizierst und addierst:
+
+$$(Av)_i = \sum_jA_{ij}\,v_j.$$
+
+Gelesen: „Eintrag $i$ von $A$ mal $v$ ist die Summe über $j$ von $A_{ij}$ mal $v_j$.“ Der erste Index von $A_{ij}$ nennt die Zeile, der zweite die Spalte. Im Beispiel wird aus dem waagerechten Pfeil $(1;\ 0)$ der schräge Pfeil $(2;\ 1)$.`,
+        q:{q:R`Was ergibt $\begin{pmatrix}1&2\\ 3&4\end{pmatrix}\begin{pmatrix}2\\ 1\end{pmatrix}$?`,
+          opts:[R`$(5;\ 8)$`, R`$(4;\ 10)$`, R`$(2;\ 4)$`], a:1,
+          ex:R`Zeile mal Spalte: $1\cdot2 + 2\cdot1 = 4$ und $3\cdot2 + 4\cdot1 = 10$.`,
+          fb:[R`Du hast die Spalten der Matrix statt ihrer Zeilen mit $v$ multipliziert: $1\cdot2 + 3\cdot1 = 5$. Richtig ist die erste Zeile $(1, 2)$ mal $(2;\ 1)$.`,
+            '',
+            R`Die Einträge neben der Diagonale zählen mit: $(Av)_1 = 1\cdot2 + 2\cdot1$, nicht nur $1\cdot2$.`]}},
+      {id:'me-t1b', title:'Die Spalten sind die Bilder der Basisvektoren',
+        num:{title:'Linearität ausgenutzt', text:R`Mit $e_1 = (1;\ 0)$ und $e_2 = (0;\ 1)$ ist $(1;\ 1) = e_1 + e_2$. Weil $A$ linear ist, gilt
+
+$$A(e_1 + e_2) = Ae_1 + Ae_2 = (2;\ 1) + (1;\ 2) = (3;\ 3).$$
+
+Das ist dasselbe Ergebnis wie mit Zeile mal Spalte.`},
+        text:R`Die Abbildung $v \mapsto Av$ ist **linear**: $A(\alpha u + \beta v) = \alpha\,Au + \beta\,Av$ für alle Zahlen $\alpha, \beta$. Deshalb genügt es zu wissen, was $A$ mit den Basisvektoren macht. Die $j$-te Spalte von $A$ ist genau das Bild $Ae_j$. Jeden anderen Vektor zerlegst du in Basisvektoren und setzt die Bilder zusammen.
+
+Im Labor siehst du das für viele Vektoren zugleich. Der graue Kreis enthält alle Vektoren $u$ der Länge $1$. Jeder graue Strich führt von $u$ zu seinem Bild $Au$, dem blauen Punkt. Die blaue Kurve ist das Bild des ganzen Kreises. Die farbigen Pfeile und gestrichelten Geraden erklärt Abschnitt 3.`,
+        fig:{lab:'eigen', init:{a:2, b:1, d:2}, caption:R`Labor mit $a = d = 2$ und $b = 1$, also $A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}$. Der Punkt $(1, 0)$ des Kreises landet bei $(2, 1)$, der Punkt $(0, 1)$ bei $(1, 2)$.`},
+        reps:{obj:R`Die Matrix $A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}$ als Abbildung`,
+          rows:[
+            {k:'matrix', tex:R`A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}`},
+            {k:'formel', tex:R`\begin{gathered}Ae_1 = \begin{pmatrix}2\\ 1\end{pmatrix},\\ Ae_2 = \begin{pmatrix}1\\ 2\end{pmatrix},\\ A(\alpha e_1 + \beta e_2) = \alpha\begin{pmatrix}2\\ 1\end{pmatrix} + \beta\begin{pmatrix}1\\ 2\end{pmatrix}\end{gathered}`},
+            {k:'worte', text:R`Der Pfeil nach rechts wird zum Pfeil nach $(2, 1)$, der Pfeil nach oben zum Pfeil nach $(1, 2)$. Jeder andere Pfeil wird aus diesen beiden zusammengesetzt.`},
+            {k:'labor', text:R`Regler „a (oben links)“ $= 2$, „b (Nebendiagonale)“ $= 1$, „d (unten rechts)“ $= 2$: Der Einheitskreis wird zur blauen Ellipse, jeder graue Strich verbindet $u$ mit $Au$.`}
+          ],
+          links:[
+            {from:'matrix', to:'formel', rule:R`Lies die Spalten ab: Spalte $j$ ist das Bild von $e_j$. Für einen beliebigen Vektor nimm $\alpha$-mal die erste plus $\beta$-mal die zweite Spalte.`},
+            {from:'formel', to:'worte', rule:R`Zeichne die beiden Spalten als Pfeile vom Ursprung aus. Sie zeigen, wohin die Basispfeile gehen.`},
+            {from:'worte', to:'labor', rule:R`Stell die drei Einträge mit den Reglern ein. Folge einem grauen Strich vom Kreis zum blauen Punkt: Das ist ein Pfeil vor und nach der Abbildung.`}
+          ]},
+        q:{q:R`Eine Matrix $M$ macht aus $e_1$ den Pfeil $e_2$ und aus $e_2$ den Pfeil $e_1$. Sie spiegelt also an der Winkelhalbierenden. Welche Matrix ist das?`, tr:{from:'worte', to:'matrix'},
+          opts:[R`$\begin{pmatrix}1&0\\ 0&-1\end{pmatrix}$`, R`$\begin{pmatrix}0&-1\\ 1&0\end{pmatrix}$`, R`$\begin{pmatrix}0&1\\ 1&0\end{pmatrix}$`], a:2,
+          ex:R`Die erste Spalte ist $Me_1 = e_2 = (0;\ 1)$, die zweite $Me_2 = e_1 = (1;\ 0)$.`,
+          fb:[R`Diese Matrix lässt $e_1$ fest und dreht $e_2$ um: eine Spiegelung an der 1-Achse. Lies die Spalten ab: Die erste muss $Me_1 = e_2$ sein.`,
+            R`Die zweite Spalte ist hier $(-1;\ 0)$, also $Me_2 = -e_1$. Das ist eine Drehung um $90^\circ$, keine Spiegelung.`,
+            '']}},
+      {id:'me-t1c', title:'Hintereinander ausführen: das Matrixprodukt',
+        num:{title:'Erst drehen, dann spiegeln', text:R`$D = \begin{pmatrix}0&-1\\ 1&0\end{pmatrix}$ dreht um $90^\circ$, $S = \begin{pmatrix}1&0\\ 0&-1\end{pmatrix}$ spiegelt an der 1-Achse. Für $e_1 = (1;\ 0)$:
+
+$$S(De_1) = S\,(0;\ 1) = (0;\ -1),\qquad D(Se_1) = D\,(1;\ 0) = (0;\ 1).$$
+
+Die Reihenfolge ändert das Ergebnis.`},
+        text:R`Wendest du erst $B$ und dann $A$ an, bekommst du $A(Bv)$. Das ist wieder eine lineare Abbildung. Ihre Matrix heißt $AB$:
+
+$$(AB)_{ij} = \sum_kA_{ik}B_{kj}.$$
+
+Gelesen: Eintrag $(i, j)$ von $AB$ ist Zeile $i$ von $A$ mal Spalte $j$ von $B$. Achte auf die Reihenfolge. In $ABv$ wirkt die **rechte** Matrix zuerst, so wie bei verketteten Funktionen $f(g(x))$ zuerst $g$ wirkt. Im Allgemeinen ist $AB \ne BA$. Das Beispiel zeigt es: $SD$ schickt $e_1$ nach unten, $DS$ nach oben.`,
+        q:{q:R`Mit $D$ und $S$ aus dem Beispiel: Wohin schickt $DS$ den Vektor $e_2 = (0;\ 1)$?`,
+          opts:[R`$(1;\ 0)$`, R`$(-1;\ 0)$`, R`$(0;\ -1)$`], a:0,
+          ex:R`Zuerst $S$: $Se_2 = (0;\ -1)$. Dann $D$: $D\,(0;\ -1) = (1;\ 0)$.`,
+          fb:['',
+            R`Das ist $SD\,e_2$: erst gedreht, dann gespiegelt. In $DS\,e_2$ wirkt $S$ zuerst.`,
+            R`Das ist nur $Se_2$. Danach wirkt noch $D$.`]}},
+      {id:'me-t1d', title:'Der Kommutator misst die Reihenfolge',
+        pre:{from:'m-komplex', seg:'mk-t1', title:R`Rechnen mit $i$`, text:R`Es gilt $i^2 = -1$. Damit ist $i\cdot(-i) = -i^2 = 1$ und $(-i)\cdot(-i) = i^2 = -1$. Mini-Beispiel: $(2i)(-2i) = -4i^2 = 4$.`},
+        num:{title:'Zwei Produkte der Pauli-Matrizen', text:R`Mit $\sigma_x = \begin{pmatrix}0&1\\ 1&0\end{pmatrix}$ und $\sigma_y = \begin{pmatrix}0&-i\\ i&0\end{pmatrix}$:
+
+$$\sigma_x\sigma_y = \begin{pmatrix}i&0\\ 0&-i\end{pmatrix},\qquad \sigma_y\sigma_x = \begin{pmatrix}-i&0\\ 0&i\end{pmatrix}.$$
+
+Die beiden Reihenfolgen geben verschiedene Matrizen.`},
+        text:R`Den Unterschied der beiden Reihenfolgen misst der **[[lex:kommutator|Kommutator]]**
+
+$$[A, B] = AB - BA,$$
+
+gelesen „Kommutator von A und B“. Ist er null, heißen $A$ und $B$ vertauschbar. Die wichtigsten Beispiele sind die [[lex:pauli|Pauli-Matrizen]] $\sigma_x$, $\sigma_y$ aus dem Beispiel und $\sigma_z = \begin{pmatrix}1&0\\ 0&-1\end{pmatrix}$. Die Herleitung zeigt $[\sigma_x, \sigma_y] = 2i\sigma_z$; zyklisch vertauscht gilt dasselbe. **Ausblick (Thema 10):** Die Pauli-Matrizen beschreiben den Spin eines Elektrons. Dass sie nicht vertauschen, hat dort eine messbare Folge: Zwei Spinkomponenten lassen sich nicht gleichzeitig scharf messen.`,
+        derive:{ctx:MAT({}), lines:[
+          {l:'[σ_x, σ_y] = σ_x σ_y - σ_y σ_x', w:'Definition des Kommutators'},
+          {l:'= (i, 0; 0, -i) - (-i, 0; 0, i)', w:'beide Produkte: Zeile mal Spalte', why:{q:'Wie entsteht der Eintrag oben links von $\\sigma_x\\sigma_y$?', opts:['Erste Zeile von $\\sigma_x$ mal erste Spalte von $\\sigma_y$: $0\\cdot0 + 1\\cdot i = i$', 'Aus den beiden Einträgen oben links: $0\\cdot 0 = 0$', 'Erste Spalte von $\\sigma_x$ mal erste Zeile von $\\sigma_y$: $0$'], a:0, ex:'Matrizen multipliziert man nicht eintragsweise: $(\\sigma_x\\sigma_y)_{11} = \\sum_k(\\sigma_x)_{1k}(\\sigma_y)_{k1} = 0\\cdot 0 + 1\\cdot i = i$.'}},
+          {l:'= (2i, 0; 0, -2i)', w:'Differenz Eintrag für Eintrag'},
+          {l:'= 2i σ_z', w:R`$2i$ ausgeklammert`, why:{q:'Was zeigt das Ergebnis?', opts:['$\\sigma_x$ und $\\sigma_y$ vertauschen nicht; der Kommutator ist $2i\\sigma_z$.', '$\\sigma_x$ und $\\sigma_y$ vertauschen, denn der Kommutator ist diagonal.', 'Der Kommutator ist ein Vielfaches von $\\mathbb 1$, nämlich $2i\\,\\mathbb 1$.'], a:0, ex:'$2i\\sigma_z \\ne 0$, also $\\sigma_x\\sigma_y \\ne \\sigma_y\\sigma_x$. Die Diagonale von $\\sigma_z$ ist $(1, -1)$, nicht $(1, 1)$; deshalb ist das Ergebnis kein Vielfaches von $\\mathbb 1$.'}}
+        ]},
+        q:{q:R`Es gilt $\sigma_x\sigma_y = i\sigma_z$. Was ist dann $\sigma_y\sigma_x$?`,
+          opts:[R`$i\sigma_z$`, R`$-i\sigma_z$`, R`$\mathbb 1$`], a:1,
+          ex:R`Aus $\sigma_x\sigma_y - \sigma_y\sigma_x = 2i\sigma_z$ folgt $\sigma_y\sigma_x = i\sigma_z - 2i\sigma_z = -i\sigma_z$. Die beiden Produkte unterscheiden sich nur im Vorzeichen.`,
+          fb:[R`Dann wäre der Kommutator null. Er ist aber $2i\sigma_z$, die beiden Produkte unterscheiden sich also.`,
+            '',
+            R`Das Produkt ist diagonal mit den Einträgen $-i$ und $i$, wie das Beispiel zeigt. $\mathbb 1$ hätte zweimal die $1$.`]}},
+      {id:'me-t1e', title:'Rechenregeln und eine Überraschung bei der Spur',
+        num:{title:'Die Spur eines Produkts', text:R`Die [[lex:spur-determinante|Spur]] ist die Summe der Diagonaleinträge. Für $A = \begin{pmatrix}1&2\\ 3&4\end{pmatrix}$ und $B = \sigma_x$:
+
+$$AB = \begin{pmatrix}2&1\\ 4&3\end{pmatrix},\qquad BA = \begin{pmatrix}3&4\\ 1&2\end{pmatrix}.$$
+
+Verschiedene Matrizen, aber beide haben die Spur $5$.`},
+        text:R`Drei Rechenregeln brauchst du ständig: $[A, B] = -[B, A]$, $[A, A] = 0$ und die Produktregel
+
+$$[A, BC] = [A, B]\,C + B\,[A, C].$$
+
+Die **Spur** $\operatorname{tr}A = \sum_iA_{ii}$, gelesen „Spur von A“, hängt nicht von der Reihenfolge ab: $\operatorname{tr}(AB) = \operatorname{tr}(BA)$. Also hat jeder Kommutator von Matrizen die Spur null. Daraus folgt etwas Überraschendes. Für keine zwei $n\times n$-Matrizen gilt $[X, P] = c\,\mathbb 1$ mit $c \ne 0$; dabei ist $\mathbb 1$ die Einheitsmatrix. Rechts steht nämlich die Spur $cn$. **Ausblick (Thema 6):** Genau diese Gleichung gilt für Ort und Impuls. Sie braucht deshalb einen unendlichdimensionalen Raum (M5).`,
+        q:{q:R`Kann für zwei $2\times2$-Matrizen $[A, B] = \mathbb 1$ gelten?`,
+          opts:[R`Ja, zum Beispiel für $A = \sigma_x$ und $B = \sigma_y$.`, R`Ja, sobald $A$ und $B$ nicht vertauschen.`, R`Nein: Die Spur links ist $0$, rechts $2$.`], a:2,
+          ex:R`$\operatorname{tr}[A, B] = \operatorname{tr}(AB) - \operatorname{tr}(BA) = 0$, aber $\operatorname{tr}\mathbb 1 = 2$.`,
+          fb:[R`$[\sigma_x, \sigma_y] = 2i\sigma_z$ hat die Spur $0$, nicht $2$. Kein Kommutator von Matrizen ist ein Vielfaches von $\mathbb 1$ ungleich null.`,
+            R`Nicht vertauschen heißt nur $[A, B] \ne 0$. Die Spur des Kommutators bleibt trotzdem $0$.`,
+            '']}},
+      {id:'me-t1f', title:'Typischer Fehler: Matrizen eintragsweise multiplizieren',
+        num:{title:'Eintragsweise ist falsch', text:R`Wer $\sigma_x$ und $\sigma_y$ Eintrag für Eintrag multipliziert, erhält $\begin{pmatrix}0\cdot0 & 1\cdot(-i)\\ 1\cdot i & 0\cdot0\end{pmatrix} = \begin{pmatrix}0&-i\\ i&0\end{pmatrix}$. Richtig ist Zeile mal Spalte: $(\sigma_x\sigma_y)_{11} = 0\cdot0 + 1\cdot i = i$, also $\sigma_x\sigma_y = \begin{pmatrix}i&0\\ 0&-i\end{pmatrix}$.`},
+        text:R`Der häufigste Rechenfehler mit Matrizen ist, sie Eintrag für Eintrag zu multiplizieren. Das sieht harmlos aus, hat aber mit dem Hintereinanderausführen nichts zu tun. Ein schneller Test: Die erste Spalte von $AB$ muss $A$ mal die erste Spalte von $B$ sein, denn sie ist das Bild von $e_1$. Der zweite häufige Fehler ist die Reihenfolge. $AB$ und $BA$ sind verschiedene Matrizen, und in $ABv$ wirkt $B$ zuerst. Bei Diagonalmatrizen merkst du von beiden Fehlern nichts. Deshalb fallen sie erst bei Matrizen wie den Pauli-Matrizen auf.`,
+        q:{q:R`Jemand rechnet $\begin{pmatrix}1&1\\ 0&1\end{pmatrix}\begin{pmatrix}1&0\\ 1&1\end{pmatrix} = \begin{pmatrix}1&0\\ 0&1\end{pmatrix}$. Was stimmt?`,
+          opts:[R`Richtig, denn die beiden Matrizen sind zueinander invers.`, R`Eintragsweise gerechnet; richtig ist $\begin{pmatrix}2&1\\ 1&1\end{pmatrix}$.`, R`Falsch; richtig ist $\begin{pmatrix}1&1\\ 1&2\end{pmatrix}$.`], a:1,
+          ex:R`Oben links: erste Zeile $(1, 1)$ mal erste Spalte $(1;\ 1)$ gibt $2$. So entsteht $\begin{pmatrix}2&1\\ 1&1\end{pmatrix}$.`,
+          fb:[R`Invers hieße, das Produkt ist $\mathbb 1$. Zeile mal Spalte gibt aber oben links $1\cdot1 + 1\cdot1 = 2$.`,
+            '',
+            R`Das ist das Produkt in umgekehrter Reihenfolge. Hier steht die erste Zeile der linken Matrix mal die erste Spalte der rechten.`]}}
+    ]},
+    /* ===== Abschnitt 2: Adjungieren, hermitesch, unitär ===== */
+    {id:'me-t2', title:'Adjungieren: hermitesche und unitäre Matrizen', steps:[
+      {id:'me-t2a', title:'Die Adjungierte: transponieren und konjugieren',
+        pre:{from:'m-komplex', seg:'mk-t1', title:'Konjugieren', text:R`Konjugieren ersetzt $i$ durch $-i$: $(a + ib)^* = a - ib$. Reelle Zahlen bleiben unverändert. Mini-Beispiel: $(4 - i)^* = 4 + i$ und $(2i)^* = -2i$.`},
+        num:{title:R`Eine $2\times2$-Matrix adjungiert`, text:R`Für $A = \begin{pmatrix}1 & 2i\\ 3 & 4 - i\end{pmatrix}$ transponierst du zuerst: Zeilen werden Spalten, $A^T = \begin{pmatrix}1 & 3\\ 2i & 4 - i\end{pmatrix}$. Dann konjugierst du jeden Eintrag:
+
+$$A^\dagger = \begin{pmatrix}1 & 3\\ -2i & 4 + i\end{pmatrix}.$$`},
+        text:R`Die **[[lex:adjungierte|Adjungierte]]** $A^\dagger$ einer Matrix, gelesen „A dagger“, ist
+
+$$A^\dagger = (A^T)^*,\qquad (A^\dagger)_{ij} = A_{ji}^*.$$
+
+Du transponierst also und konjugierst jeden Eintrag; die Reihenfolge der beiden Schritte ist egal. Für einen Spaltenvektor kennst du das aus M3. Aus dem Ket $|v\rangle$ wird so der Bra $\langle v|$, die konjugierte Zeile. Deshalb ist das Skalarprodukt $\langle u|v\rangle = u^\dagger v = \sum_ku_k^*v_k$ einfach Zeile mal Spalte.`,
+        q:{q:R`Was ist $\begin{pmatrix}0 & 1 + i\\ 2 & 3i\end{pmatrix}^\dagger$?`,
+          opts:[R`$\begin{pmatrix}0 & 1 - i\\ 2 & -3i\end{pmatrix}$`, R`$\begin{pmatrix}0 & 2\\ 1 + i & 3i\end{pmatrix}$`, R`$\begin{pmatrix}0 & 2\\ 1 - i & -3i\end{pmatrix}$`], a:2,
+          ex:R`Transponiert: $\begin{pmatrix}0 & 2\\ 1 + i & 3i\end{pmatrix}$. Konjugiert: $1 + i \to 1 - i$ und $3i \to -3i$.`,
+          fb:[R`Das ist nur konjugiert. Beim Adjungieren wandert außerdem der Eintrag $2$ von unten links nach oben rechts.`,
+            R`Das ist nur transponiert. Die komplexen Einträge müssen noch konjugiert werden.`,
+            '']}},
+      {id:'me-t2b', title:'Die Adjungierte im Skalarprodukt',
+        num:{title:'Nachgerechnet', text:R`$A = \begin{pmatrix}1 & i\\ 0 & 2\end{pmatrix}$, $u = (1;\ 1)$, $v = (0;\ 1)$. Dann ist $Av = (i;\ 2)$ und $\langle u|Av\rangle = 1\cdot i + 1\cdot2 = 2 + i$. Mit $A^\dagger = \begin{pmatrix}1 & 0\\ -i & 2\end{pmatrix}$ ist $A^\dagger u = (1;\ 2 - i)$ und
+
+$$\langle A^\dagger u|v\rangle = 1^*\cdot0 + (2 - i)^*\cdot1 = 2 + i.$$`},
+        text:R`Das Beispiel ist kein Zufall. Für jede Matrix gilt
+
+$$\langle u|Av\rangle = \langle A^\dagger u|v\rangle.$$
+
+Gelesen: „Wirkt $A$ rechts im Skalarprodukt, darfst du es als $A^\dagger$ nach links schieben.“ Der Beweis ist eine Zeile: $\sum_{i,j}u_i^*A_{ij}v_j = \sum_{i,j}(A_{ij}^*u_i)^*v_j$, und $\sum_iA_{ij}^*u_i$ ist die $j$-te Komponente von $A^\dagger u$. Diese Eigenschaft ist der eigentliche Sinn der Adjungierten. Aus ihr folgt auch $(AB)^\dagger = B^\dagger A^\dagger$: Beim Schieben nach links kommt zuerst $A$, dann $B$ an die Reihe, und die Reihenfolge dreht sich um.`,
+        q:{q:R`Wie lautet $\langle u|ABv\rangle$, wenn du beide Matrizen nach links schiebst?`,
+          opts:[R`$\langle A^\dagger B^\dagger u|v\rangle$`, R`$\langle BAu|v\rangle$`, R`$\langle B^\dagger A^\dagger u|v\rangle$`], a:2,
+          ex:R`Schritt für Schritt: $\langle u|A(Bv)\rangle = \langle A^\dagger u|Bv\rangle = \langle B^\dagger A^\dagger u|v\rangle$. Auf $u$ wirkt zuerst $A^\dagger$.`,
+          fb:[R`Schiebe einzeln: Zuerst wandert $A$ nach links und wirkt als $A^\dagger$ auf $u$. Danach kommt $B^\dagger$ davor: $B^\dagger A^\dagger u$.`,
+            R`Beim Schieben nach links wird adjungiert. Ohne Dagger stimmt die Gleichung nur für besondere Matrizen.`,
+            '']}},
+      {id:'me-t2c', title:'Hermitesch: Spiegeln und Konjugieren ändert nichts',
+        num:{title:R`$\sigma_y$ adjungiert`, text:R`$\sigma_y = \begin{pmatrix}0&-i\\ i&0\end{pmatrix}$ hat rein imaginäre Einträge. Transponieren gibt $\begin{pmatrix}0&i\\ -i&0\end{pmatrix}$, Konjugieren dreht beide Vorzeichen zurück. Also ist $\sigma_y^\dagger = \sigma_y$.`},
+        text:R`Eine Matrix heißt **hermitesch**, wenn $A^\dagger = A$. Gelesen: Spiegeln an der Diagonale und Konjugieren ändert nichts. Daraus folgen zwei Kennzeichen, die du sofort prüfen kannst. Die Diagonaleinträge sind reell, denn $A_{ii} = A_{ii}^*$. Gegenüberliegende Einträge sind zueinander konjugiert: $A_{21} = A_{12}^*$. Eine hermitesche $2\times2$-Matrix hat also immer die Form $\begin{pmatrix}a & b\\ b^* & d\end{pmatrix}$ mit reellen $a$ und $d$. Im Skalarprodukt darf eine hermitesche Matrix ohne Änderung von rechts nach links wandern: $\langle u|Av\rangle = \langle Au|v\rangle$. Die Tafel zeigt, warum die Physik sich für diese Matrizen interessiert.`,
+        reps:{obj:R`Die hermitesche Matrix $H = \begin{pmatrix}3 & 2i\\ -2i & 0\end{pmatrix}$`,
+          rows:[
+            {k:'worte', text:R`An der Diagonale gespiegelt und dann konjugiert, ergibt sich wieder dieselbe Matrix.`},
+            {k:'matrix', tex:R`\begin{gathered}H = \begin{pmatrix}3 & 2i\\ -2i & 0\end{pmatrix}:\qquad H_{11} = 3,\ H_{22} = 0\ \text{reell},\\ H_{21} = -2i = (2i)^* = H_{12}^*\end{gathered}`},
+            {k:'formel', tex:R`\begin{gathered}H^\dagger = H,\\ \langle u|Hv\rangle = \langle Hu|v\rangle\ \text{für alle } u, v\end{gathered}`},
+            {k:'physik', text:R`**Ausblick (Thema 6):** In der Quantenmechanik gehört zu jeder messbaren Größe, etwa zur Energie, eine hermitesche Matrix. Die Zahlen, die eine Messung liefern kann, lassen sich aus ihr ausrechnen (Abschnitt 3), und sie sind reell (Abschnitt 4) – wie jeder Messwert.`}
+          ],
+          links:[
+            {from:'worte', to:'matrix', rule:R`Vergleiche Eintrag $(1, 2)$ mit Eintrag $(2, 1)$: Der eine muss der konjugierte andere sein. Prüfe dann, ob die Diagonale reell ist.`},
+            {from:'matrix', to:'formel', rule:R`Bilde $H^\dagger$: transponieren, dann konjugieren. Stimmt das Ergebnis Eintrag für Eintrag mit $H$ überein, ist $H^\dagger = H$.`},
+            {from:'formel', to:'physik', rule:R`Lies „hermitesch“ als „kann eine messbare Größe darstellen“. Die möglichen Messwerte stecken in der Matrix und werden in Abschnitt 3 herausgerechnet.`}
+          ]},
+        q:{q:R`Welche Matrix ist hermitesch?`, tr:{from:'matrix', to:'formel'},
+          opts:[R`$\begin{pmatrix}2 & 1+i\\ 1+i & 0\end{pmatrix}$`, R`$\begin{pmatrix}2i & 1\\ 1 & 0\end{pmatrix}$`, R`$\begin{pmatrix}2 & 1+i\\ 1-i & 0\end{pmatrix}$`], a:2,
+          ex:R`Hermitesch verlangt eine reelle Diagonale und $A_{21} = A_{12}^*$. Bei der dritten Matrix ist $(1 + i)^* = 1 - i$ erfüllt.`,
+          fb:[R`Hier ist $A_{21} = A_{12}$ statt $A_{12}^*$. Das ist symmetrisch, aber nicht hermitesch: $(1 + i)^* = 1 - i$.`,
+            R`Ein Diagonaleintrag $2i$ ist nicht reell. Beim Adjungieren wird er zu $-2i$.`,
+            '']}},
+      {id:'me-t2d', title:'Typischer Fehler: symmetrisch ist nicht hermitesch',
+        num:{title:'Zwei Gegenbeispiele', text:R`$B = \begin{pmatrix}2 & 1 + i\\ 1 + i & 0\end{pmatrix}$ ist symmetrisch, aber $B^\dagger = \begin{pmatrix}2 & 1 - i\\ 1 - i & 0\end{pmatrix} \ne B$. Und $N = \begin{pmatrix}1 & 2\\ 0 & 1\end{pmatrix}$ ist reell, aber $N^\dagger = \begin{pmatrix}1 & 0\\ 2 & 1\end{pmatrix} \ne N$.`},
+        text:R`Zwei Faustregeln führen oft in die Irre. Erstens: „Hermitesch heißt symmetrisch.“ Das stimmt nur für reelle Matrizen. Bei komplexen Einträgen muss gegenüber die *konjugierte* Zahl stehen. Zweitens: „Hermitesche Matrizen haben reelle Einträge.“ Reelle Einträge sind weder nötig noch hinreichend. $\sigma_y$ hat imaginäre Einträge und ist hermitesch; $N$ im Beispiel ist reell und nicht hermitesch. Entscheidend ist allein die Bedingung $A^\dagger = A$. Prüfe sie Eintrag für Eintrag, und zwar immer mit Transponieren **und** Konjugieren.`,
+        q:{q:R`Für welche Zahl $z$ ist $\begin{pmatrix}1 & z\\ 3 - 2i & 5\end{pmatrix}$ hermitesch?`,
+          opts:[R`$z = 3 - 2i$`, R`$z = 3 + 2i$`, R`$z = -3 + 2i$`], a:1,
+          ex:R`Es muss $z = A_{12} = A_{21}^* = (3 - 2i)^* = 3 + 2i$ sein. Die Diagonale $1, 5$ ist schon reell.`,
+          fb:[R`Das macht die Matrix symmetrisch. Hermitesch verlangt die konjugierte Zahl: $(3 - 2i)^* = 3 + 2i$.`,
+            '',
+            R`Konjugieren dreht nur das Vorzeichen des Imaginärteils, nicht das der ganzen Zahl.`]}},
+      {id:'me-t2e', title:'Unitär: Längen und Winkel bleiben erhalten',
+        num:{title:R`Eine Drehung um $45^\circ$`, text:R`$U = \tfrac{1}{\sqrt2}\begin{pmatrix}1&-1\\ 1&1\end{pmatrix}$ dreht um $45^\circ$: $Ue_1 = \tfrac{1}{\sqrt2}(1;\ 1)$, wieder mit der Länge $\sqrt{\tfrac12 + \tfrac12} = 1$. Zeile mal Spalte gibt
+
+$$U^\dagger U = \tfrac12\begin{pmatrix}1&1\\ -1&1\end{pmatrix}\begin{pmatrix}1&-1\\ 1&1\end{pmatrix} = \tfrac12\begin{pmatrix}2&0\\ 0&2\end{pmatrix} = \mathbb 1.$$`},
+        text:R`Eine Matrix heißt **[[lex:unitaer|unitär]]**, wenn
+
+$$U^\dagger U = \mathbb 1,\qquad\text{also}\qquad U^{-1} = U^\dagger.$$
+
+Die Inverse bekommst du dann geschenkt: adjungieren. Unitäre Matrizen erhalten Skalarprodukte, denn $\langle Uu|Uv\rangle = \langle u|U^\dagger Uv\rangle = \langle u|v\rangle$. Damit bleiben Längen und Winkel erhalten. Gleichwertig ist: Die Spalten von $U$ bilden eine Orthonormalbasis (M3), denn $U^\dagger U$ enthält genau die Skalarprodukte der Spalten. Beispiele sind Drehungen, Spiegelungen und Basiswechsel zwischen Orthonormalbasen. Die Herleitung prüft $\sigma_y^\dagger\sigma_y = \mathbb 1$.`,
+        derive:{ctx:MAT({}), lines:[
+          {l:'σ_y† σ_y = (0, -i; i, 0)(0, -i; i, 0)', w:R`$\sigma_y^\dagger = \sigma_y$ eingesetzt (Schritt zuvor)`},
+          {l:'= I', w:'Zeile mal Spalte: also unitär', why:{q:R`Was folgt aus $\sigma_y^\dagger\sigma_y = \mathbb 1$?`, opts:[R`$\sigma_y$ ist unitär und erhält alle Längen.`, R`$\sigma_y$ ist nicht hermitesch, sonst wäre das Produkt $\sigma_y$.`, R`$\sigma_y$ bildet jeden Vektor auf sich selbst ab.`], a:0, ex:R`$U^\dagger U = \mathbb 1$ ist die Definition von unitär. Weil $\sigma_y$ auch hermitesch ist, heißt das $\sigma_y^2 = \mathbb 1$: Zweimal angewandt ändert $\sigma_y$ nichts, einmal angewandt schon, denn $\sigma_y(1;\ 0) = (0;\ i)$.`}}
+        ]},
+        q:{q:R`$U$ ist unitär, und $\langle u|v\rangle = 2 - i$. Was ist $\langle Uu|Uv\rangle$?`,
+          opts:[R`$|2 - i|^2 = 5$`, R`$2 - i$`, R`$2 + i$`], a:1,
+          ex:R`$\langle Uu|Uv\rangle = \langle u|U^\dagger Uv\rangle = \langle u|v\rangle$. Unitäre Matrizen erhalten das ganze Skalarprodukt, mit Betrag und Phase.`,
+          fb:[R`Das Skalarprodukt bleibt eine komplexe Zahl. Ein Betragsquadrat entsteht nirgends.`,
+            '',
+            R`Konjugiert würde nur, wenn man $u$ und $v$ vertauscht. Hier bleibt die Reihenfolge.`]}},
+      {id:'me-t2f', title:R`Antihermitesch, und was ein Faktor $i$ ändert`,
+        num:{title:R`Ein Faktor $-i$`, text:R`$K = \begin{pmatrix}0&1\\ -1&0\end{pmatrix}$ ist reell, und $K^\dagger = \begin{pmatrix}0&-1\\ 1&0\end{pmatrix} = -K$. Mit $-i$ multipliziert: $-iK = \begin{pmatrix}0&-i\\ i&0\end{pmatrix} = \sigma_y$, und das ist hermitesch.`},
+        text:R`Eine Matrix mit $A^\dagger = -A$ heißt **antihermitesch**. Ihre Diagonale ist rein imaginär, und gegenüber steht das Negative der Konjugierten. Ein Faktor $i$ macht daraus eine hermitesche Matrix, denn $(iA)^\dagger = i^*A^\dagger = (-i)(-A) = iA$. Dasselbe gilt für $-iA$. Der Grund: Adjungieren macht aus einem Vorfaktor $c$ den Faktor $c^*$, und $i^* = -i$ bringt genau das fehlende Vorzeichen. Eine Matrix kann auch mehreres zugleich sein: $\sigma_y$ ist hermitesch und unitär. **Ausblick (M5):** Dasselbe Muster kehrt bei der Ableitung $d/dx$ wieder; erst $-i\,d/dx$ ist hermitesch.`,
+        q:{q:R`$A$ ist antihermitesch. Was ist $(2iA)^\dagger$?`,
+          opts:[R`$-2iA$`, R`$2iA$`, R`$-2A$`], a:1,
+          ex:R`$(2iA)^\dagger = (2i)^*A^\dagger = (-2i)(-A) = 2iA$. Also ist $2iA$ hermitesch.`,
+          fb:[R`Beide Vorzeichenwechsel zählen: $(2i)^* = -2i$ und $A^\dagger = -A$. Zusammen ergibt das $(-2i)(-A) = 2iA$.`,
+            '',
+            R`Der Faktor $i$ verschwindet nicht; er wird nur konjugiert.`]}}
+    ]},
+    /* ===== Abschnitt 3: Eigenwertgleichung als Bild, Matrixgleichung und Polynom ===== */
+    {id:'me-t3', title:'Eigenwerte und Eigenvektoren', steps:[
+      {id:'me-t3a', title:'Richtungen, die nur gestreckt werden',
+        num:{title:'Drei Pfeile unter derselben Matrix', text:R`Für $A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}$:
+
+$$\begin{aligned}A\begin{pmatrix}1\\ 0\end{pmatrix} &= \begin{pmatrix}2\\ 1\end{pmatrix},\\ A\begin{pmatrix}1\\ 1\end{pmatrix} &= \begin{pmatrix}3\\ 3\end{pmatrix} = 3\begin{pmatrix}1\\ 1\end{pmatrix},\\ A\begin{pmatrix}1\\ -1\end{pmatrix} &= \begin{pmatrix}1\\ -1\end{pmatrix}.\end{aligned}$$
+
+Der erste Pfeil kippt. Die beiden anderen behalten ihre Richtung; der eine wird dreimal so lang, der andere bleibt gleich lang.`},
+        text:R`Die meisten Vektoren werden von einer Matrix gekippt und gestreckt. Manche Richtungen werden aber nur gestreckt:
+
+$$Av = \lambda v,\qquad v \ne 0.$$
+
+Gelesen: „$A$ mal $v$ ist ein Vielfaches von $v$.“ Dann heißt $v$ **Eigenvektor** und die Zahl $\lambda$, gelesen „lambda“, **[[lex:eigenwertproblem|Eigenwert]]**. Im Beispiel ist $(1;\ 1)$ Eigenvektor zum Eigenwert $3$ und $(1;\ -1)$ Eigenvektor zum Eigenwert $1$.
+
+Im Labor siehst du das an der Ellipse. Die gestrichelten Geraden sind die Eigenrichtungen; sie liegen auf den Halbachsen. Die Pfeile $\lambda_+e_+$ und $\lambda_-e_-$ sind die normierten Eigenvektoren $e_\pm$, mit ihrem Eigenwert gestreckt. Hier sind sie $3$ und $1$ lang.`,
+        fig:{lab:'eigen', init:{a:2, b:1, d:2}, caption:R`Dieselbe Matrix wie in Abschnitt 1. Rot gestrichelt die Richtung von $(1;\ 1)$ zum Eigenwert $3$, grün gestrichelt die von $(1;\ -1)$ zum Eigenwert $1$.`},
+        q:{q:R`Was bedeutet ein Eigenwert $\lambda = -1$ im Bild?`,
+          opts:[R`Der Pfeil wird um $90^\circ$ gedreht.`, R`Der Pfeil schrumpft auf die Länge null.`, R`Er bleibt auf seiner Geraden, kehrt sich aber um.`], a:2,
+          ex:R`$Av = -v$: gleiche Gerade, gleiche Länge, umgekehrte Richtung. Eine Spiegelung hat zum Beispiel einen solchen Eigenvektor.`,
+          fb:[R`Gedreht wird ein Eigenvektor nie, sonst wäre $Av$ kein Vielfaches von $v$.`,
+            R`Länge null gehört zum Eigenwert $0$. Bei $-1$ bleibt die Länge gleich.`,
+            '']}},
+      {id:'me-t3b', title:'Von der Gleichung zur Determinante',
+        num:{title:R`$A - \lambda\mathbb 1$ für zwei Werte von $\lambda$`, text:R`Mit $\lambda = 3$ wird $A - 3\cdot\mathbb 1 = \begin{pmatrix}-1&1\\ 1&-1\end{pmatrix}$. Ihre Determinante ist $1 - 1 = 0$, und $(1;\ 1)$ wird auf null abgebildet. Mit $\lambda = 2$ wird $A - 2\cdot\mathbb 1 = \begin{pmatrix}0&1\\ 1&0\end{pmatrix}$ mit der Determinante $-1$. Hier wird nur der Nullvektor auf null abgebildet.`},
+        text:R`Wie findet man die Eigenwerte, ohne zu raten? Schreibe $Av = \lambda v$ als $Av - \lambda\mathbb 1v = 0$, also
+
+$$(A - \lambda\mathbb 1)\,v = 0.$$
+
+Diese Gleichung hat immer die Lösung $v = 0$. Ein Eigenvektor muss aber von null verschieden sein. Eine solche Lösung gibt es genau dann, wenn die Matrix $A - \lambda\mathbb 1$ nicht invertierbar ist. Das heißt: Ihre Determinante verschwindet,
+
+$$\det(A - \lambda\mathbb 1) = 0.$$
+
+Beachte: $\lambda$ wird nur auf der Diagonale abgezogen, denn $\lambda\mathbb 1$ hat nur dort Einträge. Im Beispiel ist $\lambda = 3$ ein Eigenwert, $\lambda = 2$ nicht.`,
+        q:{q:R`Warum verlangt man $\det(A - \lambda\mathbb 1) = 0$?`,
+          opts:['Weil $\\det(A - \\lambda\\mathbb 1)$ gleich dem Eigenwert $\\lambda$ ist.', 'Weil man aus $\\det(A - \\lambda\\mathbb 1) = 0$ den Eigenvektor $v$ direkt abliest.', 'Weil nur dann $(A - \\lambda\\mathbb 1)v = 0$ eine Lösung $v \\ne 0$ hat.'], a:2,
+          ex:R`Ist $A - \lambda\mathbb 1$ invertierbar, folgt aus $(A - \lambda\mathbb 1)v = 0$ sofort $v = 0$. Erst bei Determinante null bleibt Platz für einen Eigenvektor.`,
+          fb:[R`Die Determinante von $A - \lambda\mathbb 1$ ist ein Polynom in $\lambda$. Die Eigenwerte sind seine Nullstellen, nicht seine Werte.`,
+            R`Die Determinante sagt nur, *ob* es einen Eigenvektor gibt. Ihn selbst findest du danach aus $(A - \lambda\mathbb 1)v = 0$.`,
+            '']}},
+      {id:'me-t3c', title:'Das charakteristische Polynom',
+        num:{title:R`Das Polynom von $A$`, text:R`$$\begin{aligned}&\det\begin{pmatrix}2 - \lambda & 1\\ 1 & 2 - \lambda\end{pmatrix} = (2 - \lambda)^2 - 1\\ &= \lambda^2 - 4\lambda + 3 = (\lambda - 1)(\lambda - 3).\end{aligned}$$
+
+Die Nullstellen sind $1$ und $3$. Kontrolle: $1 + 3 = 4$ ist die Spur von $A$, $1\cdot3 = 3$ ihre Determinante.`},
+        text:R`Die linke Seite von $\det(A - \lambda\mathbb 1) = 0$ ist ein Polynom in $\lambda$, das **[[lex:charakteristisches-polynom|charakteristische Polynom]]**. Für eine $n\times n$-Matrix hat es den Grad $n$ und in $\mathbb C$ genau $n$ Nullstellen, wenn man mehrfache mitzählt. Für $2\times2$ lautet es immer
+
+$$\lambda^2 - (\operatorname{tr}A)\,\lambda + \det A = 0.$$
+
+Daraus folgt eine schnelle Kontrolle: Die Summe der Eigenwerte ist die Spur, ihr Produkt die Determinante. Die Tafel stellt die Gestalten der Eigenwertgleichung nebeneinander: als Bild, als Matrixgleichung und als Polynom mit seinem Graphen.`,
+        reps:{obj:R`Die Eigenwerte von $A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}$`,
+          rows:[
+            {k:'worte', text:R`Die Richtung von $(1;\ 1)$ bleibt und wird dreimal so lang. Die Richtung von $(1;\ -1)$ bleibt und behält ihre Länge.`},
+            {k:'labor', text:R`Mit $a = d = 2$, $b = 1$: Die gestrichelten Eigenrichtungen liegen auf den Halbachsen der Ellipse, die Pfeile „λ₊e₊“ und „λ₋e₋“ sind $3$ und $1$ lang. Die Anzeige meldet $\lambda_+ = 3$ und $\lambda_- = 1$.`},
+            {k:'matrix', tex:R`\begin{gathered}\begin{pmatrix}2&1\\ 1&2\end{pmatrix}\begin{pmatrix}1\\ 1\end{pmatrix} = 3\begin{pmatrix}1\\ 1\end{pmatrix},\\ \begin{pmatrix}2&1\\ 1&2\end{pmatrix}\begin{pmatrix}1\\ -1\end{pmatrix} = 1\cdot\begin{pmatrix}1\\ -1\end{pmatrix}\end{gathered}`},
+            {k:'formel', tex:R`\begin{aligned}\det(A - \lambda\mathbb 1) &= \lambda^2 - 4\lambda + 3\\ &= (\lambda - 1)(\lambda - 3) = 0\end{aligned}`},
+            {k:'graph', plot:{x:[-0.5, 4.5], y:[-1.5, 3.5], xlab:R`\lambda`, ylab:R`p(\lambda)`, ticks:[{x:1, lab:'1'}, {x:2, lab:'2'}, {x:3, lab:'3'}]}, f:x => x * x - 4 * x + 3, lab:R`p(\lambda) = \lambda^2 - 4\lambda + 3`,
+              cap:R`Die Parabel schneidet die Achse bei $\lambda = 1$ und $\lambda = 3$: Das sind die Eigenwerte. Ihr Scheitel liegt bei der halben Spur, $\lambda = 2$.`}
+          ],
+          links:[
+            {from:'worte', to:'labor', rule:R`Stell $a$, $b$, $d$ ein und suche die Richtungen, in denen ein grauer Strich vom Kreis geradlinig nach außen oder innen läuft, ohne zu kippen.`},
+            {from:'labor', to:'matrix', rule:R`Nimm einen Vektor auf einer gestrichelten Geraden, schreibe ihn als Spalte und rechne $Av$ aus. Der Faktor zwischen $Av$ und $v$ ist der Eigenwert.`},
+            {from:'matrix', to:'formel', rule:R`Bring $\lambda v$ nach links: $(A - \lambda\mathbb 1)v = 0$. Verlange $\det = 0$ und multipliziere aus.`},
+            {from:'formel', to:'graph', rule:R`Zeichne das Polynom über $\lambda$. Jede Nullstelle ist ein Eigenwert; eine doppelte Nullstelle berührt die Achse nur.`}
+          ]},
+        q:{q:R`Der Graph des charakteristischen Polynoms einer $2\times2$-Matrix $M$ schneidet die $\lambda$-Achse bei $-1$ und bei $3$. Welche Spur und Determinante hat $M$?`, tr:{from:'graph', to:'formel'},
+          opts:[R`Spur $-2$, Determinante $3$`, R`Spur $4$, Determinante $-3$`, R`Spur $2$, Determinante $-3$`], a:2,
+          ex:R`Spur $= -1 + 3 = 2$, Determinante $= (-1)\cdot3 = -3$. Das Polynom ist $\lambda^2 - 2\lambda - 3$.`,
+          fb:[R`Vorzeichen vertauscht: Im Polynom $\lambda^2 - (\operatorname{tr}M)\lambda + \det M$ steht die Spur mit Minus. Die Summe der Nullstellen ist $+2$.`,
+            R`Die Spur ist die Summe der Eigenwerte, nicht ihr Abstand: $-1 + 3 = 2$.`,
+            '']}},
+      {id:'me-t3d', title:R`Die allgemeine Lösung für symmetrische $2\times2$-Matrizen`,
+        num:{title:'Zwei Zahlenbeispiele', text:R`Mit $a = d = 2$ und $b = 1$ gibt die Formel unten $\lambda_\pm = 2 \pm \sqrt{0^2 + 1^2} = 2 \pm 1$, also $3$ und $1$ wie zuvor. Mit den Startwerten des Labors, $a = 1{,}5$, $b = 0{,}6$, $d = 0{,}5$, ergibt sich $\lambda_\pm = 1 \pm \sqrt{0{,}25 + 0{,}36} = 1 \pm 0{,}781$.`},
+        text:R`Die Herleitung löst das Eigenwertproblem für jede reelle symmetrische Matrix $\begin{pmatrix}a&b\\ b&d\end{pmatrix}$, also genau für die Matrizen des Labors. Das Ergebnis
+
+$$\lambda_\pm = \frac{a+d}{2} \pm \sqrt{\left(\frac{a-d}{2}\right)^2 + b^2}$$
+
+liest sich so: Mitte plus oder minus Abstand. Die Mitte ist die halbe Spur. Unter der Wurzel steht eine Summe von Quadraten, also sind beide Eigenwerte reell. Ihr Abstand $\lambda_+ - \lambda_-$ ist mindestens $2|b|$. Eine Kopplung $b$ neben der Diagonale schiebt die Eigenwerte also auseinander, selbst wenn $a = d$ ist. **Ausblick (Thema 11):** Dort zeigt sich das als Abstoßung zweier Energieniveaus, sobald eine Kopplung sie verbindet.`,
+        derive:{ctx:MAT({params:{a:'real', d:'real', b:'pos'}, mats:{A:'(a, b; b, d)'}, unknowns:{λ:{ref:'(a + d)/2 + sqrt(((a - d)/2)^2 + b^2)', alt:['(a + d)/2 - sqrt(((a - d)/2)^2 + b^2)'], kind:'real'}}}), lines:[
+          {l:'det(A - λ I) = 0', w:'nichttriviale Lösung von (A − λ𝟙)v = 0'},
+          {l:'(a - λ)(d - λ) - b^2 = 0', w:'Determinante: Hauptdiagonale minus Nebendiagonale', why:{q:'Woher kommt $-b^2$?', opts:['Von $ad - bc$ mit den Nebendiagonaleinträgen $b$ und $b$.', 'Von $\\lambda$, das man auch von $b$ abziehen muss.', 'Vom Quadrat der Spur $a + d$.'], a:0, ex:'$\\lambda$ steht nur auf der Diagonale. Die Nebendiagonale liefert $-b\\cdot b$.'}},
+          {l:'λ^2 - (a + d) λ + a d - b^2 = 0', w:'ausmultipliziert: Spur und Determinante'},
+          {l:'(λ - (a + d)/2)^2 = ((a + d)/2)^2 - a d + b^2', w:'quadratische Ergänzung'},
+          {l:'(λ - (a + d)/2)^2 = ((a - d)/2)^2 + b^2', w:'rechte Seite zusammengefasst', why:{q:'Warum gilt $\\left(\\frac{a+d}{2}\\right)^2 - ad = \\left(\\frac{a-d}{2}\\right)^2$?', opts:['Beide Seiten sind gleich $\\frac{a^2 - 2ad + d^2}{4}$.', 'Weil hier $a = d$ vorausgesetzt ist.', 'Das gilt nur für positive $a$ und $d$.'], a:0, ex:'$\\frac{a^2 + 2ad + d^2}{4} - ad = \\frac{a^2 - 2ad + d^2}{4}$. Rechts steht eine Summe von Quadraten, sie ist nie negativ.'}},
+          {l:'λ = (a + d)/2 + sqrt(((a - d)/2)^2 + b^2)', w:'Wurzel gezogen: größerer Eigenwert λ₊; mit Minus vor der Wurzel λ₋', why:{q:'Warum sind beide Eigenwerte reell?', opts:['Weil unter der Wurzel eine Summe reeller Quadrate steht.', 'Weil $b > 0$ vorausgesetzt ist.', 'Weil $a + d$ reell ist; die Wurzel spielt keine Rolle.'], a:0, ex:'$\\left(\\frac{a-d}{2}\\right)^2 + b^2 \\ge 0$. Das ist der $2\\times 2$-Fall eines allgemeinen Satzes über hermitesche Matrizen (Abschnitt 4).'}}
+        ]},
+        q:{q:R`Stell im Labor „a (oben links)“ und „d (unten rechts)“ auf $1$ und erhöhe „b (Nebendiagonale)“ von $0$ aus. Was meldet die Anzeige?`, tr:{from:'formel', to:'labor'},
+          opts:[R`Beide Eigenwerte bleiben $1$; nur die Ellipse dreht sich.`, R`$\lambda_\pm = 1 \pm b$: Die Werte spalten symmetrisch auf.`, R`$\lambda_+ = 1 + b$, während $\lambda_- = 1$ fest bleibt.`], a:1,
+          ex:R`Mit $a = d$ ist die Wurzel $\sqrt{0 + b^2} = |b|$, also $\lambda_\pm = 1 \pm b$ für $b \ge 0$.`,
+          fb:[R`Die Mitte bleibt bei $1$, aber der Abstand wächst: $\lambda_+ - \lambda_- = 2b$.`,
+            '',
+            R`Beide Eigenwerte bewegen sich, symmetrisch um die halbe Spur $1$. Ihre Summe muss die Spur $2$ bleiben.`]}},
+      {id:'me-t3e', title:'Eigenvektoren bestimmen und normieren',
+        num:{title:R`Eigenvektor von $\sigma_x$ zu $\lambda = 1$`, text:R`$\sigma_x - 1\cdot\mathbb 1 = \begin{pmatrix}-1&1\\ 1&-1\end{pmatrix}$. Die erste Zeile von $(\sigma_x - \mathbb 1)v = 0$ heißt $-v_1 + v_2 = 0$, also $v_1 = v_2$. Wähle $v = (1;\ 1)$. Normiert: $\|v\| = \sqrt2$, also $\tfrac{1}{\sqrt2}(1;\ 1)$.`},
+        text:R`Hast du einen Eigenwert, setzt du ihn in $(A - \lambda\mathbb 1)v = 0$ ein und löst nach $v$. Bei $2\times2$ sagen beide Zeilen dasselbe, denn die Determinante ist null; eine Zeile genügt. Ein Eigenvektor ist nur bis auf einen Faktor bestimmt: Mit $v$ ist auch $5v$ oder $-v$ ein Eigenvektor. Meist normiert man ihn auf $v^\dagger v = 1$. Eine Phase $e^{i\alpha}$ bleibt trotzdem frei. Hat ein Eigenwert mehrere linear unabhängige Eigenvektoren, heißt er **[[lex:entarteter-eigenwert|entartet]]**. Beispiel: Für $\mathbb 1$ ist jeder Vektor Eigenvektor zum Eigenwert $1$.`,
+        q:{q:R`Welcher Vektor ist ein Eigenvektor von $\begin{pmatrix}3&0\\ 0&-1\end{pmatrix}$ zum Eigenwert $-1$?`,
+          opts:[R`$(1;\ 0)$`, R`$(1;\ -1)$`, R`$(0;\ 5)$`], a:2,
+          ex:R`Bei einer Diagonalmatrix sind die Basisvektoren Eigenvektoren. $(0;\ 5)$ ist ein Vielfaches von $(0;\ 1)$; normiert wäre es $(0;\ 1)$.`,
+          fb:[R`$(1;\ 0)$ ist Eigenvektor zum Eigenwert $3$: Die Matrix streckt die 1-Richtung um $3$.`,
+            R`$\begin{pmatrix}3&0\\ 0&-1\end{pmatrix}(1;\ -1) = (3;\ 1)$ ist kein Vielfaches von $(1;\ -1)$.`,
+            '']}},
+      {id:'me-t3f', title:'Typischer Fehler: die Diagonale als Eigenwerte ablesen',
+        num:{title:'Diagonale abgelesen', text:R`Bei $\begin{pmatrix}1&2\\ 2&1\end{pmatrix}$ zeigt die Diagonale zweimal die $1$. Das charakteristische Polynom ist aber
+
+$$(1 - \lambda)^2 - 4 = \lambda^2 - 2\lambda - 3 = (\lambda - 3)(\lambda + 1).$$
+
+Die Eigenwerte sind $3$ und $-1$. Kontrolle: Summe $2$ = Spur, Produkt $-3$ = Determinante.`},
+        text:R`Zwei Abkürzungen gehen oft schief. Erstens: die Diagonaleinträge als Eigenwerte ablesen. Das stimmt nur für Diagonal- und Dreiecksmatrizen, also wenn auf einer Seite der Diagonale nur Nullen stehen. Zweitens: $\lambda$ von allen vier Einträgen abziehen statt nur von der Diagonale. Dann löst du eine ganz andere Gleichung. Ein Test entlarvt beide Fehler: Summe der Eigenwerte gleich Spur, Produkt gleich Determinante. Für $\begin{pmatrix}1&2\\ 2&1\end{pmatrix}$ wären $1$ und $1$ zwar mit der Spur $2$ verträglich. Ihr Produkt $1$ ist aber nicht die Determinante $-3$.`,
+        q:{q:R`Jemand liest bei $\begin{pmatrix}4&1\\ 2&3\end{pmatrix}$ die Eigenwerte $4$ und $3$ ab. Was sagt der Test mit Spur und Determinante?`,
+          opts:[R`Beide Proben passen, also stimmen $4$ und $3$.`, R`$4\cdot3 = 12 \ne \det = 10$: falsch; richtig sind $5$ und $2$.`, R`Die Spur passt nicht; richtig sind $7$ und $10$.`], a:1,
+          ex:R`Spur $7 = 4 + 3$ passt zufällig, aber $\det = 12 - 2 = 10$. Das Polynom $\lambda^2 - 7\lambda + 10 = (\lambda - 5)(\lambda - 2)$ liefert $5$ und $2$.`,
+          fb:[R`Die Spur passt, das Produkt nicht: $\det = 4\cdot3 - 1\cdot2 = 10$, nicht $12$.`,
+            '',
+            R`$7$ und $10$ sind Spur und Determinante selbst, nicht die Eigenwerte. Gesucht sind zwei Zahlen mit Summe $7$ und Produkt $10$.`]}}
+    ]},
+    /* ===== Abschnitt 4: Spektralsatz ===== */
+    {id:'me-t4', title:'Warum hermitesche Matrizen so gutartig sind', steps:[
+      {id:'me-t4a', title:'Die Eigenwerte sind reell',
+        num:{title:'Eine komplexe hermitesche Matrix', text:R`$H = \begin{pmatrix}3 & 2i\\ -2i & 0\end{pmatrix}$ hat die Spur $3$ und die Determinante $3\cdot0 - (2i)(-2i) = -4$. Das charakteristische Polynom $\lambda^2 - 3\lambda - 4 = (\lambda - 4)(\lambda + 1)$ hat die reellen Nullstellen $4$ und $-1$, obwohl $H$ komplexe Einträge hat.`},
+        text:R`Für hermitesche Matrizen sind die Eigenwerte immer reell. Der Beweis braucht nur $\langle u|Av\rangle = \langle A^\dagger u|v\rangle$ aus Abschnitt 2. Sei $Av = \lambda v$ mit $v \ne 0$. Dann ist $\langle v|Av\rangle = \lambda\langle v|v\rangle$. Weil $A = A^\dagger$, darfst du $A$ nach links schieben: $\langle v|Av\rangle = \langle Av|v\rangle = \lambda^*\langle v|v\rangle$. Hier wird $\lambda$ aus dem linken Argument gezogen und dabei konjugiert. Beide Ausdrücke sind gleich, und $\langle v|v\rangle > 0$. Also ist $\lambda = \lambda^*$, und das heißt: $\lambda$ ist reell. Die Herleitung bestätigt es für $H$.`,
+        derive:{ctx:MAT({mats:{H:'(3, 2i; -2i, 0)'}, states:{v:'(2i; 1)', w:'(1; 2i)'}, unknowns:{λ:{ref:'4', alt:['-1'], kind:'real'}}}), lines:[
+          {l:'det(H - λ I) = 0', w:'H = (3, 2i; −2i, 0) ist hermitesch'},
+          {l:'(3 - λ)(0 - λ) - (2i)(-2i) = 0', w:'Determinante: Hauptdiagonale minus Nebendiagonale', why:{q:'Was ergibt $(2i)(-2i)$?', opts:['$-4i^2 = 4$', '$4i^2 = -4$', '$-4i$'], a:0, ex:'$(2i)(-2i) = -4i^2 = +4$. Hier liegt die häufigste Fehlerquelle.'}},
+          {l:'λ^2 - 3λ - 4 = 0', w:'ausmultipliziert: Spur 3, Determinante −4'},
+          {l:'(λ - 4)(λ + 1) = 0', w:'faktorisiert: Eigenwerte 4 und −1', why:{q:R`Warum mussten reelle Nullstellen herauskommen?`, opts:[R`Weil $H^\dagger = H$ ist.`, R`Weil die Spur $3$ reell ist.`, R`Weil die Diagonale von $H$ reell ist.`], a:0, ex:R`Der Beweis braucht $H^\dagger = H$. Eine reelle Spur oder Diagonale genügt nicht: $\begin{pmatrix}1&1\\ -1&1\end{pmatrix}$ hat die Eigenwerte $1 \pm i$.`}}
+        ]},
+        q:{q:'Übertrage den Beweis auf eine Matrix mit $A^\\dagger = -A$ (antihermitesch). Was folgt dann für einen Eigenwert $\\lambda$?',
+          opts:['$\\lambda = \\lambda^*$: $\\lambda$ ist reell, wie vorher.', '$\\lambda = -\\lambda^*$: $\\lambda$ ist rein imaginär.', '$\\lambda = -\\lambda$: also ist $\\lambda = 0$.'], a:1,
+          ex:'Mit $A^\\dagger = -A$ wird $\\langle v|Av\\rangle = \\langle A^\\dagger v|v\\rangle = \\langle -Av|v\\rangle = -\\lambda^*\\langle v|v\\rangle$. Gleichsetzen mit $\\lambda\\langle v|v\\rangle$ gibt $\\lambda = -\\lambda^*$, also $\\operatorname{Re}\\lambda = 0$. Beispiel: $\\begin{pmatrix}0&1\\\\ -1&0\\end{pmatrix}$ hat die Eigenwerte $\\pm i$.',
+          fb:['Den Schritt $\\langle v|Av\\rangle = \\langle Av|v\\rangle$ gibt es nur für $A^\\dagger = A$. Hier steht rechts $\\langle -Av|v\\rangle$.', '', 'Beim Herausziehen aus dem linken Argument wird $-\\lambda$ konjugiert: Es entsteht $-\\lambda^*$, nicht $-\\lambda$.']}},
+      {id:'me-t4b', title:'Eigenvektoren zu verschiedenen Eigenwerten stehen senkrecht',
+        num:{title:R`Die Eigenvektoren von $H$`, text:R`Aus der ersten Zeile von $(H - 4\cdot\mathbb 1)v = 0$, also $-v_1 + 2iv_2 = 0$, folgt $v = (2i;\ 1)$. Ebenso gehört $w = (1;\ 2i)$ zum Eigenwert $-1$. Ihr Skalarprodukt, mit konjugierter linker Zeile:
+
+$$\langle v|w\rangle = (-2i)\cdot1 + 1\cdot2i = 0.$$`},
+        text:R`Sei $A$ hermitesch, $Av_1 = \lambda_1v_1$ und $Av_2 = \lambda_2v_2$ mit $\lambda_1 \ne \lambda_2$. Rechne $\langle v_1|Av_2\rangle$ auf zwei Arten. Wirkt $A$ nach rechts, ist es $\lambda_2\langle v_1|v_2\rangle$. Schiebst du $A$ nach links, ist es $\lambda_1^*\langle v_1|v_2\rangle = \lambda_1\langle v_1|v_2\rangle$, denn $\lambda_1$ ist reell. Die Differenz ist $(\lambda_1 - \lambda_2)\langle v_1|v_2\rangle = 0$. Weil $\lambda_1 \ne \lambda_2$, folgt $\langle v_1|v_2\rangle = 0$. Die Herleitung prüft das für $H$. Normiert sind $v/\sqrt5$ und $w/\sqrt5$; zusammen bilden sie eine Orthonormalbasis.`,
+        derive:{ctx:MAT({mats:{H:'(3, 2i; -2i, 0)'}, states:{v:'(2i; 1)', w:'(1; 2i)'}}), lines:[
+          {l:'H v = (3 · 2i + 2i; -2i · 2i)', w:'v = (2i; 1) eingesetzt: Zeile mal Spalte'},
+          {l:'= (8i; 4)', w:'ausgerechnet'},
+          {l:'= 4 v', w:'Eigenvektor zum Eigenwert 4', why:{q:'Wie findet man $v = (2i, 1)^T$?', opts:['Erste Zeile von $(H - 4\\mathbb 1)v = 0$: $-v_1 + 2iv_2 = 0$, also $v_1 = 2iv_2$.', 'Man nimmt die erste Spalte von $H$ und teilt durch den Eigenwert.', 'Man rät; ein systematisches Verfahren dafür gibt es nicht.'], a:0, ex:'Mit $v_2 = 1$ ist $v_1 = 2i$. Die zweite Zeile, $-2iv_1 - 4v_2 = 4 - 4 = 0$, ist automatisch erfüllt.'}},
+          {l:'H w = -w', w:'w = (1; 2i) zum Eigenwert −1'},
+          {l:'⟨v|w⟩ = (-2i)(1) + (1)(2i)', w:'Bra: konjugierte Zeile (−2i, 1)', why:{q:R`Warum steht im Bra $-2i$?`, opts:['Weil der Bra die konjugierte Zeile ist: $(2i)^* = -2i$.', 'Weil man von $w$ den Eintrag $2i$ abzieht.', 'Weil im Bra jeder erste Eintrag negativ wird.'], a:0, ex:R`$\langle v| = v^\dagger = (2i,\ 1)^* = (-2i,\ 1)$. Ohne Konjugation käme $2i + 2i = 4i$ heraus.`}},
+          {l:'= 0', w:'v und w stehen senkrecht', why:{q:'Warum musste hier $0$ herauskommen?', opts:['Weil Eigenvektoren von $H = H^\\dagger$ zu verschiedenen Eigenwerten senkrecht stehen.', 'Weil $v$ und $w$ beide normiert sind und deshalb senkrecht stehen.', 'Weil die Spur von $H$ gleich der Summe der beiden Eigenwerte ist.'], a:0, ex:'Das ist der Satz dieses Schritts. Normiert sind $v/\\sqrt5$ und $w/\\sqrt5$; zusammen bilden sie eine Orthonormalbasis des $\\mathbb C^2$.'}}
+        ]},
+        q:{q:R`$A$ ist hermitesch, $Au = 2u$ und $Aw = 5w$. Was ist $\langle u|w\rangle$?`,
+          opts:[R`$\tfrac25$`, R`$0$`, R`Das hängt von $u$ und $w$ ab.`], a:1,
+          ex:R`$(2 - 5)\langle u|w\rangle = 0$, also $\langle u|w\rangle = 0$, für jede Wahl der Eigenvektoren.`,
+          fb:[R`Die Eigenwerte gehen nicht als Verhältnis ein. Aus $(\lambda_1 - \lambda_2)\langle u|w\rangle = 0$ folgt $\langle u|w\rangle = 0$.`,
+            '',
+            R`Für hermitesches $A$ und verschiedene Eigenwerte ist das Ergebnis immer $0$, egal welche Vielfachen du wählst.`]}},
+      {id:'me-t4c', title:'Genug Eigenvektoren: der Spektralsatz',
+        num:{title:'Ein entarteter Eigenwert', text:R`$A = \begin{pmatrix}2&0&0\\ 0&2&0\\ 0&0&5\end{pmatrix}$ hat die Eigenwerte $2, 2, 5$. Jeder Vektor $(x;\ y;\ 0)$ ist Eigenvektor zum Eigenwert $2$, etwa $(1;\ 0;\ 0)$, $(0;\ 1;\ 0)$ oder $\tfrac{1}{\sqrt2}(1;\ 1;\ 0)$. Wähle zwei davon orthonormal und nimm $(0;\ 0;\ 1)$ dazu: eine Orthonormalbasis aus Eigenvektoren.`},
+        text:R`Senkrecht stehen reicht nicht. Man braucht auch **genug** Eigenvektoren für eine ganze Basis. Das garantiert der **Spektralsatz**: Jede hermitesche $n\times n$-Matrix hat eine Orthonormalbasis aus $n$ Eigenvektoren, auch wenn Eigenwerte mehrfach vorkommen. Beweisskizze: Das charakteristische Polynom hat in $\mathbb C$ eine Nullstelle, also gibt es einen normierten Eigenvektor $v$. Steht $w$ senkrecht auf $v$, dann auch $Aw$, denn $\langle v|Aw\rangle = \langle Av|w\rangle = \lambda\langle v|w\rangle = 0$. Im restlichen Raum der Dimension $n - 1$ wiederholst du das. Bei Entartung ist die Basis nicht eindeutig. Im **Eigenraum**, der Menge aller Eigenvektoren zu diesem Eigenwert samt Nullvektor, wählst du eine Orthonormalbasis, etwa mit [[lex:gram-schmidt|Gram-Schmidt]] (M3).`,
+        q:{q:R`Eine hermitesche $3\times3$-Matrix hat die Eigenwerte $2$, $2$ und $5$. Aus wie vielen Vektoren besteht eine Orthonormalbasis aus ihren Eigenvektoren?`,
+          opts:[R`aus $2$, einem je verschiedenen Eigenwert`, R`aus $3$`, R`Das hängt von der Matrix ab.`], a:1,
+          ex:R`Der Spektralsatz garantiert eine Orthonormalbasis aus Eigenvektoren, auch bei Entartung. Zum Eigenwert $2$ gehört eine ganze Ebene, aus der du zwei orthonormale Vektoren wählst.`,
+          fb:[R`Zum doppelten Eigenwert $2$ gehört eine Ebene von Eigenvektoren. Aus ihr nimmst du zwei, dazu einen zum Eigenwert $5$.`,
+            '',
+            R`Für hermitesche Matrizen hängt es nicht davon ab: Der Spektralsatz liefert immer $n$ orthonormale Eigenvektoren.`]}},
+      {id:'me-t4d', title:'Was der Spektralsatz für eine Messgröße bedeutet',
+        num:{title:R`$H$ in Zahlen`, text:R`Die Eigenwerte von $H$ sind $4$ und $-1$, die normierten Eigenvektoren $e_1 = \tfrac{1}{\sqrt5}(2i;\ 1)$ und $e_2 = \tfrac{1}{\sqrt5}(1;\ 2i)$. Der Vektor $(1;\ 0)$ hat darin die Komponenten
+
+$$\langle e_1|(1;\ 0)\rangle = \tfrac{-2i}{\sqrt5},\qquad \langle e_2|(1;\ 0)\rangle = \tfrac{1}{\sqrt5}.$$
+
+Ihre Betragsquadrate $\tfrac45$ und $\tfrac15$ ergeben zusammen $1$.`},
+        text:R`Für eine hermitesche Matrix bekommst du also drei Dinge zusammen: reelle Eigenwerte, senkrechte Eigenvektoren und genug davon für eine Basis. Jeder Vektor zerlegt sich dann eindeutig in Eigenvektoren. Die Komponenten bekommst du wie in M3 als Skalarprodukte, ohne Gleichungssystem. Ist der Vektor normiert, ergeben ihre Betragsquadrate zusammen $1$. Die Tafel zeigt, wofür die Physik genau diese drei Eigenschaften braucht. Dafür musst du noch keine Quantenmechanik kennen. Es genügt, die Übersetzung im Kopf zu behalten, bis Thema 6 sie begründet.`,
+        reps:{obj:R`Der Spektralsatz an $H = \begin{pmatrix}3 & 2i\\ -2i & 0\end{pmatrix}$`,
+          rows:[
+            {k:'matrix', tex:R`H = \begin{pmatrix}3 & 2i\\ -2i & 0\end{pmatrix} = H^\dagger`},
+            {k:'formel', tex:R`\begin{gathered}He_1 = 4e_1,\quad He_2 = -e_2,\quad \langle e_1|e_2\rangle = 0,\\ \begin{pmatrix}1\\ 0\end{pmatrix} = \tfrac{-2i}{\sqrt5}\,e_1 + \tfrac{1}{\sqrt5}\,e_2\end{gathered}`},
+            {k:'worte', text:R`Zwei reelle Streckfaktoren, zwei senkrechte Richtungen. Jeder Vektor ist eine Überlagerung dieser Richtungen, mit Anteilen, deren Betragsquadrate zusammen $1$ ergeben.`},
+            {k:'physik', text:R`**Ausblick (Thema 6):** Stellt $H$ eine Messgröße dar, sind $4$ und $-1$ die einzigen möglichen Messwerte. Ein System im Zustand $(1;\ 0)$ liefert $4$ mit der Wahrscheinlichkeit $\tfrac45$ und $-1$ mit $\tfrac15$. Reell, weil Messwerte reell sind; Summe $1$, weil irgendein Wert herauskommt.`}
+          ],
+          links:[
+            {from:'matrix', to:'formel', rule:R`Löse $\det(H - \lambda\mathbb 1) = 0$, setze jeden Eigenwert in $(H - \lambda\mathbb 1)v = 0$ ein und normiere. Die Komponenten eines Vektors $x$ sind $\langle e_n|x\rangle$.`},
+            {from:'formel', to:'worte', rule:R`Lies jeden Eigenwert als Streckfaktor seiner Richtung und $\langle e_1|e_2\rangle = 0$ als „senkrecht“.`},
+            {from:'worte', to:'physik', rule:R`Ersetze „Streckfaktor“ durch „möglicher Messwert“ und „Betragsquadrat der Komponente“ durch „Wahrscheinlichkeit dieses Werts“.`}
+          ]},
+        q:{q:R`Ein normierter Vektor hat in der Eigenbasis von $H$ die Komponente $0{,}6$ längs $e_1$ (Eigenwert $4$) und $0{,}8i$ längs $e_2$ (Eigenwert $-1$). Welche Wahrscheinlichkeit sagt die Übersetzung für den Messwert $-1$ voraus?`, tr:{from:'formel', to:'physik'},
+          opts:[R`$0{,}8$`, R`$0{,}36$`, R`$0{,}64$`, R`$-0{,}64$`], a:2,
+          ex:R`Betragsquadrat der Komponente längs $e_2$: $|0{,}8i|^2 = 0{,}64$. Zusammen mit $0{,}6^2 = 0{,}36$ ergibt sich $1$.`,
+          fb:[R`$0{,}8$ ist der Betrag der Komponente, nicht ihr Quadrat. Wahrscheinlichkeiten sind Betragsquadrate.`,
+            R`$0{,}36$ gehört zur Komponente längs $e_1$, also zum Messwert $4$.`,
+            '',
+            R`Das Betragsquadrat ist $(0{,}8i)^*\cdot0{,}8i = 0{,}64$, nicht $(0{,}8i)^2$. Eine Wahrscheinlichkeit ist nie negativ.`]}},
+      {id:'me-t4e', title:'Was ohne Hermitezität schiefgehen kann',
+        num:{title:'Zwei reelle Matrizen', text:R`Die Drehung $D = \begin{pmatrix}0&-1\\ 1&0\end{pmatrix}$ hat das Polynom $\lambda^2 + 1$ und die Eigenwerte $\pm i$: Keine Richtung der Ebene bleibt. Die Matrix $N = \begin{pmatrix}1&1\\ 0&1\end{pmatrix}$ hat das Polynom $(\lambda - 1)^2$. Aus $(N - \mathbb 1)v = (v_2;\ 0) = 0$ folgt $v_2 = 0$: Es gibt nur die Eigenvektoren $c\,(1;\ 0)$.`},
+        text:R`Ohne Hermitezität kann zweierlei schiefgehen. Die Eigenwerte können komplex sein, wie bei der Drehung $D$. Oder es gibt zu wenige Eigenvektoren, wie bei $N$. Dann gibt es keine Basis aus Eigenvektoren; man sagt, $N$ ist [[lex:nicht-diagonalisierbar|nicht diagonalisierbar]]. Abschnitt 5 erklärt das Wort. Genau der Schritt aus der Beweisskizze scheitert: $(0;\ 1)$ steht senkrecht auf dem Eigenvektor $(1;\ 0)$, aber $N(0;\ 1) = (1;\ 1)$ nicht mehr. Reelle Einträge schützen davor nicht, Hermitezität schon. Umgekehrt ist Hermitezität für reelle Eigenwerte hinreichend, aber nicht notwendig: $N$ hat den reellen Eigenwert $1$.`,
+        q:{q:R`Was gilt für $\begin{pmatrix}2&1\\ 0&2\end{pmatrix}$?`,
+          opts:[R`Sie hat eine Eigenbasis, weil sie reell ist.`, R`Sie hat nur eine Eigenrichtung, also keine Eigenbasis.`, R`Sie hat eine Eigenbasis mit den Eigenwerten $2$ und $1$.`], a:1,
+          ex:R`Der Eigenwert $2$ ist doppelt, und $(A - 2\cdot\mathbb 1)v = (v_2;\ 0) = 0$ liefert nur $v \propto (1;\ 0)$. Die Matrix ist nicht hermitesch, der Spektralsatz greift nicht.`,
+          fb:[R`Reelle Einträge garantieren keine Eigenbasis. Hier gibt es nur die Richtung $(1;\ 0)$.`,
+            '',
+            R`Eine Dreiecksmatrix hat ihre Diagonale als Eigenwerte: zweimal die $2$. Die $1$ steht neben der Diagonale.`]}},
+      {id:'me-t4f', title:'Typischer Fehler: Orthogonalität ohne Konjugation prüfen',
+        num:{title:R`Die Eigenvektoren von $H$ noch einmal`, text:R`Ohne Konjugation: $2i\cdot1 + 1\cdot2i = 4i$ – als stünden $v = (2i;\ 1)$ und $w = (1;\ 2i)$ nicht senkrecht. Mit Konjugation: $\langle v|w\rangle = (-2i)\cdot1 + 1\cdot2i = 0$.`},
+        text:R`Beim Nachprüfen der Orthogonalität passiert der häufigste Fehler: Die linke Spalte wird nicht konjugiert. Bei reellen Vektoren merkst du nichts, bei komplexen kommt Unsinn heraus. Dann scheint der Satz aus Schritt 2 verletzt, obwohl nur die Rechnung falsch ist. Merke: Ein Skalarprodukt ist Bra mal Ket, und der Bra ist die *konjugierte* Zeile. Ein zweiter Fehlschluss betrifft den Spektralsatz selbst: „Hermitesch heißt immer, es gibt eine Eigenbasis.“ Für Matrizen stimmt das. **Ausblick (M5):** In Räumen von Funktionen gibt es hermitesche Operatoren ohne eine einzige normierbare Eigenfunktion.`,
+        q:{q:R`Jemand prüft für die Eigenvektoren $(1;\ i)$ und $(1;\ -i)$ von $\sigma_y$: $1\cdot1 + i\cdot(-i) = 2 \ne 0$, also nicht senkrecht. Was ist falsch?`,
+          opts:[R`Die linke Spalte muss konjugiert werden: $1 + (-i)(-i) = 0$.`, R`Nichts; $\sigma_y$ ist eben nicht hermitesch.`, R`Zu verschiedenen Eigenwerten müssen Eigenvektoren nicht senkrecht stehen.`], a:0,
+          ex:R`$\langle(1;\ i)|(1;\ -i)\rangle = 1^*\cdot1 + i^*\cdot(-i) = 1 + (-i)(-i) = 1 - 1 = 0$.`,
+          fb:['',
+            R`$\sigma_y$ ist hermitesch (Abschnitt 2). Der Fehler steckt in der fehlenden Konjugation.`,
+            R`Für hermitesche Matrizen müssen sie es, das ist der Satz aus Schritt 2. Hier sind die Eigenwerte $+1$ und $-1$.`]}}
+    ]},
+    /* ===== Abschnitt 5: Diagonalisieren, Eigenbasis, Spektralzerlegung ===== */
+    {id:'me-t5', title:'Diagonalisieren und Spektralzerlegung', steps:[
+      {id:'me-t5a', title:'Eigenvektoren als Spalten: die Matrix U',
+        num:{title:R`$A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}$`, text:R`Die normierten Eigenvektoren sind $|{+x}\rangle = \tfrac{1}{\sqrt2}(1;\ 1)$ zu $3$ und $|{-x}\rangle = \tfrac{1}{\sqrt2}(1;\ -1)$ zu $1$. Die Namen kommen von $\sigma_x$, das dieselben Eigenvektoren hat. Als Spalten nebeneinander:
+
+$$U = \tfrac{1}{\sqrt2}\begin{pmatrix}1&1\\ 1&-1\end{pmatrix},\qquad AU = \tfrac{1}{\sqrt2}\begin{pmatrix}3&1\\ 3&-1\end{pmatrix} = U\begin{pmatrix}3&0\\ 0&1\end{pmatrix}.$$`},
+        text:R`Schreib die orthonormalen Eigenvektoren einer hermiteschen Matrix als Spalten in eine Matrix $U$. Weil die Spalten eine Orthonormalbasis bilden, ist $U$ unitär (Abschnitt 2). Spalte für Spalte gilt $AU = UD$ mit der Diagonalmatrix $D = \operatorname{diag}(\lambda_1, \dots, \lambda_n)$ der Eigenwerte. Multiplizierst du von links mit $U^\dagger$, folgt
+
+$$D = U^\dagger AU,\qquad A = UDU^\dagger.$$
+
+Das ist die **[[lex:diagonalisierung|Diagonalisierung]]**. Die Reihenfolge der Spalten in $U$ legt die Reihenfolge der Eigenwerte in $D$ fest. Die Herleitung rechnet es für $A$ nach.`,
+        derive:{ctx:MAT({mats:{A:'(2, 1; 1, 2)', U:'(1, 1; 1, -1)/sqrt(2)'}}), lines:[
+          {l:'A |+x⟩ = 3 |+x⟩', w:'A = 2·𝟙 + σ_x: Eigenvektoren von σ_x; ebenso A|−x⟩ = |−x⟩'},
+          {l:'U = (1, 1; 1, -1)/sqrt(2)', w:'Spalten: |+x⟩ und |−x⟩', why:{q:'Warum ist $U$ unitär?', opts:['Weil seine Spalten normiert und zueinander orthogonal sind.', 'Weil alle seine Einträge den gleichen Betrag $1/\\sqrt2$ haben.', 'Weil $U$ reell und symmetrisch ist, also hermitesch.'], a:0, ex:'$U^\\dagger U$ enthält genau die Skalarprodukte der Spalten: $\\langle{+x}|{+x}\\rangle = 1$, $\\langle{+x}|{-x}\\rangle = 0$ und so weiter.'}},
+          {l:'U† A U = (3, 0; 0, 1)', w:'in der Eigenbasis diagonal'}
+        ]},
+        q:{q:R`Du vertauschst die beiden Spalten von $U$. Was wird dann aus $D = U^\dagger AU$?`,
+          opts:[R`$D$ bleibt $\operatorname{diag}(3, 1)$.`, R`$D$ wird $\operatorname{diag}(1, 3)$.`, R`$U^\dagger AU$ ist dann nicht mehr diagonal.`], a:1,
+          ex:R`Die $j$-te Spalte von $U$ gehört zum $j$-ten Diagonaleintrag von $D$. Steht $|{-x}\rangle$ vorn, steht auch der Eigenwert $1$ vorn.`,
+          fb:[R`Die Reihenfolge in $D$ folgt der Reihenfolge der Spalten. Vertauschen der Spalten vertauscht die Eigenwerte.`,
+            '',
+            R`Die Spalten sind weiter Eigenvektoren, also bleibt $D$ diagonal; nur die Reihenfolge ändert sich.`]}},
+      {id:'me-t5b', title:'In der Eigenbasis wirkt A nur als Streckung',
+        pre:{from:'m-vektor', seg:'mv-t3', title:'Komponenten in einer Orthonormalbasis', text:R`In einer Orthonormalbasis $e_1, e_2$ ist die Komponente $c_i = \langle e_i|v\rangle$, ohne Gleichungssystem. Mini-Beispiel: $e_{1,2} = \tfrac{1}{\sqrt2}(1;\ \pm1)$ und $v = (2;\ 0)$ geben $c_1 = c_2 = \sqrt2$, also $v = \sqrt2\,e_1 + \sqrt2\,e_2$.`},
+        num:{title:'Zwei Wege, ein Ergebnis', text:R`$v = (2;\ 0)$ hat in der Eigenbasis die Komponenten $c_\pm = \langle{\pm x}|v\rangle = \sqrt2$. $A$ streckt sie zu $3\sqrt2$ und $1\cdot\sqrt2$. Zurück in der Standardbasis:
+
+$$3\sqrt2\,|{+x}\rangle + \sqrt2\,|{-x}\rangle = (3;\ 3) + (1;\ -1) = (4;\ 2).$$
+
+Direkt gerechnet: $A\,(2;\ 0) = (4;\ 2)$.`},
+        text:R`Lies $A = UDU^\dagger$ von rechts nach links. $U^\dagger$ rechnet die Komponenten von $v$ in die Eigenbasis um, denn die Zeilen von $U^\dagger$ sind die Bras $\langle{\pm x}|$. Dort wirkt $D$: Jede Komponente wird mit ihrem Eigenwert multipliziert, sonst passiert nichts. $U$ setzt die Eigenvektoren wieder zusammen. Dieselbe Abbildung hat also zwei Matrizen: in der Standardbasis die volle Matrix $A$, in der Eigenbasis die Diagonalmatrix $D$. Im Labor siehst du das an der Ellipse. Längs der gestrichelten Achsen wird nur gestreckt, um $3$ und um $1$.`,
+        reps:{obj:R`Eine Abbildung, zwei Matrizen: $A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}$`,
+          rows:[
+            {k:'matrix', tex:R`\begin{gathered}\text{Standardbasis:}\quad A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix},\\ A\begin{pmatrix}2\\ 0\end{pmatrix} = \begin{pmatrix}4\\ 2\end{pmatrix}\end{gathered}`},
+            {k:'worte', text:R`Streckt die Richtung $(1;\ 1)$ um $3$ und lässt die Richtung $(1;\ -1)$, wie sie ist. Jeder andere Pfeil kippt, weil seine beiden Anteile verschieden stark gestreckt werden.`},
+            {k:'labor', text:R`Mit $a = d = 2$, $b = 1$ hat die Ellipse die Halbachsen $3$ und $1$, längs der gestrichelten Diagonalen.`},
+            {k:'formel', tex:R`\begin{gathered}\text{Eigenbasis:}\quad U^\dagger AU = D = \begin{pmatrix}3&0\\ 0&1\end{pmatrix},\\ D\begin{pmatrix}\sqrt2\\ \sqrt2\end{pmatrix} = \begin{pmatrix}3\sqrt2\\ \sqrt2\end{pmatrix}\end{gathered}`}
+          ],
+          links:[
+            {from:'matrix', to:'worte', rule:R`Rechne $A$ mal einige Pfeile. Suche die Pfeile, deren Bild ein Vielfaches ist; die Faktoren sind die Streckungen.`},
+            {from:'worte', to:'labor', rule:R`Stell die Einträge ein. Die Halbachsen der Ellipse liegen in den Richtungen, die nur gestreckt werden; ihre Längen sind die Streckfaktoren.`},
+            {from:'labor', to:'formel', rule:R`Nimm die Achsenrichtungen, normiert, als Spalten von $U$. Rechne die Komponenten mit $U^\dagger$ um und multipliziere jede mit ihrem Streckfaktor.`},
+            {from:'formel', to:'matrix', rule:R`Zurück mit $A = UDU^\dagger$: Komponenten in der Eigenbasis strecken, dann mit $U$ wieder zusammensetzen.`}
+          ]},
+        q:{q:R`Welche Matrix hat $\begin{pmatrix}3&1\\ 1&3\end{pmatrix}$ in ihrer Eigenbasis $|{\pm x}\rangle$?`, tr:{from:'matrix', to:'formel'},
+          opts:[R`$\operatorname{diag}(3, 3)$`, R`$\operatorname{diag}(3, 1)$`, R`$\operatorname{diag}(4, 2)$`], a:2,
+          ex:R`$\begin{pmatrix}3&1\\ 1&3\end{pmatrix} = 3\cdot\mathbb 1 + \sigma_x$ streckt $|{+x}\rangle$ um $4$ und $|{-x}\rangle$ um $2$.`,
+          fb:[R`Das ist die Diagonale in der Standardbasis. In der Eigenbasis stehen die Eigenwerte: Summe $6$, Produkt $\det = 8$.`,
+            R`Das sind die Eigenwerte von $A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}$. Hier ist die Diagonale um $1$ größer, also auch beide Eigenwerte.`,
+            '']}},
+      {id:'me-t5c', title:'Die Spektralzerlegung',
+        pre:{from:'m-vektor', seg:'mv-t4', title:'Projektor', text:R`Die Projektion auf einen normierten Vektor $e$ ist $\langle e|v\rangle\,e$. Als Matrix ist das $P_e = |e\rangle\langle e|$, Spalte mal Zeile. Mini-Beispiel: $e = \tfrac{1}{\sqrt2}(1;\ 1)$ gibt $P_e = \tfrac12\begin{pmatrix}1&1\\ 1&1\end{pmatrix}$ und $P_e(2;\ 0) = (1;\ 1)$.`},
+        num:{title:'Zwei Projektoren, gewichtet', text:R`$$\begin{aligned}&3\,|{+x}\rangle\langle{+x}| + 1\,|{-x}\rangle\langle{-x}|\\ &= \tfrac32\begin{pmatrix}1&1\\ 1&1\end{pmatrix} + \tfrac12\begin{pmatrix}1&-1\\ -1&1\end{pmatrix}\\ &= \begin{pmatrix}2&1\\ 1&2\end{pmatrix} = A.\end{aligned}$$`},
+        text:R`Gleichwertig zu $A = UDU^\dagger$, und in der Physik üblicher, ist die **Spektralzerlegung**
+
+$$A = \sum_n\lambda_n\,|n\rangle\langle n|.$$
+
+Gelesen: „$A$ ist die Summe über alle Eigenwerte, jeweils mal dem Projektor auf ihre Eigenrichtung.“ Jedes $P_n = |n\rangle\langle n|$ ist ein [[lex:projektion|Projektor]], und zusammen ergeben sie $\sum_nP_n = \mathbb 1$. Auf einen Vektor mit den Komponenten $c_n = \langle n|v\rangle$ wirkt $A$ dann so: $Av = \sum_n\lambda_nc_n|n\rangle$. Jede Komponente wird mit ihrem Eigenwert multipliziert. **Ausblick (Thema 3 und 6):** Genau so rechnet die Quantenmechanik mit Entwicklungskoeffizienten.`,
+        derive:{ctx:MAT({mats:{A:'(2, 1; 1, 2)'}}), lines:[
+          {l:'A = 3 |+x⟩⟨+x| + 1 |-x⟩⟨-x|', w:'Spektralzerlegung', why:{q:'Was bedeutet diese Zeile?', opts:['$A$ streckt den Anteil längs $|{+x}\\rangle$ um $3$, den längs $|{-x}\\rangle$ um $1$.', '$A$ ist die Summe seiner beiden Eigenwerte $3$ und $1$.', '$A$ hat nur zwei von null verschiedene Einträge.'], a:0, ex:'$|n\\rangle\\langle n|$ projiziert auf die Eigenrichtung; das Beispiel oben multipliziert es aus.'}}
+        ]},
+        q:{q:R`$A = 2|1\rangle\langle1| - |2\rangle\langle2|$ mit orthonormalen $|1\rangle, |2\rangle$. Was ist $A(|1\rangle + |2\rangle)$?`,
+          opts:[R`$|1\rangle + |2\rangle$`, R`$(2 - 1)(|1\rangle + |2\rangle)$`, R`$2|1\rangle - |2\rangle$`], a:2,
+          ex:R`Jede Komponente wird mit ihrem Eigenwert multipliziert: $2\cdot1$ bei $|1\rangle$, $(-1)\cdot1$ bei $|2\rangle$.`,
+          fb:[R`$|1\rangle + |2\rangle$ ist kein Eigenvektor; die beiden Anteile werden verschieden gestreckt.`,
+            R`Die Eigenwerte werden nicht addiert. Jeder wirkt nur auf seine eigene Komponente.`,
+            '']}},
+      {id:'me-t5d', title:'Vertauschende Matrizen haben eine gemeinsame Eigenbasis',
+        num:{title:R`$A$ und $\sigma_x$`, text:R`$A = 2\cdot\mathbb 1 + \sigma_x$ vertauscht mit $\sigma_x$: $A\sigma_x = 2\sigma_x + \sigma_x^2 = \sigma_xA$. Beide haben die Eigenvektoren $|{\pm x}\rangle$, mit den Eigenwerten $3$ und $1$ für $A$ und $+1$ und $-1$ für $\sigma_x$.`},
+        text:R`Gilt $[A, B] = 0$ für hermitesche $A$ und $B$, dann haben sie eine [[lex:gemeinsame-eigenbasis|gemeinsame Eigenbasis]]. Der Kern des Arguments: Aus $Av = \lambda v$ folgt $A(Bv) = BAv = \lambda\,(Bv)$. Also ist $Bv$ wieder Eigenvektor von $A$ zum selben Eigenwert, oder null. $B$ bildet jeden Eigenraum von $A$ in sich ab. Ist der Eigenwert nicht entartet, muss $Bv$ ein Vielfaches von $v$ sein: $v$ ist auch Eigenvektor von $B$. Ist er entartet, diagonalisierst du $B$ innerhalb des Eigenraums. **Ausblick (Thema 6):** Vertauschende Messgrößen lassen sich gemeinsam scharf messen.`,
+        q:{q:R`$A$ und $B$ sind hermitesch, $[A, B] = 0$, und alle Eigenwerte von $A$ sind verschieden. Was folgt?`,
+          opts:[R`$A$ und $B$ haben dieselben Eigenwerte.`, R`Jeder Eigenvektor von $A$ ist auch Eigenvektor von $B$.`, R`Jeder Eigenvektor von $B$ ist einer von $A$, nicht umgekehrt.`], a:1,
+          ex:R`Ohne Entartung ist jeder Eigenraum von $A$ eindimensional, und $B$ bildet ihn in sich ab: $Bv = \mu v$. Die Eigenwerte $\mu$ von $B$ können ganz andere sein.`,
+          fb:[R`Gemeinsam sind die Eigenvektoren, nicht die Eigenwerte. Im Beispiel hat $A$ die Werte $3, 1$, $\sigma_x$ die Werte $\pm1$.`,
+            '',
+            R`Umgekehrt herum: Weil $A$ nicht entartet ist, ist jeder Eigenvektor von $A$ einer von $B$. Hat $B$ einen entarteten Eigenwert, gilt die Umkehrung nicht.`]}},
+      {id:'me-t5e', title:'Typischer Fehler: vertauschbar heißt nicht „jeder Eigenvektor gemeinsam“',
+        num:{title:R`$\mathbb 1$ und $\sigma_x$`, text:R`$\mathbb 1$ vertauscht mit $\sigma_x$. Für $\mathbb 1$ ist jeder Vektor Eigenvektor, auch $(1;\ 0)$. Aber $\sigma_x(1;\ 0) = (0;\ 1)$ ist kein Vielfaches von $(1;\ 0)$. Gemeinsam sind nur passend gewählte Eigenvektoren, hier $|{\pm x}\rangle$.`},
+        text:R`Ein häufig falsch zitierter Satz lautet: „Vertauschen $A$ und $B$, dann ist jeder Eigenvektor von $A$ auch einer von $B$.“ Das stimmt nur, wenn $A$ keinen entarteten Eigenwert hat. Bei Entartung gibt es in einem Eigenraum viele Basen, und nur manche davon bestehen auch aus Eigenvektoren von $B$. Das extreme Beispiel ist $\mathbb 1$: Sie vertauscht mit allem, und ihr einziger Eigenwert $1$ ist so entartet wie möglich. Richtig ist also: Es *gibt* eine gemeinsame Eigenbasis. Du musst sie passend wählen.`,
+        q:{q:R`$A = \operatorname{diag}(5, 5)$ und $B = \sigma_x$ vertauschen. Ist $(1;\ 0)$ ein gemeinsamer Eigenvektor?`,
+          opts:[R`Ja, denn $A$ und $B$ vertauschen.`, R`Nein; gemeinsam sind etwa $\tfrac{1}{\sqrt2}(1;\ \pm1)$.`, R`Nein; die beiden haben gar keinen gemeinsamen Eigenvektor.`], a:1,
+          ex:R`$(1;\ 0)$ ist Eigenvektor von $A = 5\cdot\mathbb 1$, aber nicht von $\sigma_x$. Die Eigenvektoren von $\sigma_x$ sind auch Eigenvektoren von $A$.`,
+          fb:[R`Vertauschen garantiert nur, dass es eine gemeinsame Basis *gibt*. $\sigma_x(1;\ 0) = (0;\ 1)$, also ist $(1;\ 0)$ kein Eigenvektor von $B$.`,
+            '',
+            R`Die gemeinsame Eigenbasis existiert: $|{\pm x}\rangle$ sind Eigenvektoren von $\sigma_x$ und, wie jeder Vektor, von $5\cdot\mathbb 1$.`]}}
+    ]},
+    /* ===== Abschnitt 6: Matrixfunktionen, Zeitentwicklung ===== */
+    {id:'me-t6', title:'Funktionen von Matrizen und Zeitentwicklung', steps:[
+      {id:'me-t6a', title:'Potenzen über die Eigenbasis',
+        num:{title:R`$A^2$ auf zwei Wegen`, text:R`Direkt: $A^2 = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}\begin{pmatrix}2&1\\ 1&2\end{pmatrix} = \begin{pmatrix}5&4\\ 4&5\end{pmatrix}$. Über die Eigenbasis werden die Eigenwerte $3$ und $1$ quadriert:
+
+$$\begin{aligned}A^2 &= 9\,|{+x}\rangle\langle{+x}| + 1\,|{-x}\rangle\langle{-x}|\\ &= \tfrac92\begin{pmatrix}1&1\\ 1&1\end{pmatrix} + \tfrac12\begin{pmatrix}1&-1\\ -1&1\end{pmatrix}\\ &= \begin{pmatrix}5&4\\ 4&5\end{pmatrix}.\end{aligned}$$`},
+        text:R`Aus $A = UDU^\dagger$ und $U^\dagger U = \mathbb 1$ folgt
+
+$$A^2 = UDU^\dagger UDU^\dagger = UD^2U^\dagger,$$
+
+und ebenso $A^k = UD^kU^\dagger$ für jede Potenz. In der Mitte hebt sich $U^\dagger U$ jedes Mal weg. Eine Diagonalmatrix zu potenzieren ist leicht: Du potenzierst die Diagonaleinträge. In der Spektralzerlegung heißt das $A^k = \sum_n\lambda_n^k\,|n\rangle\langle n|$. Die Eigenvektoren bleiben, nur die Eigenwerte werden potenziert. Für $A^{10}$ sparst du so neun Matrixprodukte.`,
+        derive:{ctx:MAT({mats:{A:'(2, 1; 1, 2)'}}), lines:[
+          {l:'A^2 = 9 |+x⟩⟨+x| + 1 |-x⟩⟨-x|', w:'f(λ) = λ² auf die Eigenwerte 3 und 1', why:{q:'Warum stehen hier $9$ und $1$?', opts:['$A^2 = UD^2U^\\dagger$: Die Eigenwerte $3$ und $1$ werden quadriert.', 'Man quadriert die Einträge $2$ und $1$ der Matrix $A$.', 'Weil $\\operatorname{tr}A^2 = 9 + 1$ sein muss.'], a:0, ex:'Die Eigenvektoren ändern sich nicht, die Eigenwerte werden quadriert.'}},
+          {l:'= (5, 4; 4, 5)', w:'ausmultipliziert'},
+          {l:'A A = (5, 4; 4, 5)', w:'Kontrolle durch direktes Multiplizieren'}
+        ]},
+        q:{q:R`Welche Eigenwerte hat $A^3$ für $A = \begin{pmatrix}2&1\\ 1&2\end{pmatrix}$?`,
+          opts:[R`$8$ und $1$`, R`$27$ und $1$`, R`$9$ und $3$`], a:1,
+          ex:R`Die Eigenwerte $3$ und $1$ werden in die dritte Potenz gehoben: $27$ und $1$.`,
+          fb:[R`Das sind die dritten Potenzen der Einträge $2$ und $1$. Potenziert werden die Eigenwerte, nicht die Einträge.`,
+            '',
+            R`Das ist $3$ mal die Eigenwerte. Bei $A^3$ werden sie dreimal miteinander multipliziert: $3^3 = 27$.`]}},
+      {id:'me-t6b', title:'Die Exponentialfunktion einer Matrix',
+        num:{title:R`$e^{itA}$`, text:R`Mit $f(\lambda) = e^{it\lambda}$ auf die Eigenwerte $3$ und $1$:
+
+$$e^{itA} = e^{3it}|{+x}\rangle\langle{+x}| + e^{it}|{-x}\rangle\langle{-x}| = \tfrac12\begin{pmatrix}e^{3it} + e^{it} & e^{3it} - e^{it}\\ e^{3it} - e^{it} & e^{3it} + e^{it}\end{pmatrix}.$$
+
+Bei $t = 0$ ergibt das $\mathbb 1$, wie es sein muss.`},
+        text:R`Eine **[[lex:matrixfunktion|Funktion einer Matrix]]** definiert man über die Potenzreihe, etwa $e^A = \sum_{k=0}^\infty A^k/k!$. Ausrechnen willst du diese Reihe nicht. Weil jede Potenz in der Eigenbasis nur die Eigenwerte potenziert, gilt für jede Potenzreihe
+
+$$f(A) = U f(D)\,U^\dagger = \sum_nf(\lambda_n)\,|n\rangle\langle n|.$$
+
+Gelesen: „$f$ wirkt auf die Eigenwerte, die Eigenvektoren bleiben.“ Für hermitesches $A$ und reelles $t$ ist $e^{itA}$ unitär. Denn die Eigenwerte $e^{it\lambda_n}$ haben den Betrag $1$, und die Eigenvektoren bilden eine Orthonormalbasis.`,
+        derive:{ctx:MAT({mats:{A:'(2, 1; 1, 2)'}}), lines:[
+          {l:'e^(i t A) = e^(3 i t) |+x⟩⟨+x| + e^(i t) |-x⟩⟨-x|', w:'$f(\\lambda) = e^{it\\lambda}$', why:{q:'Warum ist $e^{itA}$ unitär?', opts:['Weil die Eigenwerte $e^{3it}$ und $e^{it}$ den Betrag $1$ haben.', 'Weil $A$ nur reelle Einträge hat und symmetrisch ist.', 'Weil jede Exponentialfunktion einer Matrix unitär ist.'], a:0, ex:'Das liegt an der Hermitezität von $A$: Die Eigenvektoren bilden eine Orthonormalbasis, und reelle Eigenwerte $\\lambda_n$ ergeben $|e^{it\\lambda_n}| = 1$. Für $e^A$ selbst gilt das nicht, es hat die Eigenwerte $e^3$ und $e$.'}},
+          {l:'= (e^(3 i t) + e^(i t), e^(3 i t) - e^(i t); e^(3 i t) - e^(i t), e^(3 i t) + e^(i t))/2', w:'Projektoren ausmultipliziert'}
+        ]},
+        q:{q:R`$A|n\rangle = \lambda_n|n\rangle$. Was ist $f(A)\,|n\rangle$?`,
+          opts:[R`$\lambda_n\,f(|n\rangle)$`, R`$f(\lambda_n)\,|n\rangle$`, R`$f(A_{nn})\,|n\rangle$`], a:1,
+          ex:R`Auf einen Eigenvektor wirkt jede Potenz $A^k$ als $\lambda_n^k$. Die Reihe von $f$ wird deshalb zu $f(\lambda_n)$.`,
+          fb:[R`$f$ wirkt auf Zahlen, nicht auf Vektoren. Der Vektor $|n\rangle$ bleibt, wie er ist.`,
+            '',
+            R`Der Diagonaleintrag $A_{nn}$ ist nur in der Eigenbasis gleich $\lambda_n$. Allgemein zählt der Eigenwert.`]}},
+      {id:'me-t6c', title:'Typischer Fehler: die Funktion auf jeden Eintrag',
+        num:{title:R`$e^{i\pi\sigma_z/2}$`, text:R`$\sigma_z = \operatorname{diag}(1, -1)$ ist schon diagonal, also $e^{i\pi\sigma_z/2} = \operatorname{diag}(e^{i\pi/2}, e^{-i\pi/2}) = \operatorname{diag}(i, -i) = i\sigma_z$. Eintragsweise käme $\begin{pmatrix}e^{i\pi/2} & e^0\\ e^0 & e^{-i\pi/2}\end{pmatrix} = \begin{pmatrix}i & 1\\ 1 & -i\end{pmatrix}$ heraus – mit Einsen, wo Nullen stehen müssen.`},
+        text:R`Der häufigste Fehler bei Matrixfunktionen: $f$ auf jeden Eintrag anwenden. $f(A)$ ist aber **nicht** die Matrix der Werte $f(A_{ij})$. Schon $A^2$ zeigt das: $\begin{pmatrix}2&1\\ 1&2\end{pmatrix}^2$ hat die Einträge $5$ und $4$, nicht $4$ und $1$. Nur bei Diagonalmatrizen stimmt die eintragsweise Rechnung auf der Diagonale. Neben der Diagonale muss die $0$ bleiben, und $e^0 = 1$ ist keine $0$. Ein zweiter Fehler ist, die Reihe nach dem ersten Glied abzubrechen: $e^A \approx \mathbb 1 + A$ ist nur eine Näherung für kleine $A$.`,
+        q:{q:R`Was ist $e^{(\ln2)\,\sigma_z}$?`,
+          opts:[R`$\begin{pmatrix}2&1\\ 1&\tfrac12\end{pmatrix}$`, R`$\operatorname{diag}(2, \tfrac12)$`, R`$\mathbb 1 + (\ln2)\,\sigma_z$`], a:1,
+          ex:R`$\sigma_z$ ist diagonal mit den Eigenwerten $\pm1$: $\operatorname{diag}(e^{\ln2}, e^{-\ln2}) = \operatorname{diag}(2, \tfrac12)$.`,
+          fb:[R`Eintragsweise gerechnet: Neben der Diagonale steht $e^0 = 1$ statt $0$.`,
+            '',
+            R`Das ist nur die erste Ordnung der Reihe. Exakt ist $\operatorname{diag}(2, \tfrac12)$, nicht $\operatorname{diag}(1{,}69;\ 0{,}31)$.`]}},
+      {id:'me-t6d', title:'Ein Sonderfall: wenn das Quadrat 1 ist',
+        pre:{from:'m-komplex', seg:'mk-t2', title:'Euler-Formel', text:R`$e^{i\theta} = \cos\theta + i\sin\theta$. Das folgt aus der Potenzreihe von $e^x$ (M2): Die geraden Potenzen von $i\theta$ ergeben $\cos\theta$, die ungeraden $i\sin\theta$, weil $i^2 = -1$. Mini-Beispiel: $e^{i\pi/2} = i$.`},
+        num:{title:R`$e^{i\theta\sigma_x}$ für $\theta = \pi/2$`, text:R`Wegen $\sigma_x^2 = \mathbb 1$ ist $e^{i\theta\sigma_x} = \cos\theta\,\mathbb 1 + i\sin\theta\,\sigma_x$. Für $\theta = \tfrac\pi2$ ist $\cos\tfrac\pi2 = 0$ und $\sin\tfrac\pi2 = 1$, also $e^{i\pi\sigma_x/2} = i\sigma_x = \begin{pmatrix}0&i\\ i&0\end{pmatrix}$.`},
+        text:R`Für Matrizen mit $\sigma^2 = \mathbb 1$, etwa alle Pauli-Matrizen, brauchst du nicht zu diagonalisieren. In der Reihe $\sum_k(i\theta\sigma)^k/k!$ ist jede gerade Potenz $\sigma^{2m} = \mathbb 1$ und jede ungerade $\sigma^{2m+1} = \sigma$. Die Reihe zerfällt deshalb genau wie bei der Euler-Formel:
+
+$$e^{i\theta\sigma} = \cos\theta\,\mathbb 1 + i\sin\theta\,\sigma.$$
+
+Probe über die Eigenbasis: $\sigma_x$ hat die Eigenwerte $\pm1$. Darauf wirkt $f$ als $e^{\pm i\theta} = \cos\theta \pm i\sin\theta$. Das passt zur Formel, denn $\sigma$ ist auf den beiden Eigenvektoren $+1$ bzw. $-1$.`,
+        q:{q:R`Was ist $e^{i\pi\sigma_y}$?`,
+          opts:[R`$i\sigma_y$`, R`$\mathbb 1$`, R`$-\mathbb 1$`], a:2,
+          ex:R`$\cos\pi\,\mathbb 1 + i\sin\pi\,\sigma_y = -\mathbb 1$. Beide Eigenwerte $e^{\pm i\pi}$ sind $-1$.`,
+          fb:[R`$i\sigma_y$ gehört zu $\theta = \tfrac\pi2$. Bei $\theta = \pi$ ist $\sin\pi = 0$.`,
+            R`$\mathbb 1$ käme bei $\theta = 2\pi$ heraus. Bei $\theta = \pi$ ist $\cos\pi = -1$.`,
+            '']}},
+      {id:'me-t6e', title:'Zeitentwicklung: jede Eigenrichtung bekommt ihre Phase',
+        num:{title:'Das Molekül vom Anfang', text:R`$H = \begin{pmatrix}E_0 & -\Delta\\ -\Delta & E_0\end{pmatrix}$ hat die Eigenvektoren $|{\pm}\rangle = \tfrac{1}{\sqrt2}(1;\ \pm1)$ zu $E_0 \mp \Delta$. Der Start $|L\rangle = (1;\ 0) = \tfrac{1}{\sqrt2}\left(|{+}\rangle + |{-}\rangle\right)$ entwickelt sich zu
+
+$$\tfrac{1}{\sqrt2}\left(e^{-i(E_0 - \Delta)t/\hbar}|{+}\rangle + e^{-i(E_0 + \Delta)t/\hbar}|{-}\rangle\right).$$
+
+Die zweite Komponente in der Basis $|L\rangle, |R\rangle$ hat das Betragsquadrat $\sin^2(\Delta t/\hbar)$.`},
+        text:R`**Ausblick (Thema 2 und 6):** In der Quantenmechanik entwickelt sich ein Zustand nach der Regel $|\psi(t)\rangle = e^{-iHt/\hbar}|\psi(0)\rangle$. Dabei ist $H$ eine hermitesche Matrix und $\hbar$ eine Naturkonstante. Mathematisch ist das nur eine Matrixfunktion. Ein Eigenvektor $|n\rangle$ von $H$ zum Eigenwert $E_n$ bekommt die Phase $e^{-iE_nt/\hbar}$ und behält seine Richtung. Ein allgemeiner Vektor $\sum_nc_n|n\rangle$ wird zu $\sum_nc_ne^{-iE_nt/\hbar}|n\rangle$. Laufen die Phasen verschieden schnell, ändern sich die Komponenten in jeder anderen Basis. Weil $e^{-iHt/\hbar}$ unitär ist, bleibt die Norm $1$.`,
+        reps:{obj:'Zeitentwicklung im Molekül mit zwei Lagen',
+          rows:[
+            {k:'matrix', tex:R`\begin{gathered}H = \begin{pmatrix}E_0 & -\Delta\\ -\Delta & E_0\end{pmatrix},\\ |L\rangle = \begin{pmatrix}1\\ 0\end{pmatrix},\\ |R\rangle = \begin{pmatrix}0\\ 1\end{pmatrix}\end{gathered}`},
+            {k:'formel', tex:R`\begin{aligned}e^{-iHt/\hbar} = {}&e^{-i(E_0 - \Delta)t/\hbar}\,|{+}\rangle\langle{+}|\\ &+ e^{-i(E_0 + \Delta)t/\hbar}\,|{-}\rangle\langle{-}|\end{aligned}`},
+            {k:'graph', plot:{x:[0, 2 * Math.PI], y:[0, 1.15], xlab:R`\Delta t/\hbar`, ylab:'P', ticks:[{x:Math.PI / 2, lab:R`\pi/2`}, {x:Math.PI, lab:R`\pi`}, {x:3 * Math.PI / 2, lab:R`3\pi/2`}, {x:2 * Math.PI, lab:R`2\pi`}]}, f:x => Math.sin(x) ** 2, lab:R`P_R = \sin^2(\Delta t/\hbar)`, f2:x => Math.cos(x) ** 2, lab2:R`P_L = \cos^2(\Delta t/\hbar)`,
+              cap:R`Rechts und links tauschen sich periodisch aus. Bei $\Delta t/\hbar = \pi/2$ ist das System sicher rechts, bei $\pi$ wieder links.`},
+            {k:'physik', text:R`**Ausblick:** Beim Ammoniak-Molekül klappt das Stickstoffatom so durch die Ebene der Wasserstoffatome, mit etwa $24\,$GHz. Der Ammoniak-Maser nutzt diese Frequenz.`}
+          ],
+          links:[
+            {from:'matrix', to:'formel', rule:R`Diagonalisiere $H$: Eigenvektoren $|{\pm}\rangle$, Eigenwerte $E_0 \mp \Delta$. Setze dann $f(E) = e^{-iEt/\hbar}$ in die Spektralzerlegung ein.`},
+            {from:'formel', to:'graph', rule:R`Wende die Matrix auf $|L\rangle$ an, nimm die zweite Komponente und bilde ihr Betragsquadrat. Trage es über $\Delta t/\hbar$ auf.`},
+            {from:'graph', to:'physik', rule:R`Lies die Kurve als Wahrscheinlichkeit, das Molekül rechts zu finden. Eine Periode von $P_R$ dauert $\Delta t/\hbar = \pi$, also $t = h/(2\Delta)$; die Frequenz ist $2\Delta/h$.`}
+          ]},
+        q:{q:R`Im Graphen erreicht $P_R$ zum ersten Mal den Wert $1$. Zu welcher Zeit ist das?`, tr:{from:'graph', to:'formel'},
+          opts:[R`$t = \pi\hbar/\Delta$`, R`$t = \hbar/\Delta$`, R`$t = \pi\hbar/(2\Delta)$`], a:2,
+          ex:R`$\sin^2(\Delta t/\hbar) = 1$ zum ersten Mal bei $\Delta t/\hbar = \pi/2$, also $t = \pi\hbar/(2\Delta)$.`,
+          fb:[R`Bei $\Delta t/\hbar = \pi$ ist $\sin^2\pi = 0$: Das System ist dann wieder links.`,
+            R`Bei $\Delta t/\hbar = 1$ ist $\sin^21 \approx 0{,}71$, noch nicht $1$.`,
+            '']}},
+      {id:'me-t6f', title:'Vorsicht bei Summen im Exponenten',
+        num:{title:'Zwei Matrizen, die nicht vertauschen', text:R`$A = \begin{pmatrix}0&1\\ 0&0\end{pmatrix}$ und $B = \begin{pmatrix}0&0\\ 1&0\end{pmatrix}$ haben $A^2 = B^2 = 0$, also $e^A = \mathbb 1 + A$ und $e^B = \mathbb 1 + B$. Damit ist $e^Ae^B = \begin{pmatrix}2&1\\ 1&1\end{pmatrix}$. Aber $A + B = \sigma_x$ hat die Eigenwerte $\pm1$, und
+
+$$e^{\sigma_x} = \tfrac{e + e^{-1}}{2}\,\mathbb 1 + \tfrac{e - e^{-1}}{2}\,\sigma_x \approx \begin{pmatrix}1{,}543&1{,}175\\ 1{,}175&1{,}543\end{pmatrix}.$$`},
+        text:R`Für Zahlen gilt $e^{a+b} = e^ae^b$. Für Matrizen gilt $e^{A+B} = e^Ae^B$ nur, wenn $[A, B] = 0$. Der Grund steckt schon in der zweiten Ordnung. Links steht $\tfrac12(A + B)^2 = \tfrac12(A^2 + AB + BA + B^2)$, rechts $\tfrac12A^2 + AB + \tfrac12B^2$. Rechts minus links ergibt $\tfrac12(AB - BA) = \tfrac12[A, B]$. Vertauschen die Matrizen, darfst du trennen. Das ist oft nützlich: $H = E_0\mathbb 1 - \Delta\sigma_x$ gibt $e^{-iHt/\hbar} = e^{-iE_0t/\hbar}\,e^{i\Delta t\sigma_x/\hbar}$, weil $\mathbb 1$ mit allem vertauscht. Prüfe also vor jedem Trennen, ob die beiden Matrizen vertauschen.`,
+        q:{q:R`Für welches Paar gilt sicher $e^{A+B} = e^Ae^B$?`,
+          opts:[R`$A = \sigma_x$, $B = \sigma_z$`, R`$A = 3\cdot\mathbb 1$, $B = \sigma_y$`, R`$A = \sigma_x$, $B = i\sigma_y$`], a:1,
+          ex:R`$3\cdot\mathbb 1$ vertauscht mit jeder Matrix. Dann gilt $e^{3 + \sigma_y} = e^3\,e^{\sigma_y}$.`,
+          fb:[R`$\sigma_x$ und $\sigma_z$ vertauschen nicht: $[\sigma_x, \sigma_z] = -2i\sigma_y \ne 0$.`,
+            '',
+            R`$[\sigma_x, i\sigma_y] = i\cdot2i\sigma_z = -2\sigma_z \ne 0$. Ein Faktor $i$ ändert daran nichts.`]}}
+    ]}
   ],
   example:{
     title:'Eigenwerte und Eigenvektoren einer symmetrischen Matrix',
@@ -165,6 +681,15 @@ topic({
     ]
   },
   lab:{type:'eigen', title:'Was eine symmetrische Matrix mit dem Einheitskreis macht',
+    map:[
+      {sym:R`A = \begin{pmatrix}a&b\\ b&d\end{pmatrix}`, ctl:'a (oben links)', says:R`Die drei Regler setzen die Einträge der symmetrischen Matrix: $a$ oben links, $b$ auf beiden Plätzen neben der Diagonale, $d$ unten rechts. Jede Änderung ändert die Abbildung $v \mapsto Av$ und damit die blaue Ellipse. Jeder graue Strich im Bild führt von einem Vektor $u$ des grauen Einheitskreises zu seinem Bild $Au$, dem blauen Punkt.`},
+      {sym:R`b`, ctl:'b (Nebendiagonale)', says:R`Die Kopplung neben der Diagonale. Bei $b = 0$ ist $A$ diagonal, und die Eigenrichtungen liegen auf den Achsen. Wächst $|b|$, rücken die Eigenwerte auseinander: $\lambda_+ - \lambda_- \ge 2|b|$.`},
+      {sym:R`d`, ctl:'d (unten rechts)', says:R`Der zweite Diagonaleintrag. Zusammen mit $a$ bestimmt er die Mitte $\tfrac{a+d}{2}$ der beiden Eigenwerte, also die halbe Spur.`},
+      {sym:R`\lambda_+e_+`, ctl:'λ₊e₊', says:R`Roter Pfeil: der normierte Eigenvektor $e_+$ zum größeren Eigenwert, mit $\lambda_+$ gestreckt. Die rot gestrichelte Gerade ist seine Eigenrichtung. Die Anzeige nennt $\lambda_\pm = \tfrac{a+d}{2} \pm \sqrt{\left(\tfrac{a-d}{2}\right)^2 + b^2}$ sowie Spur und Determinante zur Kontrolle.`},
+      {sym:R`\lambda_-e_-`, ctl:'λ₋e₋', says:R`Grüner Pfeil: $e_-$ mal $\lambda_-$. Ist $\lambda_- < 0$, zeigt der Pfeil gegen $e_-$ – die Richtung bleibt dieselbe Gerade, nur umgekehrt.`},
+      {sym:R`\langle e_+|e_-\rangle = 0`, ctl:'Eigenvektoren senkrecht', says:R`Für jede symmetrische Matrix stehen die beiden Eigenrichtungen senkrecht (Abschnitt 4). Die Anzeige nennt dazu den Winkel von $e_+$ zur 1-Achse; er folgt aus $\tan2\theta = 2b/(a - d)$.`},
+      {sym:R`\lambda_+ = \lambda_-`, ctl:'jeder Vektor ist Eigenvektor', says:R`Bei $a = d$ und $b = 0$ ist $A = a\,\mathbb 1$: Der Eigenwert ist entartet, die Ellipse ist ein Kreis, und jede Richtung ist Eigenrichtung.`}
+    ],
     sketch:{id:'me-lab-s', kind:'arrows', title:'Vorhersage: die Eigenpfeile des Labors',
       text:'Das Labor zeichnet für $A = \\begin{pmatrix}a&b\\\\b&d\\end{pmatrix}$ die Pfeile $\\lambda_+e_+$ und $\\lambda_-e_-$: die normierten Eigenvektoren, mit ihren Eigenwerten gestreckt. Zeichne beide Pfeile für $a = d = 0{,}5$ und $b = 1{,}5$ vorher, je vom Ursprung aus. Das Vorzeichen eines Eigenvektors ist frei. Stell danach $a = 0{,}5$, $b = 1{,}5$ und $d = 0{,}5$ ein und vergleiche.',
       plot:{x:[-2.5, 2.5], y:[-2, 2], abs:true, xlab:'1', ylab:'2', unit:true, grid:0.5},

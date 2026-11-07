@@ -329,6 +329,8 @@ a.nachlesen::before{content:"↗ ";font-weight:400}
 .lab.fig .ctrl{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 12px}
 .lab.fig:not(.more) .ctrl>.xtra{display:none}
 .lab .morectl{margin-top:4px}
+/* unsichtbare KaTeX-Stützen (.pstrut) der Anzeige ragen über Regler und „Mehr Regler“ und fingen sonst Klicks ab */
+.lab .ctrl,.lab .morectl{position:relative;z-index:1}
 .lab canvas[hidden]{display:none}
 .lab canvas+canvas{margin-top:8px}
 /* Messfolge */
@@ -345,7 +347,7 @@ a.nachlesen::before{content:"↗ ";font-weight:400}
 .sumpanel{position:fixed;right:0;top:64px;bottom:0;z-index:36;width:min(440px,94vw);overflow:auto;background:var(--sheet);border-left:1px solid var(--line);box-shadow:-8px 0 30px rgba(0,0,0,.16);padding:16px 18px 120px}
 .sumhead{position:sticky;top:-16px;background:var(--sheet);padding:6px 0;z-index:1}
 @media (max-width:700px){ .sumtab{position:static;writing-mode:horizontal-tb;transform:none;border-radius:10px;padding:8px 14px;border:1px solid var(--accent);margin:4px 0 8px} .sumpanel{top:0;width:100vw;z-index:75} }
-.katex-display{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:5px 0}
 /* Abschluss */
 .fitem{margin-top:22px;border-top:2px solid var(--line);padding-top:12px}
 .fhead{font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
@@ -438,3 +440,132 @@ a.nachlesen::before{content:"↗ ";font-weight:400}
 .scr-note{margin-top:4px}
 @media (max-width:520px){ .sketch{padding:12px 10px} .sk-tools,.scr .sk-tools{gap:4px} .sk-tools .lbl{display:none} .sk-tools .btn{min-width:38px;justify-content:center;padding:3px 8px} .sk-fb li{padding:6px 8px;font-size:.92rem} }
 @media print{ .scr,.sk-tools,.sk-act{display:none} }
+/* ===== Erklärteil in Schritten (didaktik/UMBAU2.md, Abschnitt 4) ===== */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.stpprog{font-weight:700}
+.stpdots{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
+.stpdots i{display:block;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--grid-strong);background:var(--sheet)}
+.stpdots i.d{background:var(--good);border-color:var(--good)}
+.stpdots i.c{box-shadow:0 0 0 2px var(--accent-soft);border-color:var(--accent)}
+.stplist{display:flex;flex-direction:column;gap:18px;margin-top:12px}
+.stp{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:14px 16px;scroll-margin-top:84px;min-width:0;background:var(--sheet)}
+.stp>*+*{margin-top:14px}
+.stp.flash{animation:stpflash 2s ease-out}
+@keyframes stpflash{0%{box-shadow:0 0 0 4px color-mix(in srgb,var(--c4) 60%,transparent)}100%{box-shadow:0 0 0 0 transparent}}
+.stph{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:1.08rem;margin:0}
+.stph:focus{outline:none}
+.stph:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.stpn{font:700 .72rem var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.stptext{max-width:760px}
+.stptext p{line-height:1.6}
+.stpq .mc{max-width:760px}
+.stpfoot{margin-top:18px}
+.stpfoot [hidden]{display:none}
+.stp-dlg{border-left-color:var(--grid-strong)}
+.stp h5,.box-num h5{font:700 .95rem var(--f-display);margin-bottom:6px}
+.box-num h5{margin-top:0}
+.stp>h5.drvh{margin-top:20px}
+/* Erst ein Beispiel, Kurz aufgefrischt */
+.box-num{background:color-mix(in srgb,var(--c2) 8%,var(--sheet));border-left:4px solid var(--c2);max-width:760px}
+.box-num p{margin:.3em 0}
+.box-pre{background:color-mix(in srgb,var(--c3) 8%,var(--sheet));border-left:4px solid var(--c3);max-width:760px;padding:10px 14px}
+.box-pre>summary{cursor:pointer;font-weight:600;display:list-item;list-style-position:inside}
+.box-pre>summary:focus-visible,.labmap>summary:focus-visible,.cheatd>summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.box-pre .pre-h{color:var(--c3);font-weight:700}
+.box-pre .pre-b{margin-top:8px}
+.box-pre .pre-b p{margin:.3em 0}
+.box-pre .mc{border-color:var(--grid-strong);background:var(--sheet)}
+.box-pre .tag{margin-left:4px}
+/* Übersetzungsfrage */
+.mc .qh .trtag,.trtag{display:inline-block;color:var(--accent);background:var(--accent-soft);text-transform:none;letter-spacing:0;font-size:.8rem;font-weight:700;border-radius:6px;padding:1px 8px;margin-left:4px;vertical-align:baseline;line-height:1.45}
+.mc.mc-tr{border-color:var(--accent)}
+/* Darstellungstafel */
+.reps{border:1.5px solid var(--accent);border-radius:12px;padding:12px 14px;margin:0;max-width:900px;min-width:0;background:var(--sheet)}
+.reps-h{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-bottom:6px}
+.reps-tag{font:700 .72rem var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.reps-obj{font-weight:700}
+.reps-rows{display:flex;flex-direction:column}
+.rep{display:grid;grid-template-columns:9.5rem minmax(0,1fr);gap:4px 14px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.rep:first-child{border-top:0}
+.rep-k{justify-self:start;font:700 .76rem var(--f-body);letter-spacing:.03em;text-transform:uppercase;border-radius:6px;padding:2px 8px;color:var(--rk,var(--accent));background:color-mix(in srgb,var(--rk,var(--accent)) 12%,var(--sheet))}
+.rep-c{min-width:0;overflow-x:auto;overflow-y:hidden}
+.rep-c .katex-display{margin:.15em 0;text-align:left}
+.rep-c .katex-display>.katex{text-align:left}
+.rep-c .rep-t p{margin:.2em 0}
+.rep-c .sk-static{max-width:560px}
+.rep-link{display:grid;grid-template-columns:9.5rem minmax(0,1fr);gap:4px 14px;align-items:start;padding:3px 0 7px}
+.rep-arr{justify-self:center;font-size:1.25rem;line-height:1.2;color:var(--accent);font-weight:700}
+.rep-rule{font-size:.92rem;background:var(--accent-soft);border-radius:8px;padding:5px 10px;min-width:0;overflow-x:auto}
+.rep-link.none .rep-rule{background:none}
+.rep-dir{font-weight:700;color:var(--accent);margin-right:2px}
+.reps-more{margin-top:8px;padding-top:6px;border-top:1px dashed var(--line)}
+.reps-compact{padding:10px 12px}
+.reps-compact .rep{padding:6px 0}
+.rep-worte{--rk:var(--muted)} .rep-dirac{--rk:var(--c5)} .rep-ort{--rk:var(--c3)} .rep-impuls{--rk:var(--c4)} .rep-matrix{--rk:var(--c2)}
+.rep-formel{--rk:var(--accent)} .rep-graph{--rk:var(--c2)} .rep-labor{--rk:var(--c4)} .rep-mathe{--rk:var(--c5)} .rep-physik{--rk:var(--c1)}
+@media (max-width:640px){
+  .rep{grid-template-columns:minmax(0,1fr);gap:4px}
+  .rep-link{grid-template-columns:1.6rem minmax(0,1fr);gap:4px 6px}
+  .rep-arr{justify-self:start}
+  .reps{padding:10px 10px}
+  .stp{padding:12px 10px}
+}
+/* statischer Graph (Skizzen-Renderer) */
+.sk-static{margin:0;max-width:640px;min-width:0}
+.sk-static .sk-wrap{border-width:1px;margin:0}
+.sk-static-cv{cursor:default;touch-action:auto;height:200px}
+.sk-static figcaption{margin-top:5px}
+.sk-legend .lg-2{color:var(--c1);font-weight:600}
+.sk-legend .lg-2::before{border-top-style:dashed}
+.stpplot{max-width:560px}
+/* Spickzettel */
+.cheat{margin-top:18px}
+.cheat .reps{margin-top:12px}
+.cheat-l{margin-top:6px}
+.cheatd>summary{cursor:pointer}
+/* Labor ↔ Formel (lab.map) */
+.labmap{max-width:900px;padding:10px 14px;background:color-mix(in srgb,var(--c4) 7%,var(--sheet));border-left:4px solid var(--c4)}
+.labmap>summary{cursor:pointer}
+.lm-grid{display:flex;flex-direction:column;margin-top:8px}
+.lm-row{display:grid;grid-template-columns:minmax(6rem,9rem) minmax(8rem,12rem) minmax(0,1fr);gap:4px 14px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.lm-head{font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border-top:0;padding-top:0}
+.lm-sym{min-width:0;overflow-x:auto}
+.lm-chip{font:600 .9rem var(--f-body);color:var(--ink);background:var(--sheet);border:1px solid var(--grid-strong);border-radius:7px;padding:3px 9px;cursor:pointer;text-align:left;min-height:32px}
+.lm-chip:hover{border-color:var(--c4)}
+.lm-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lm-says{min-width:0}
+.lm-hl{outline:3px solid var(--c4);outline-offset:3px;border-radius:6px;transition:outline-color .3s}
+@media (max-width:640px){
+  .lm-head{display:none}
+  .lm-row{grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:6px 10px}
+  .lm-says{grid-column:1 / -1}
+}
+@media print{ .stpfoot,.stpdots{display:none} .box-pre{break-inside:avoid} .reps{break-inside:avoid} }
+/* breite Formeln scrollen im eigenen Kasten; ein Schatten am Rand zeigt, dass es weitergeht.
+   --scbg = Hintergrund des umgebenden Kastens (die Abdeckung des Schattens muss dieselbe Farbe haben) */
+:root{--scbg:var(--sheet)}
+main,.stp,.reps,.dlg,.sumpanel{--scbg:var(--sheet)}
+.box-num{--scbg:color-mix(in srgb,var(--c2) 8%,var(--sheet))}
+.box-pre{--scbg:color-mix(in srgb,var(--c3) 8%,var(--sheet))}
+.box-pre .mc{--scbg:var(--sheet)}
+.rep-rule{--scbg:var(--accent-soft)}
+.labmap{--scbg:color-mix(in srgb,var(--c4) 7%,var(--sheet))}
+.mc .opt{--scbg:var(--info-soft)} .mc .opt.sel{--scbg:var(--accent-soft)} .mc .opt.right{--scbg:var(--good-soft)} .mc .opt.wrongc{--scbg:var(--bad-soft)}
+/* Scrollkästen: Herleitungszeile (.drl), Inhalt einer Option (.optx); in der Schrittansicht außerdem Absätze und Listen
+   in Text, Beispiel, Auffrischung und Herleitungstext, Frage und Rückmeldung, Bildunterschriften und Schritttitel.
+   Text bricht wie bisher um; nur was sich nicht umbrechen lässt (breite Formel), scrollt im eigenen Kasten. */
+.drl{display:inline-block;max-width:100%;overflow-x:auto;overflow-y:hidden;vertical-align:middle;padding:4px 0}
+.mc .optx{display:block;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:4px 0;margin:-4px 0}
+/* Innenabstand oben/unten: große Klammern und Brüche ragen sonst um einige Pixel aus dem Scrollkasten und würden abgeschnitten */
+.stp .mc>:is(.q,.fb),.stp :is(.stptext,.box-num,.pre-b,.drvt)>:is(p,ul,ol),.stp figcaption{padding-block:3px}
+/* KaTeX zieht Hoch- und Tiefstellungen mit margin-right:-2px zurück (.vlist-t2); endet eine Formel am Kastenrand,
+   ragt sie sonst 2 px hinaus, und Windows zeigt für 2 px eine Scrollleiste */
+.drl,.mc .optx,.stph>.stpt,.rep-c,.stp .mc>:is(.q,.fb),.stp :is(.stptext,.box-num,.pre-b,.drvt)>:is(p,ul,ol),.stp figcaption{padding-inline-end:2px}
+.stp :is(.stptext,.box-num,.pre-b,.drvt)>:is(p,ul,ol),.stp .mc>:is(.q,.fb),.stp figcaption,.stph>.stpt{min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden}
+.stp .katex-display,.reps .katex-display,.dlg .stp .katex-display,.rep-rule,.lm-sym,.rep-c,.drl,.mc .optx,
+.stp :is(.stptext,.box-num,.pre-b,.drvt)>:is(p,ul,ol),.stp .mc>:is(.q,.fb),.stp figcaption,.stph>.stpt{background:linear-gradient(to right,var(--scbg) 30%,transparent),linear-gradient(to left,var(--scbg) 30%,transparent) 100% 0,radial-gradient(farthest-side at 0 50%,color-mix(in srgb,var(--ink) 22%,transparent),transparent),radial-gradient(farthest-side at 100% 50%,color-mix(in srgb,var(--ink) 22%,transparent),transparent) 100% 0;background-repeat:no-repeat;background-size:36px 100%,36px 100%,12px 100%,12px 100%;background-attachment:local,local,scroll,scroll;background-color:var(--scbg)}
+/* Formel und anschließendes Satz- bzw. Anführungszeichen ohne Umbruch dazwischen (inl() in 10-util.js) */
+.nbx{white-space:nowrap}
+.nbx>.katex{white-space:normal}
+.nbx .nbt{white-space:nowrap}
+:is(.segnav .tl,.say .who,.sk-lab>span,.brand,.sr-only) .nbx>.katex{white-space:nowrap}
