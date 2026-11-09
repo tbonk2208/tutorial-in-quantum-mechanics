@@ -105,8 +105,14 @@ LABS.complex = (el, L, o) => {
   const DEG = Math.PI / 180;
   const I = labInit(o); let r = I.r ?? 1.2, ph = Math.round((I.ph ?? 53 * DEG) / DEG) * DEG;   // Start 53°: z ≈ 0,72 + 0,96 i (M1, mk-t1e)
   const draw = () => {
-    P.frame(-2, 2, -1.6, 1.6, {nx:8, ny:4, xl:'Re', yl:'Im'});
+    /* gleicher Maßstab auf beiden Achsen: Re z und Im z sind beides reelle Zahlen derselben Einheit.
+       Nur so ist |z| = 1 ein Kreis, und Winkel (Phasen) erscheinen unverzerrt. */
+    squareFrame(P, 2.7, 0.5);
     const c = P.c;
+    /* Achsennamen an die Achsen selbst (nicht an den Rahmen): Re rechts an der waagerechten, Im oben an der senkrechten Achse */
+    c.font = '12px "Source Sans 3", sans-serif'; c.fillStyle = cssv('--muted');
+    c.textAlign = 'right'; c.fillText('Re', P.w - P.pr - 2, P.Y(0) - 6);
+    c.textAlign = 'left'; c.fillText('Im', P.X(0) + 6, P.pt + 12);
     c.strokeStyle = cssv('--grid-strong'); c.beginPath(); c.arc(P.X(0), P.Y(0), P.X(1) - P.X(0), 0, 2 * Math.PI); c.stroke();
     const z = [r * Math.cos(ph), r * Math.sin(ph)];
     const arrow = (x, y, col, lab) => { c.strokeStyle = col; c.fillStyle = col; c.lineWidth = 2.4; c.beginPath(); c.moveTo(P.X(0), P.Y(0)); c.lineTo(P.X(x), P.Y(y)); c.stroke(); c.beginPath(); c.arc(P.X(x), P.Y(y), 4, 0, 7); c.fill(); P.text(lab, P.X(x) + 6, P.Y(y) - 6, col); };
