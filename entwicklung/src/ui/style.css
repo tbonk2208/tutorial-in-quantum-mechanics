@@ -569,3 +569,8 @@ main,.stp,.reps,.dlg,.sumpanel{--scbg:var(--sheet)}
 .nbx>.katex{white-space:normal}
 .nbx .nbt{white-space:nowrap}
 :is(.segnav .tl,.say .who,.sk-lab>span,.brand,.sr-only) .nbx>.katex{white-space:nowrap}
+
+/* Fortschritt eines begonnenen Themas in der Themenliste: 7 Punkte = 7 Schritte des Lernwegs */
+.tprog{display:flex;gap:4px;margin-top:6px}
+.tprog i{width:9px;height:9px;border-radius:50%;background:var(--line);display:inline-block}
+.tprog i.d{background:var(--c2)}

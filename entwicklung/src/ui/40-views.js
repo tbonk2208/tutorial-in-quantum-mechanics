@@ -40,7 +40,8 @@ function renderNav(active){
     b.onclick = () => go(n[0]); side.append(b);
   }
   const sure = TOPICS.filter(isSure).length;
-  $('#topprog').innerHTML = '<span class="bar"><i style="width:' + Math.round(100 * sure / TOPICS.length) + '%"></i></span>' + sure + '/' + TOPICS.length + '<span class="lbl">&nbsp;Themen sicher</span>';
+  const begun = TOPICS.filter(t => !isSure(t) && progressOf(t).started).length;
+  $('#topprog').innerHTML = '<span class="bar"><i style="width:' + Math.round(100 * sure / TOPICS.length) + '%"></i></span>' + sure + '/' + TOPICS.length + '<span class="lbl">&nbsp;Themen sicher' + (begun ? ' · ' + begun + ' begonnen' : '') + '</span>';
 }
 function render(){
   if (typeof INKUI !== 'undefined') INKUI.flushAll();   /* Handschrift nicht verlieren */
@@ -102,13 +103,30 @@ function migrateTopic(t, s){
   if (s.entry && s.entry !== 'adv' && s.entry !== 'guided') delete s.entry;   /* alte Empfehlung nach dem Voraussetzungscheck */
   s.v = 4;
 }
+/* Fortschritt eines Themas – unabhängig davon, welchen Schritt man zuletzt angesehen hat.
+   s.step = zuletzt geöffneter Schritt, s.reach = weitester geöffneter Schritt, s.done[k] = Schritt k erledigt.
+   resume: dort weitermachen, wo man war – aber nie vor dem ersten noch offenen Schritt (Zurückblättern zum Nachlesen
+   setzt den Fortschritt nicht zurück). */
+function progressOf(t){
+  const s = tstate(t), N = 7, d = s.done || {};
+  let done = 0; for (let k = 1; k <= N; k++) if (d[k]) done++;
+  let first = 1; while (first <= N && d[first]) first++;
+  const T = t.teach || [], tc = s.tc || {};
+  const segs = T.filter(sg => tc.seg && tc.seg[sg.id]).length;
+  const answered = !!(tc.st && Object.keys(tc.st).length) || !!(s.diag && Object.keys(s.diag).length) || !!(s.check && Object.keys(s.check).length);
+  const reach = Math.max(s.reach || 1, s.step || 1);
+  const started = done > 0 || reach > 1 || segs > 0 || answered || !!s.final;
+  const resume = Math.min(N, Math.max(s.step || 1, first));
+  return {done, first, reach, segs, nSeg:T.length, started, resume};
+}
 function statusText(t){
   const s = tstate(t), f = s.final;
   if (f && f.sure) return f.legacy && !f.v4 ? 'Sicher (Abschluss alter Form)' : 'Sicher';
   if (f && f.v4 && f.prelim) return 'Vorläufig sicher · Wiederholung ab ' + fmtD(addDays(f.date, 2)) + ' macht es sicher';
   if (f && f.v4) return 'Abschluss: ' + Math.round(100 * f.pct) + ' % · noch nicht bestanden';
   if (f) return 'Abschluss: ' + f.score + ' von 4';
-  if (s.step > 1) return 'Begonnen (Schritt ' + s.step + ')';
+  const P = progressOf(t);
+  if (P.started) return 'Begonnen · ' + P.done + ' von 7 Schritten erledigt' + (P.nSeg && !s.done[3] && P.segs ? ' · Erklären: ' + P.segs + ' von ' + P.nSeg + ' Abschnitten' : '');
   return 'Noch nicht angefangen';
 }
 
@@ -125,9 +143,9 @@ VIEWS.start = main => {
   const td = h('div', {class:'today stack'});
   td.append(h('h3', {}, 'Für heute'));
   const next = nextTopic();
-  const lastT = TOPICS.find(t => tstate(t).step > 1 && !tstate(t).final);
+  const lastT = TOPICS.find(t => progressOf(t).started && !tstate(t).final);
   const L = h('ul', {class:'clean'});
-  if (lastT) L.append(h('li', {html:'Weitermachen: <a href="#/learn/' + lastT.id + '/' + tstate(lastT).step + '">' + tname(lastT) + ': ' + escH(lastT.title) + '</a>'}));
+  if (lastT) L.append(h('li', {html:'Weitermachen: <a href="#/learn/' + lastT.id + '/' + progressOf(lastT).resume + '">' + tname(lastT) + ': ' + escH(lastT.title) + '</a>'}));
   else if (next) L.append(h('li', {html:'Als Nächstes: <a href="#/learn/' + next.id + '/1">' + tname(next) + ': ' + escH(next.title) + '</a>'}));
   const due = dueTopics();
   if (due.length) L.append(h('li', {html:'Fällig zum Wiederholen: ' + due.map(t => '<a href="#/review/' + t.id + '">' + escH(t.short || t.title) + '</a>').join(', ')}));
@@ -154,13 +172,13 @@ function dueTopics(){ const d = today(); return TOPICS.filter(t => { const r = s
 
 /* ---------- Neues lernen ---------- */
 VIEWS.learn = (main, args) => {
-  if (args[0]){ const t = topicById(args[0]); if (t) return topicView(main, t, +(args[1] || tstate(t).step || 1), args[2], args[3]); }
+  if (args[0]){ const t = topicById(args[0]); if (t) return topicView(main, t, +(args[1] || progressOf(t).resume || 1), args[2], args[3]); }
   main.append(h('h1', {}, 'Neues lernen'));
   main.append(h('p', {class:'muted'}, 'Wähle ein Thema. Du lernst es in sieben kleinen Schritten.'));
   const how = h('details', {class:'box', style:'margin-top:14px'});
   how.innerHTML = '<summary><b>Wie läuft ein Thema ab?</b></summary><ol class="clean">' + STEPS_NEW.map(s => '<li><b>' + s[0] + ':</b> ' + s[1] + '</li>').join('') + '</ol><p class="small muted">Themen, deren neuer Erklärteil noch nicht fertig ist, laufen vorerst im bisherigen Ablauf (Ziel und Check, Einstieg, Klären, Darstellen, Vergleichen, Üben, Abschluss).</p><p class="small muted">Die Abfolge folgt der Lernforschung (Vorhersagen vor der Erklärung, Erklären in kurzen Abschnitten, Beispiele mit Selbsterklärung, Abrufübung, verteiltes Wiederholen; siehe <a href="#/sources">Quellen</a>) und der physikdidaktischen Forschung zu Lernschwierigkeiten in der Quantenmechanik.</p>';
   main.append(how);
-  main.append(topicList(t => go('learn/' + t.id + '/' + (tstate(t).step || 1)), 'Starten', true));
+  main.append(topicList(t => go('learn/' + t.id + '/' + progressOf(t).resume), 'Starten', true));
 };
 /* Auftakt im Reiter „Quantenmechanik“: Text kommt aus Thema 1 (wozu, phenomenon) */
 function whyQM(){
@@ -191,7 +209,14 @@ function topicRows(list, onPick, label){
     const sure = isSure(t), pre = isPrelim(t);
     const row = h('div', {class:'topic' + (sure ? ' sure' : pre ? ' prelim' : '')});
     row.innerHTML = '<span class="num">' + tnum(t) + '</span><div><b>' + escH(t.title) + '</b>' + (t === next ? '<span class="tag">als Nächstes</span>' : '') + (sure ? '<span class="tag good">sicher</span>' : pre ? '<span class="tag pre">vorläufig sicher</span>' : '') + '<div class="small muted">' + escH(t.src || '') + '</div><div class="small muted">' + escH(statusText(t)) + '</div></div>';
-    const b = h('button', {class:'btn btn-sm', type:'button'}, label); b.onclick = () => onPick(t);
+    const P = progressOf(t);
+    if (P.started && !sure){
+      const d = tstate(t).done || {};
+      const pr = h('div', {class:'tprog', title:P.done + ' von 7 Schritten erledigt', 'aria-label':P.done + ' von 7 Schritten erledigt'});
+      pr.innerHTML = [1, 2, 3, 4, 5, 6, 7].map(k => '<i class="' + (d[k] ? 'd' : '') + '"></i>').join('');
+      const box = row.querySelector('div'); if (box) box.append(pr);
+    }
+    const b = h('button', {class:'btn btn-sm', type:'button'}, label === 'Starten' && P.started && !sure ? 'Fortsetzen' : label); b.onclick = () => onPick(t);
     row.append(b); wrap.append(row);
   }
   return wrap;
@@ -200,7 +225,7 @@ function topicView(main, t, step, sub, sub2){
   const s = tstate(t);
   const V4 = isV4(t), ST = stepsOf(t), SV = V4 ? STEPVIEW : STEPVIEW_OLD;
   step = Math.min(7, Math.max(1, step || 1));
-  s.step = step; store.data.ch = t.ch; store.save();
+  s.step = step; s.reach = Math.max(s.reach || 1, step); store.data.ch = t.ch; store.save();
   main.append(h('button', {class:'back', type:'button', onclick:() => go('learn')}, '← Neues lernen'));
   main.append(h('div', {class:'small muted', html:escH(chName(t.ch)) + ' · ' + tname(t) + (t.src ? ' · ' + escH(t.src) : '') + ' · <a href="#/lex">Begriff nachschlagen</a>'}));
   main.append(h('h1', {style:'margin-top:4px', html:inl(t.title)}));
@@ -358,7 +383,7 @@ STEPVIEW[1] = (body, t, s, nextBtn) => {
   const rb = reflBox(t); if (rb) body.append(rb);
   if (t.needs) body.append(h('p', {class:'small', html:'<b>Das brauchst du schon:</b> ' + inl(t.needs)}));
   const mref = (t.math || []).map(topicById).filter(Boolean);
-  if (mref.length) body.append(h('p', {class:'small', html:'<b>Mathe dazu:</b> ' + mref.map(m => '<a href="#/learn/' + m.id + '/' + (tstate(m).step || 1) + '">' + tname(m) + ' ' + escH(m.title) + '</a>' + (isSure(m) ? ' ✓' : '')).join(' · ')}));
+  if (mref.length) body.append(h('p', {class:'small', html:'<b>Mathe dazu:</b> ' + mref.map(m => '<a href="#/learn/' + m.id + '/' + progressOf(m).resume + '">' + tname(m) + ' ' + escH(m.title) + '</a>' + (isSure(m) ? ' ✓' : '')).join(' · ')}));
   const D = t.diag || [];
   s.check = s.check || {}; s.diag = s.diag || {};
   const nb = nextBtn(null, () => t.check.every((q, i) => s.check[i] !== undefined) && D.every((q, i) => s.diag[i] !== undefined));
@@ -798,7 +823,7 @@ STEPVIEW_OLD[1] = (body, t, s, nextBtn) => {
   if (t.bridge) body.append(h('div', {class:'box box-info', html:'<h4>Brücke: Was aus früheren Themen wiederkommt</h4>' + md(t.bridge)}));
   if (t.needs) body.append(h('p', {class:'small', html:'<b>Das brauchst du schon:</b> ' + inl(t.needs)}));
   const mref = (t.math || []).map(topicById).filter(Boolean);
-  if (mref.length) body.append(h('p', {class:'small', html:'<b>Mathe dazu:</b> ' + mref.map(m => '<a href="#/learn/' + m.id + '/' + (tstate(m).step || 1) + '">' + tname(m) + ' ' + escH(m.title) + '</a>' + (isSure(m) ? ' ✓' : '')).join(' · ')}));
+  if (mref.length) body.append(h('p', {class:'small', html:'<b>Mathe dazu:</b> ' + mref.map(m => '<a href="#/learn/' + m.id + '/' + progressOf(m).resume + '">' + tname(m) + ' ' + escH(m.title) + '</a>' + (isSure(m) ? ' ✓' : '')).join(' · ')}));
   body.append(h('h3', {}, 'Eingangscheck'));
   body.append(h('p', {class:'small muted'}, t.check.length + ' kurze Fragen. Sie zählen nicht. Sie zeigen nur, womit du am besten anfängst. Wenn du etwas nicht weißt, tippe auf „Weiß ich noch nicht“.'));
   s.check = s.check || {};
@@ -990,7 +1015,7 @@ function pickWeighted(arr, n){
   return out;
 }
 function newMix(){
-  const started = TOPICS.filter(t => { const s = tstate(t); return s.step > 1 || s.final; });
+  const started = TOPICS.filter(t => progressOf(t).started);
   const base = started.length ? started : chTopics(curCh()).slice(0, 3);
   const T = base.flatMap(t => t.practice.map(k => ({t:t.id, k:'task', id:k.id, w:weakness(t) / Math.max(1, t.practice.length)})));
   const Cc = base.flatMap(t => (t.concept || []).map(c => ({t:t.id, k:'concept', id:c.id, w:weakness(t) / t.concept.length})));
