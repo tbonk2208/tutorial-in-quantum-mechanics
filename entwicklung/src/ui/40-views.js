@@ -1345,6 +1345,33 @@ VIEWS.lex = (main, args) => {
 };
 
 /* ---------- Einstellungen ---------- */
+/* Einstellungen: „Als App installieren“ – je nach Umgebung Knopf oder kurze Anleitung */
+function installBox(){
+  const E = pwaEnv();
+  const box = h('div', {class:'box stack', id:'install', style:'margin-top:18px'});
+  let html = '<h3>Als App installieren</h3>';
+  if (E.standalone || PWA.installed) html += '<p>Das Tutorial läuft bereits als installierte App. Es funktioniert auch ohne Internet.</p>';
+  else if (!E.pages || E.framed){
+    html += '<p>Hier lässt sich das Tutorial nicht installieren: Diese Fassung läuft eingebettet (in Claude bzw. in einer Vorschau), und dort kann der Browser keine App anlegen.</p>'
+      + '<p>Installieren kannst du die Fassung auf GitHub Pages. Öffne diese Adresse in deinem Browser (z. B. Edge oder Chrome unter Windows, Safari auf dem iPad):<br><a href="' + PAGES_URL + '" target="_blank" rel="noopener">' + PAGES_URL + '</a></p>'
+      + '<p class="small muted">Der Lernstand liegt je Adresse getrennt. Sichere ihn hier unten unter „Lernstand“ als Datei und lies ihn in der installierten App wieder ein.</p>';
+  } else {
+    const steps = E.ios ? (E.safari ? 'Tippe in Safari auf <b>Teilen</b> (Quadrat mit Pfeil nach oben) und dann auf <b>Zum Home-Bildschirm</b>.' : 'Öffne die Seite in <b>Safari</b>: Nur dort gibt es unter <b>Teilen</b> den Eintrag <b>Zum Home-Bildschirm</b>.')
+      : E.edge ? 'In Edge: Menü <b>…</b> (Einstellungen und mehr) → <b>Apps</b> → <b>Diese Website als App installieren</b>, oder das Installieren-Symbol rechts in der Adressleiste.'
+      : E.chrome && E.android ? 'In Chrome: Menü <b>⋮</b> → <b>Zum Startbildschirm hinzufügen</b> → <b>Installieren</b>.'
+      : E.chrome ? 'In Chrome: das Installieren-Symbol rechts in der Adressleiste, oder Menü <b>⋮</b> → <b>Streamen, speichern und teilen</b> (je nach Version <b>Speichern und teilen</b>) → <b>QM Tutorial installieren</b>.'
+      : E.firefox ? 'Firefox kann Web-Apps je nach Version und System nicht oder nur eingeschränkt installieren. Am einfachsten geht es mit Edge oder Chrome (Windows, Android) bzw. Safari (iPad).'
+      : 'Suche im Menü deines Browsers nach <b>Installieren</b>, <b>Als App installieren</b> oder <b>Zum Home-Bildschirm</b>.';
+    html += '<p>Installiert öffnet sich das Tutorial in einem eigenen Fenster und läuft auch ohne Internet.</p><p>' + steps + '</p>';
+  }
+  box.innerHTML = html;
+  if (!E.standalone && !PWA.installed && E.pages && !E.framed && PWA.deferred){
+    const b = h('button', {class:'btn btn-primary', type:'button'}, 'Jetzt installieren');
+    b.onclick = async () => { const ok = await pwaInstall(); if (!ok) toast('Nicht installiert. Du kannst es später hier erneut versuchen.'); render(); };
+    box.insertBefore(h('div', {class:'row'}, b), box.children[1] || null);
+  }
+  return box;
+}
 VIEWS.settings = (main, args) => {
   if (args && args[0] === 'hand' && typeof INKUI !== 'undefined') return INKUI.trainerView(main);
   if (args && args[0] === 'probe' && typeof INKUI !== 'undefined') return INKUI.probeView(main);
@@ -1356,6 +1383,7 @@ VIEWS.settings = (main, args) => {
   <label class="fld">Prüfen <select class="s-mode"><option value="line">Zeile für Zeile (mit Enter)</option><option value="all">Erst den ganzen Lösungsweg (mit „Prüfen“)</option></select></label>`;
   main.append(f);
   $('.s-theme', f).value = S.theme || ''; $('.s-size', f).value = S.size || ''; $('.s-mode', f).value = S.mode || 'line';
+  main.append(installBox());
   f.addEventListener('change', () => { S.theme = $('.s-theme', f).value; S.size = $('.s-size', f).value; S.mode = $('.s-mode', f).value; store.save(); applySettings(); toast('Gespeichert.'); });
   /* Stift und Handschrift */
   if (typeof INKUI !== 'undefined'){

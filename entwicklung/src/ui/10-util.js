@@ -63,6 +63,25 @@ function lineHTML(src, ctx){
 }
 function ctxOf(spec){ if (!spec) return null; if (!spec.__ctx) spec.__ctx = makeCtx(spec); return spec.__ctx; }
 
+/* Installation als App (PWA). Installierbar ist nur die Fassung auf GitHub Pages; in Claude läuft das Tutorial in einem eingebetteten Rahmen. */
+const PAGES_URL = 'https://tbonk2208.github.io/tutorial-in-quantum-mechanics/';
+const PWA = {deferred:null, installed:false, sw:false, barShown:false};
+async function pwaInstall(){
+  const d = PWA.deferred; if (!d) return false;
+  try { d.prompt(); const c = await d.userChoice; PWA.deferred = null; return c && c.outcome === 'accepted'; } catch(e){ return false; }
+}
+function pwaEnv(){
+  const ua = navigator.userAgent || '';
+  let standalone = false; try { standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; } catch(e){}
+  let framed = false; try { framed = window.top !== window.self; } catch(e){ framed = true; }
+  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const edge = /Edg\//.test(ua), firefox = /Firefox\//.test(ua), samsung = /SamsungBrowser/.test(ua);
+  const chrome = /Chrome\//.test(ua) && !edge && !/OPR\//.test(ua) && !samsung;
+  const safari = /Safari\//.test(ua) && !/Chrome\/|CriOS|FxiOS|EdgiOS/.test(ua);
+  const android = /Android/.test(ua);
+  return {standalone, framed, pages:/github\.io$/.test(location.hostname), ios, edge, chrome, firefox, safari, android};
+}
+
 /* Speicher (nur auf diesem Gerät) */
 const store = {
   key:'qm-lernhilfe-1',
